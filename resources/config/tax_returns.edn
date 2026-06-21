@@ -1,0 +1,24 @@
+{;; SARS 2026 year of assessment (1 March 2025 – 28 February 2026)
+ ;; Used by the tax returns simulator — matches the current filing season
+ :tax-brackets
+ [{:threshold 0        :rate 0.18 :base-tax 0}
+  {:threshold 237100   :rate 0.26 :base-tax 42678}
+  {:threshold 370500   :rate 0.31 :base-tax 77362}
+  {:threshold 512800   :rate 0.36 :base-tax 121475}
+  {:threshold 673000   :rate 0.39 :base-tax 179147}
+  {:threshold 857900   :rate 0.41 :base-tax 251258}
+  {:threshold 1817000  :rate 0.45 :base-tax 644489}]
+
+ :rebates
+ {:primary 17235
+  :secondary 9444
+  :tertiary 3145}
+
+ :thresholds
+ {:under-65 95750
+  :age-65-plus 148217
+  :age-75-plus 165689}
+
+ :age-bands
+ {:secondary-rebate-from 65
+  :tertiary-rebate-from 75}}
