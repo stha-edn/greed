@@ -1,63 +1,33 @@
 (ns com.greed.ui.tools.core
   (:require [com.greed.ui.components.svgs :as svgs]))
 
-
-(defn modal-tool [& {:keys [title description]
-               :or   {title "Tool Title"
-                      description "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Nostrum quam voluptatibus"}}]
-  [:div
-   {:class "p-8 space-y-3 border-2 border-gray-400 rounded-xl"}
-   [:span
-    {:class "inline-block text-orange-500"}
-    (svgs/flame)]
-   [:h1
-    {:class "text-xl font-semibold text-gray-700 capitalize"}
-    title]
-   [:p
-    {:class "text-gray-500"}
-    description]
-   [:button
-    {"@click" "isOpen = true"
-     :class "inline-flex p-2 text-gray-500 capitalize transition-colors duration-300 transform bg-gray-100 rounded-full hover:underline hover:text-orange-500"}
-    (svgs/arrow->)]])
-
-(defn link-tool [& {:keys [title description link]
-               :or   {title "Tool Title"
-                      description "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Nostrum quam voluptatibus"}}]
-  [:div
-   {:class "p-8 space-y-3 border-2 border-gray-400 rounded-xl"}
-   [:span
-    {:class "inline-block text-orange-500"}
-    (svgs/flame)]
-   [:h1
-    {:class "text-xl font-semibold text-gray-700 capitalize"}
-    title]
-   [:p
-    {:class "text-gray-500"}
-    description]
-   [:a
-    {:href link
-     :class "inline-flex p-2 text-gray-500 capitalize transition-colors duration-300 transform bg-gray-100 rounded-full hover:underline hover:text-orange-500"}
-    (svgs/arrow->)]])
+(defn- tool-card [& {:keys [title description link badge]}]
+  [:a {:href link
+       :class "group block bg-white rounded-xl border border-gray-100 shadow-card p-6 hover:border-gray-200 hover:shadow-card-md transition-all duration-150"}
+   [:div {:class "flex items-start justify-between"}
+    [:div {:class "w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center text-white mb-4"}
+     (svgs/flame)]
+    (when badge
+      [:span {:class "text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full"} badge])]
+   [:h3 {:class "text-sm font-semibold text-zinc-900 group-hover:text-emerald-600 transition-colors"} title]
+   [:p {:class "mt-1 text-sm text-zinc-500 leading-relaxed"} description]
+   [:div {:class "mt-4 flex items-center gap-1 text-xs font-medium text-zinc-400 group-hover:text-emerald-600 transition-colors"}
+    "Open tool"
+    [:svg {:class "w-3.5 h-3.5" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
+     [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2" :d "M9 5l7 7-7 7"}]]]])
 
 (defn tools []
-  [:section
-   [:div
-    {:class "container px-6 py-10 mx-auto"}
-    [:h1
-     {:class "text-2xl font-semibold text-gray-800 capitalize lg:text-3xl"}
-     "Finance "
-     [:span {:class "underline decoration-blue-500"} "Tools"]]
-    [:p
-     {:class "mt-4 text-gray-500 xl:mt-6"}
-     "Make informed decisions about your finances with our free tools."]
-    [:div
-     {:class "grid grid-cols-1 gap-8 mt-8 xl:mt-12 xl:gap-12 md:grid-cols-2 xl:grid-cols-3"}
-     (link-tool
-      :title "Income tax calculator"
-      :description "Calculate your income tax in seconds"
-      :link "/app/tools/income-tax-calculator")
-     (link-tool
-      :title "Tax returns"
-      :description "File and manage your tax returns"
-      :link "/app/tools/tax-returns")]]])
+  [:div
+   [:p {:class "text-zinc-500 mb-6 text-sm"}
+    "Free tools to help you understand and manage your finances."]
+   [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"}
+    (tool-card
+     :title "Income Tax Calculator"
+     :description "Quickly estimate your annual income tax, rebates, and take-home pay based on SARS 2026/27 brackets."
+     :link "/app/tools/income-tax-calculator"
+     :badge "2026/27")
+    (tool-card
+     :title "Tax Returns (ITR12)"
+     :description "Simulate your SARS tax return including medical aid credits, RA deductions, and travel allowances."
+     :link "/app/tools/tax-returns"
+     :badge "2026 year")]])

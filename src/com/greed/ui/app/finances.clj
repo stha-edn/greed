@@ -6,10 +6,8 @@
             [com.greed.ui.components.alerts :as alerts]
             [com.greed.ui.components.headers :as headers]))
 
-
 (defn budget-lists [& {:keys [budget-items salary-budget-item]}]
-  [:div
-   {:class "grid grid-cols-1 md:grid-cols-3 gap-4"}
+  [:div {:class "grid grid-cols-1 md:grid-cols-3 gap-4"}
    (tables/budget-table
     {:title "income"
      :items (filterv #(= (:budget-item/type %) :income) budget-items)
@@ -22,15 +20,14 @@
      :items (filterv #(= (:budget-item/type %) :savings) budget-items)})])
 
 (defn page [{:keys [session params] :as ctx}]
-  (let [user-id (:uid session)
-        budget-items (data/get-budget-items ctx user-id)
+  (let [user-id           (:uid session)
+        budget-items      (data/get-budget-items ctx user-id)
         salary-budget-item (data/get-salary-budget-item ctx user-id)]
     (ui/app
      ctx
-     [:div.container.mx-auto
-      {:x-data "{ isAddButtonOpen: false, isActionModalOpen: false }"}
+     [:div {:class "space-y-4" :x-data "{ isAddButtonOpen: false, isActionModalOpen: false }"}
       (when (:alert params) (alerts/info params))
-      (headers/pages-heading ["Tools" "Budget Tracker"])
+      (headers/pages-heading ["Budget Tracker"])
       (stats/expense-tracker-stats budget-items)
       (tables/add-button)
       (budget-lists

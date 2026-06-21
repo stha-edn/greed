@@ -3,7 +3,6 @@
             [com.biffweb :as biff]
             [clojure.java.io :as io]
             [ring.util.response :as ring-response]
-            [ring.middleware.anti-forgery :as csrf]
             [com.greed.settings :as settings]
             [com.greed.ui.components.headers :as headers]))
 
@@ -25,13 +24,15 @@
                      :description (str settings/app-name " Description")
                      :image "/img/g.png"})
        (update :base/head (fn [head]
-                            (concat [[:link {:rel "stylesheet" :href (static-path "/css/main.css")}]
+                            (concat [[:link {:rel "preconnect" :href "https://fonts.googleapis.com"}]
+                                     [:link {:rel "preconnect" :href "https://fonts.gstatic.com" :crossorigin ""}]
+                                     [:link {:href "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" :rel "stylesheet"}]
+                                     [:link {:rel "stylesheet" :href (static-path "/css/main.css")}]
                                      [:script {:src (static-path "/js/main.js")}]
                                      [:script {:src "https://unpkg.com/htmx.org@1.9.12"}]
                                      [:script {:src "https://unpkg.com/htmx.org@1.9.12/dist/ext/ws.js"}]
                                      [:script {:src "https://unpkg.com/hyperscript.org@0.9.8"}]
                                      [:script {:src "https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" :defer "defer"}]
-                                     [:link {:href "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" :rel "stylesheet"}]
                                      [:script {:src "https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"}]
                                      (when recaptcha
                                        [:script {:src "https://www.google.com/recaptcha/api.js"
@@ -40,29 +41,26 @@
    body))
 
 (defn page [ctx & body]
-  (base
-   ctx
-   [:.pattern.h-screen 
-    body]))
+  (base ctx [:.pattern.min-h-screen body]))
 
 (defn app [ctx & body]
   (base
    ctx
-   [:.flex.flex-col.h-screen
-    [:.
-     {:class "flex-none fixed top-0 left-0 w-72"}
-     (headers/app ctx)]
-    [:.
-     {:class "flex-grow overflow-auto p-4 mt-20 md:mt-0 md:ml-72 md:bg-gray-50"}
-     body]]))
+   [:div {:class "flex min-h-screen bg-slate-50"}
+    (headers/app ctx)
+    [:main {:class "flex-1 pt-14 md:pt-0 md:ml-64 min-h-screen"}
+     [:div {:class "p-6"}
+      body]]]))
 
-(defn on-error [{:keys [status ex] :as ctx}]
+(defn on-error [{:keys [status] :as ctx}]
   {:status status
    :headers {"content-type" "text/html"}
    :body (rum/render-static-markup
-          (page
-           ctx
-           [:h1.text-lg.font-bold
-            (if (= status 404)
-              "Page not found."
-              "Something went wrong.")]))})
+          (page ctx [:div {:class "flex items-center justify-center min-h-screen"}
+                     [:div {:class "text-center p-8"}
+                      [:h1 {:class "text-2xl font-semibold text-slate-900 mb-2"}
+                       (if (= status 404) "Page not found" "Something went wrong")]
+                      [:p {:class "text-slate-500 mb-4"}
+                       (if (= status 404) "The page you are looking for does not exist." "An unexpected error occurred.")]
+                      [:a {:href "/" :class "text-blue-600 hover:underline"} "Go home"]]]))})
+

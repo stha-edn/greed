@@ -143,6 +143,65 @@
       (logger/info "Finances not found"))))
 
 
+(defn get-tax-profile [{:keys [biff/db]} user-id]
+  (first (q db
+            '{:find (pull tp [*])
+              :in [user-id]
+              :where [[tp :tax-profile/user-id user-id]]}
+            user-id)))
+
+(defn upsert-tax-profile [{:keys [params] :as ctx}]
+  (let [user-id (get-user-id-from-session ctx)]
+    (logger/info "Creating tax profile...")
+    (biff/submit-tx ctx
+                    [{:db/doc-type :tax-profile
+                      :xt/id (java.util.UUID/randomUUID)
+                      :tax-profile/user-id user-id
+                      :tax-profile/medical-monthly    (or (utilities/->int (:medical-monthly params)) 0)
+                      :tax-profile/medical-dependants (or (utilities/->int (:medical-dependants params)) 0)
+                      :tax-profile/ra-annual          (or (utilities/->int (:ra-annual params)) 0)}])))
+
+(defn update-tax-profile [{:keys [params] :as ctx}]
+  (let [user-id (get-user-id-from-session ctx)
+        tp      (get-tax-profile ctx user-id)
+        tp-id   (:xt/id tp)]
+    (if tp
+      (do (logger/info "Updating tax profile...")
+          (biff/submit-tx ctx
+                          [{:db/doc-type :tax-profile
+                            :xt/id tp-id
+                            :db/op :update
+                            :tax-profile/medical-monthly    (or (utilities/->int (:medical-monthly params)) 0)
+                            :tax-profile/medical-dependants (or (utilities/->int (:medical-dependants params)) 0)
+                            :tax-profile/ra-annual          (or (utilities/->int (:ra-annual params)) 0)}]))
+      (logger/info "Tax profile not found"))))
+
+(defn get-events [{:keys [biff/db]} user-id]
+  (sort-by :event/date
+           (q db
+              '{:find (pull event [*])
+                :in [user-id]
+                :where [[event :event/user-id user-id]]}
+              user-id)))
+
+(defn create-event [{:keys [params] :as ctx}]
+  (let [user-id (get-user-id-from-session ctx)]
+    (logger/info "Creating event...")
+    (biff/submit-tx ctx
+                    [{:db/doc-type :event
+                      :xt/id (java.util.UUID/randomUUID)
+                      :event/user-id user-id
+                      :event/title (:title params)
+                      :event/date (:date params)}])))
+
+(defn delete-event [{:keys [params] :as ctx}]
+  (let [event-id (utilities/->uuid (:event-id params))]
+    (logger/info "Deleting event...")
+    (biff/submit-tx ctx
+                    [{:db/doc-type :event
+                      :xt/id event-id
+                      :db/op :delete}])))
+
 (defn upsert-budget-item [{:keys [params] :as ctx}]
   (let [user-id (get-user-id-from-session ctx)
         budget-item-id (java.util.UUID/randomUUID)]

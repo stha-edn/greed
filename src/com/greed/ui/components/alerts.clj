@@ -44,8 +44,9 @@
        (svgs/close)]]]))
 
 
-(defn salary-prompt-modal []
-  "Modal prompting user to update salary in /app/profile. Parent must have Alpine x-data with showSalaryPrompt."
+(defn salary-prompt-modal
+  "Modal prompting user to update salary. Parent must have Alpine x-data with showSalaryPrompt."
+  []
   [:div
    {:class "relative flex justify-center"}
    [:div

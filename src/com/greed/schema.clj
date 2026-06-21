@@ -19,6 +19,21 @@
               [:finances/salary    :int]
               [:finances/payday    :int]]
 
+   :tax-profile/id :uuid
+   :tax-profile [:map {:closed true}
+                 [:xt/id                              :tax-profile/id]
+                 [:tax-profile/user-id                :user/id]
+                 [:tax-profile/medical-monthly        {:optional true} [:maybe :int]]
+                 [:tax-profile/medical-dependants     {:optional true} [:maybe :int]]
+                 [:tax-profile/ra-annual              {:optional true} [:maybe :int]]]
+
+   :event/id :uuid
+   :event [:map {:closed true}
+           [:xt/id          :event/id]
+           [:event/user-id  :user/id]
+           [:event/title    :string]
+           [:event/date     :string]]
+
    :budget-item/id :uuid
    :budget-item [:map {:closed true}
                  [:xt/id               :budget-item/id]

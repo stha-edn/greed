@@ -96,6 +96,16 @@
       nil)))
 
 
+(defn ordinal [n]
+  (let [n (int n)
+        suffix (cond
+                 (#{11 12 13} (mod n 100)) "th"
+                 (= 1 (mod n 10)) "st"
+                 (= 2 (mod n 10)) "nd"
+                 (= 3 (mod n 10)) "rd"
+                 :else "th")]
+    (str n suffix)))
+
 (comment
 
   (->int "1234")

@@ -1,5 +1,5 @@
 (ns com.greed.home
-  (:require [com.biffweb :as biff :refer [q]]
+  (:require [com.biffweb :as biff]
    [com.greed.middleware :as mid]
    [com.greed.ui :as ui]
    [com.greed.ui.pages.home :as p.home]
@@ -11,19 +11,19 @@
 (defn home-page [ctx]
   (ui/page
     ctx
-    (headers/pages)
+    (headers/pages ctx)
     (p.home/page)))
 
 (defn team-page [ctx]
   (ui/page
     ctx
-    (headers/pages)
+    (headers/pages ctx)
     (p.team/page)))
 
 (defn signin-page [ctx]
   (ui/page
     ctx
-    (headers/pages)
+    (headers/pages ctx)
     (p.signin/form ctx)))
 
 (defn signin-success-page [{:keys [biff/db session params]}]
@@ -35,7 +35,7 @@
 (defn signup-page [ctx]
   (ui/page
     ctx
-    (headers/pages)
+    (headers/pages ctx)
     (p.signup/form ctx)))
 
 (defn signup-success-page [{:keys [biff/db session params]}]
@@ -45,8 +45,7 @@
      :session (assoc session :uid user-id)}))
 
 (def module
-  {:routes [["" {:middleware [mid/wrap-redirect-signed-in]}
-             ["/"                  {:get home-page}]]
+  {:routes [["/"                  {:get home-page}]
             ["/team"               {:get team-page}]
             ["/signin"             {:get signin-page}]
             ["/signup"             {:get signup-page}]

@@ -22,6 +22,8 @@
               ["/update-budget-item" {:post mid/update-budget-item}]
               ["/delete-budget-item" {:get mid/delete-budget-item}]]
              ["/calendar" {:get calendar/page}]
+             ["/calendar/create-event" {:post calendar/create-event}]
+             ["/calendar/delete-event" {:post calendar/delete-event}]
              ["/tools"
               ["" {:get tools/page}]
               ["/income-tax-calculator" {:get income-tax-calculator/page-get :post income-tax-calculator/page}]
@@ -29,4 +31,5 @@
              ["/settings" {:get settings/page}]
              ["/profile" {:get account/page}]
              ["/save-user" {:post mid/save-user}]
-             ["/save-finances" {:post mid/save-finances}]]]})
+             ["/save-finances" {:post mid/save-finances}]
+             ["/save-tax-profile" {:post mid/save-tax-profile}]]]})

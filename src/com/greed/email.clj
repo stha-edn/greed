@@ -1,7 +1,5 @@
 (ns com.greed.email
-  (:require [camel-snake-kebab.core :as csk]
-            [camel-snake-kebab.extras :as cske]
-            [clj-http.client :as http]
+  (:require [clj-http.client :as http]
             [com.greed.settings :as settings]
             [clojure.tools.logging :as log]
             [rum.core :as rum]))
@@ -71,7 +69,7 @@
       (log/error (:body result)))
     success))
 
-(defn send-console [ctx form-params]
+(defn send-console [_ctx form-params]
   (println "TO:" (:to form-params))
   (println "SUBJECT:" (:subject form-params))
   (println)

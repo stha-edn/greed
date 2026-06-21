@@ -56,7 +56,7 @@
      "Enter figures from your IRP5 (employee tax certificate) and other documents. The simulator applies SARS 2026 year of assessment tax brackets, rebates, and credits to estimate whether you are owed a refund or have tax to pay."]
     [:p {:class "text-sm text-gray-500 mt-2"}
      "Filing opens annually in July on "
-     [:a {:href "https://www.sars.gov.za" :class "text-blue-600 hover:underline" :target "_blank"} "eFiling"]
+     [:a {:href "https://www.sars.gov.za" :class "text-emerald-600 hover:underline" :target "_blank"} "eFiling"]
      ". Non-provisional taxpayers (salaried employees) must submit by late October."]]
 
    [:div {:class "bg-white rounded-lg shadow p-6"}
@@ -112,48 +112,73 @@
    (when sub [:p {:class "text-xs text-gray-500 mt-0.5"} sub])])
 
 (defn- auto-assessment-card [ctx]
-  (let [user-id  (data/get-user-id-from-session ctx)
-        user     (data/get-user ctx user-id)
-        finances (data/get-finances ctx user-id)
-        age      (:user/age user)
-        salary   (:finances/salary finances)]
+  (let [user-id    (data/get-user-id-from-session ctx)
+        user       (data/get-user ctx user-id)
+        finances   (data/get-finances ctx user-id)
+        tp         (data/get-tax-profile ctx user-id)
+        age        (or (:user/age user) 0)
+        salary     (:finances/salary finances)
+        med-monthly  (or (:tax-profile/medical-monthly tp) 0)
+        dependants   (or (:tax-profile/medical-dependants tp) 0)
+        ra-annual    (or (:tax-profile/ra-annual tp) 0)
+        has-profile? (some? tp)]
     (if (and salary age (pos? salary))
-      (let [annual-income (utilities/income->annual-income salary)
-            {:keys [gross-tax rebates net-tax net-income effective-rate]}
-              (tax/calculate-income-tax annual-income age (c/get-tax-returns-config))
-            monthly-tax (utilities/annual-income->monthly-income net-tax)
-            monthly-net (utilities/annual-income->monthly-income net-income)]
-        [:div {:class "mt-6 bg-white rounded-lg shadow p-6"}
+      (let [annual-income  (utilities/income->annual-income salary)
+            ra-ded         (ra-deduction annual-income ra-annual)
+            taxable-income (max 0 (- annual-income ra-ded))
+            {:keys [gross-tax rebates net-tax effective-rate]}
+              (tax/calculate-income-tax taxable-income age (c/get-tax-returns-config))
+            mtc            (if (pos? med-monthly) (medical-tax-credit dependants) 0)
+            add-med        (additional-medical-credit age med-monthly 0 mtc)
+            final-tax      (max 0 (- net-tax mtc add-med))
+            monthly-tax    (utilities/annual-income->monthly-income final-tax)
+            monthly-net    (utilities/annual-income->monthly-income (- annual-income final-tax))
+            credits-applied? (or (pos? mtc) (pos? ra-ded))]
+        [:div {:class "bg-white rounded-lg shadow p-6"}
          [:div {:class "flex flex-wrap items-center justify-between gap-2 mb-1"}
           [:h2 {:class "text-lg font-semibold text-gray-800"} "Auto Assessment"]
-          [:span {:class "text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium"} "2026 Year of Assessment"]]
-         [:p {:class "text-sm text-gray-500 mb-5"}
-          "Based on your salary of " [:span {:class "font-medium text-gray-700"} (utilities/amount->rands salary) "/month"]
-          " and age " [:span {:class "font-medium text-gray-700"} age]
-          ". Salary income only — no medical aid, RA or travel allowances applied."]
+          [:span {:class "text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium"} "2026 Year of Assessment"]]
+         [:p {:class "text-sm text-gray-500 mb-4"}
+          "Based on your salary of "
+          [:span {:class "font-medium text-gray-700"} (utilities/amount->rands salary) "/month"]
+          " and age " [:span {:class "font-medium text-gray-700"} age] "."]
+
+         (when credits-applied?
+           [:div {:class "flex flex-wrap gap-2 mb-4"}
+            (when (pos? ra-ded)
+              [:span {:class "text-xs bg-gray-100 text-gray-600 rounded-full px-2.5 py-1"}
+               (str "RA deduction: " (utilities/amount->rands ra-ded))])
+            (when (pos? mtc)
+              [:span {:class "text-xs bg-gray-100 text-gray-600 rounded-full px-2.5 py-1"}
+               (str "Medical credit: " (utilities/amount->rands mtc))])
+            (when (pos? add-med)
+              [:span {:class "text-xs bg-gray-100 text-gray-600 rounded-full px-2.5 py-1"}
+               (str "Additional med credit: " (utilities/amount->rands add-med))])])
 
          [:div {:class "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 mb-5"}
-          (stat "Gross Annual Income"   (utilities/amount->rands annual-income)  nil)
-          (stat "Gross Tax"             (utilities/amount->rands gross-tax)       nil)
-          (stat "Rebates"               (utilities/amount->rands rebates)         nil)
-          (stat "Estimated Annual Tax"  (utilities/amount->rands net-tax)         nil)
-          (stat "Net Annual Income"     (utilities/amount->rands net-income)      nil)
-          (stat "Net Monthly Income"    (utilities/amount->rands monthly-net)     nil)]
+          (stat "Gross Annual Income"  (utilities/amount->rands annual-income) nil)
+          (stat "Gross Tax"            (utilities/amount->rands gross-tax)      nil)
+          (stat "Rebates"              (utilities/amount->rands rebates)        nil)
+          (stat "Estimated Annual Tax" (utilities/amount->rands final-tax)      nil)
+          (stat "Net Annual Income"    (utilities/amount->rands (- annual-income final-tax)) nil)
+          (stat "Net Monthly Income"   (utilities/amount->rands monthly-net)    nil)]
 
          [:div {:class "flex flex-wrap items-center justify-between gap-4 bg-gray-50 rounded-lg px-4 py-3"}
           [:div
            [:p {:class "text-sm text-gray-600"}
             "Your employer should withhold approximately "
             [:span {:class "font-semibold text-gray-900"} (utilities/amount->rands monthly-tax) "/month"]
-            " in PAYE. With no other deductions your assessment would be "
-            [:span {:class "font-semibold text-gray-900"} "R0.00"] "."]
+            " in PAYE."]
            [:p {:class "text-xs text-gray-400 mt-1"}
-            "Effective tax rate: " (utilities/->percentage effective-rate)
-            ". Use the ITR12 simulator below if you have medical aid, an RA, or a travel allowance."]]]])
+            "Effective tax rate: " (utilities/->percentage effective-rate) "."
+            (when-not has-profile?
+              " Add your medical aid and RA details in Settings for a more accurate estimate.")]]]])
       [:div {:class "mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4"}
        [:p {:class "text-sm text-amber-800"}
         "No salary data found. Add your salary in "
         [:a {:href "/app/finances/" :class "font-medium underline"} "Finances"]
+        " or "
+        [:a {:href "/app/settings" :class "font-medium underline"} "Settings"]
         " to enable auto assessment."]])))
 
 (defn- field [id label type & [hint required?]]
@@ -192,16 +217,16 @@
      (field "out-of-pocket-medical" "Out-of-pocket Medical Expenses p/a (R)" "number" "Not covered by medical aid")]
     [:div {:class "mt-6 flex justify-end"}
      [:button {:type "submit"
-               :class "px-8 py-2.5 text-white bg-gray-800 rounded-md hover:bg-gray-700 focus:outline-none"}
+               :class "px-8 py-2.5 text-white bg-zinc-900 rounded-md hover:bg-gray-700 focus:outline-none"}
       "Simulate Return"]])])
 
 (defn page [ctx]
   (ui/app
    ctx
-   [:div.container.mx-auto
+   [:div {:class "space-y-4"}
     (headers/pages-heading ["Tools" "Tax Returns"])
     (auto-assessment-card ctx)
-    [:div {:class "mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
+    [:div {:class "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
      (guide)
      (form-card)]]))
 
@@ -231,9 +256,9 @@
 
     (ui/app
      ctx
-     [:div.container.mx-auto
+     [:div {:class "space-y-4"}
       (headers/pages-heading ["Tools" "Tax Returns"])
-      [:div {:class "mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
+      [:div {:class "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
        (guide)
        [:div {:class "bg-white rounded-lg shadow p-6"}
         [:h2 {:class "text-lg font-semibold text-gray-800 mb-4"} "2026 Tax Summary"]
@@ -271,5 +296,5 @@
 
         [:div {:class "mt-5"}
          [:a {:href "/app/tools/tax-returns"
-              :class "text-sm text-blue-600 hover:underline"}
+              :class "text-sm text-emerald-600 hover:underline"}
           "<- Run another simulation"]]]]])))

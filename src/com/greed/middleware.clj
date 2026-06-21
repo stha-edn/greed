@@ -1,5 +1,5 @@
 (ns com.greed.middleware
-  (:require [com.biffweb :as biff :refer [q]]
+  (:require [com.biffweb :as biff]
             [muuntaja.middleware :as muuntaja]
             [ring.middleware.anti-forgery :as csrf]
             [ring.middleware.defaults :as rd]
@@ -21,7 +21,7 @@
        :headers {"location" "/signin?error=not-signed-in"}})))
 
 (defn wrap-authenticate [handler]
-  (fn [{:keys [uri db] :as ctx}]
+  (fn [{:keys [uri] :as ctx}]
     (let [error-location (if (= "/authenticate/signup" uri)
                            "/signup?error=invalid-email"
                            "/signin?error=invalid-credentials")]
@@ -37,7 +37,7 @@
       (data/update-user ctx)
       (data/upsert-user ctx)))
   {:status 303
-   :headers {"location" "/app?alert=user-saved"}})
+   :headers {"location" "/app/settings?alert=user-saved"}})
 
 (defn save-finances [ctx]
   (let [user-id (data/get-user-id-from-session ctx)
@@ -46,7 +46,16 @@
       (data/update-finances ctx)
       (data/upsert-finances ctx)))
   {:status 303
-   :headers {"location" "/app?alert=finances-saved"}})
+   :headers {"location" "/app/settings?alert=finances-saved"}})
+
+(defn save-tax-profile [ctx]
+  (let [user-id (data/get-user-id-from-session ctx)
+        tp      (data/get-tax-profile ctx user-id)]
+    (if tp
+      (data/update-tax-profile ctx)
+      (data/upsert-tax-profile ctx)))
+  {:status 303
+   :headers {"location" "/app/settings?alert=tax-profile-saved"}})
 
 (defn create-budget-item [ctx]
   (data/upsert-budget-item ctx)
@@ -67,19 +76,6 @@
   {:status 303
    :headers {"location" "/"}
    :session (dissoc session :uid)})
-
-;; Stick this function somewhere in your middleware stack below if you want to
-;; inspect what things look like before/after certain middleware fns run.
-(defn wrap-debug [handler]
-  (fn [ctx]
-    (let [response (handler ctx)]
-      (println "REQUEST")
-      (biff/pprint ctx)
-      (def ctx* ctx)
-      (println "RESPONSE")
-      (biff/pprint response)
-      (def response* response)
-      response)))
 
 (defn wrap-site-defaults [handler]
   (-> handler

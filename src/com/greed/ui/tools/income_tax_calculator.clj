@@ -61,9 +61,9 @@
 (defn page-get [ctx]
   (ui/app
    ctx
-   [:div.container.mx-auto
+   [:div {:class "space-y-4"}
     (headers/pages-heading ["Tools" "Income Tax Calculator"])
-    [:div {:class "mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
+    [:div {:class "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
      (guide)
      [:div {:class "bg-white rounded-lg shadow p-6"}
       [:h2 {:class "text-lg font-semibold text-gray-800"} "Calculate your income tax"]
@@ -76,7 +76,7 @@
         (field "age" "Age" "number" "Determines which rebate tier applies")]
        [:div {:class "mt-6 flex justify-end"}
         [:button {:type "submit"
-                  :class "px-8 py-2.5 text-white bg-gray-800 rounded-md hover:bg-gray-700 focus:outline-none"}
+                  :class "px-8 py-2.5 text-white bg-zinc-900 rounded-md hover:bg-gray-700 focus:outline-none"}
          "Calculate"]])]]]))
 
 (defn page [{:keys [params] :as ctx}]
@@ -90,9 +90,9 @@
         net-monthly   (utilities/annual-income->monthly-income (- annual-income net-tax))]
     (ui/app
      ctx
-     [:div.container.mx-auto
+     [:div {:class "space-y-4"}
       (headers/pages-heading ["Tools" "Income Tax Calculator"])
-      [:div {:class "mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
+      [:div {:class "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
        (guide)
        [:div {:class "bg-white rounded-lg shadow p-6"}
         [:h2 {:class "text-lg font-semibold text-gray-800 mb-4"} "Tax Breakdown"]
@@ -116,5 +116,5 @@
 
         [:div {:class "mt-6"}
          [:a {:href "/app/tools/income-tax-calculator"
-              :class "text-sm text-blue-600 hover:underline"}
+              :class "text-sm text-emerald-600 hover:underline"}
           "<- Calculate again"]]]]])))

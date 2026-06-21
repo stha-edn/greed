@@ -3,157 +3,61 @@
             [com.greed.utilities.core :as utilities]
             [com.greed.ui.components.svgs :as svgs]))
 
+(defn- metric-card [& {:keys [label value icon-bg icon]}]
+  [:div {:class "bg-white rounded-xl border border-gray-100 shadow-card p-5"}
+   [:div {:class "flex items-start justify-between"}
+    [:div
+     [:p {:class "text-xs font-medium text-zinc-400 uppercase tracking-wide"} label]
+     [:p {:class "mt-1.5 text-2xl font-semibold text-zinc-900"} value]]
+    [:div {:class (str "flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center " icon-bg)}
+     icon]]])
 
 (defn savings-stat [budget-items]
   (let [{:keys [total-savings]} (c.ui/get-budget-data budget-items)]
-    [:div
-     {:class "px-4 py-4"}
-     [:article
-      {:class "flex items-center gap-4 rounded-lg border border-gray-100 p-6 sm:justify-between bg-gradient-to-r from-gray-50 to-gray-300 shadow-sm"}
-      [:span
-       {:class "rounded-full bg-gray-200 p-3 text-gray-800 sm:order-last"}
-       (svgs/money)]
-      [:div
-       [:p
-        {:class "text-2xl font-medium text-gray-900"}
-        (utilities/amount->rands total-savings)]
-       [:p
-        {:class "text-sm text-gray-500"}
-        "Total Savings"]]]]))
-
-(defn tax-stat [& {:keys [title value]}]
-  [:article
-   {:class "flex flex-col gap-4 rounded-lg border border-gray-100 p-6 bg-gradient-to-r from-gray-200 to-gray-50"}
-   [:div
-    {:class "inline-flex gap-2 self-end rounded-sm bg-green-100 p-1 text-green-600"}
-    (svgs/uptrend)]
-   [:div
-    [:strong {:class "block text-sm font-medium text-gray-500"}
-     title]
-    [:p
-     [:span {:class "text-2xl font-medium text-gray-900"}
-      value]]]])
-
-(defn tax-stats [income-tax-data]
-  (let [{:keys [net-tax
-                net-income
-                effective-rate]} income-tax-data
-        monthly-tax (/ (or net-tax 0) 12)]
-    [:section
-     {:class "bg-gray-100 -mt-24 rounded-xl"}
-     [:div
-      {:class "mx-auto px-4"}
-      [:div
-       {:class "flex flex-wrap"}
-       [:div
-        {:class "lg:pt-12 pt-6 w-full md:w-4/12 px-4 text-center"}
-        [:div
-         {:class "relative flex flex-col min-w-0 break-words bg-white w-full mb-1 shadow-lg rounded-lg"}
-         [:div {:class "px-4 flex-auto"}]]]]
-      [:div
-       {:class "flex flex-wrap items-center mt-16"}
-       [:div
-        {:class "w-full md:w-1/2 px-4 mr-auto ml-auto"}
-        [:div
-         {:class "text-gray-500 p-3 text-center inline-flex items-center justify-center w-14 h-14 mb-6 shadow-lg rounded-full bg-white"}
-         (svgs/credit-card)]
-        [:h3
-         {:class "text-3xl mb-2 font-semibold leading-normal"}
-         "Taxation overview"]
-        [:p
-         {:class
-          "text-lg font-light leading-relaxed mt-4 mb-4 text-gray-600"}
-         "Know your tax obligations and how to manage your finances."]
-        [:p
-         {:class "text-lg font-light leading-relaxed mt-0 mb-4 text-gray-600"}
-         "Taxation is a necessary part of life. It helps fund public services and infrastructure. However, it can also be a burden if not managed properly."]
-        [:a
-         {:href "https://www.sars.gov.za/tax-rates/income-tax/rates-of-tax-for-individuals/"
-          :target "_blank"
-          :rel "noopener noreferrer"
-          :class "text-sm text-blue-600 hover:text-blue-800 hover:underline"}
-         "Full tax rates and rebates on SARS →"]]
-       [:div
-        {:class "w-full md:w-1/2 px-4 mr-auto ml-auto"}
-        [:div
-         {:class "flex flex-col min-w-0 break-words w-full mb-6 "}
-         [:div
-          {:class "px-4 py-5 flex-auto"}
-          [:div
-           {:class "grid grid-cols-1 sm:grid-cols-2 gap-4"}
-           (tax-stat
-            :title "Net annual income"
-            :value (utilities/amount->rands net-income))
-           (tax-stat
-            :title "Estimated monthly tax"
-            :value (utilities/amount->rands (or monthly-tax 0)))
-           (tax-stat
-            :title "Effective rate"
-            :value (utilities/->percentage effective-rate))
-           (tax-stat
-            :title "Net monthly income"
-            :value (-> net-income
-                        utilities/annual-income->monthly-income
-                        utilities/amount->rands))]]]
-
-        ]]]]))
-
+    (metric-card
+     :label "Total Savings"
+     :value (utilities/amount->rands total-savings)
+     :icon-bg "bg-gray-100"
+     :icon [:span {:class "text-zinc-600"} (svgs/money)])))
 
 (defn expense-tracker-stats [budget-items]
-  (let [{:keys [total-income
-                total-expenses
-                total-savings]} (c.ui/get-budget-data budget-items)]
+  (let [{:keys [total-income total-expenses total-savings]} (c.ui/get-budget-data budget-items)]
+    [:div {:class "grid grid-cols-1 sm:grid-cols-3 gap-4"}
+     (metric-card
+      :label "Monthly Income"
+      :value (utilities/amount->rands total-income)
+      :icon-bg "bg-emerald-50"
+      :icon [:span {:class "text-emerald-600"} (svgs/uptrend)])
+     (metric-card
+      :label "Monthly Expenses"
+      :value (utilities/amount->rands total-expenses)
+      :icon-bg "bg-gray-100"
+      :icon [:span {:class "text-zinc-500"} (svgs/downtrend)])
+     (metric-card
+      :label "Net Savings"
+      :value (utilities/amount->rands total-savings)
+      :icon-bg "bg-gray-100"
+      :icon [:span {:class "text-zinc-500"} (svgs/banknotes)])]))
+
+(defn- tax-metric [label value sub]
+  [:div {:class "bg-white rounded-xl border border-gray-100 shadow-card p-5"}
+   [:p {:class "text-xs font-medium text-zinc-400 uppercase tracking-wide"} label]
+   [:p {:class "mt-1.5 text-xl font-semibold text-zinc-900"} value]
+   (when sub [:p {:class "text-xs text-zinc-400 mt-0.5"} sub])])
+
+(defn tax-stats [income-tax-data]
+  (let [{:keys [annual-income gross-tax rebates net-tax net-income effective-rate]} income-tax-data]
     [:div
-     {:class "px-4 py-4"}
-     [:div
-      {:class "grid lg:grid-cols-3 md:grid-cols-2 gap-6 w-full"}
-      [:div
-       {:class "flex items-center p-4 bg-white rounded"}
-       [:div
-        {:class "flex flex-shrink-0 items-center justify-center bg-green-200 h-16 w-16 rounded"}
-        (svgs/uptrend)]
-       [:div
-        {:class "flex-grow flex flex-col ml-4"}
-        [:span {:class "text-xl font-bold"}
-         (utilities/amount->rands total-income)]
-        [:div
-         {:class "flex items-center justify-between"}
-         [:span {:class "text-gray-500"}
-          "Monthly income"]
-         [:span
-          {:class "text-green-500 text-sm font-semibold ml-2"}
-          "+12.6%"]]]]
-      [:div
-       {:class "flex items-center p-4 bg-white rounded"}
-       [:div
-        {:class
-         "flex flex-shrink-0 items-center justify-center bg-red-200 h-16 w-16 rounded"}
-        (svgs/downtrend)]
-       [:div
-        {:class "flex-grow flex flex-col ml-4"}
-        [:span {:class "text-xl font-bold"}
-         (utilities/amount->rands total-expenses)]
-        [:div
-         {:class "flex items-center justify-between"}
-         [:span {:class "text-gray-500"}
-          "Monthly expenses"]
-         [:span
-          {:class "text-red-500 text-sm font-semibold ml-2"}
-          "-8.1%"]]]]
-      [:div
-       {:class "flex items-center p-4 bg-white rounded"}
-       [:div
-        {:class
-         "flex flex-shrink-0 items-center justify-center bg-gray-200 h-16 w-16 rounded"}
-        (svgs/banknotes)]
-       [:div
-        {:class "flex-grow flex flex-col ml-4"}
-        [:span {:class "text-xl font-bold"}
-         (utilities/amount->rands total-savings)]
-        [:div
-         {:class "flex items-center justify-between"}
-         [:span {:class "text-gray-500"}
-          "Total savings"]
-         [:span
-          {:class "text-green-500 text-sm font-semibold ml-2"}
-          "+28.4%"]]]]]]))
+     [:div {:class "flex items-center justify-between mb-3"}
+      [:h2 {:class "text-xs font-medium text-zinc-400 uppercase tracking-wide"} "Tax Overview"]
+      [:a {:href "https://www.sars.gov.za/tax-rates/income-tax/rates-of-tax-for-individuals/"
+           :target "_blank" :rel "noopener noreferrer"
+           :class "text-xs text-emerald-600 hover:underline"}
+       "SARS rates"]]
+     [:div {:class "grid grid-cols-2 sm:grid-cols-3 gap-4"}
+      (tax-metric "Gross Annual Income" (utilities/amount->rands (or annual-income 0)) "Before tax")
+      (tax-metric "Gross Tax"           (utilities/amount->rands (or gross-tax 0))     "From brackets")
+      (tax-metric "Rebates"             (utilities/amount->rands (or rebates 0))       "Age-based credit")
+      (tax-metric "Net Annual Tax"      (utilities/amount->rands (or net-tax 0))       "After rebates")
+      (tax-metric "Effective Rate"      (utilities/->percentage (or effective-rate 0)) "Of total income")
+      (tax-metric "Net Annual Income"   (utilities/amount->rands (or net-income 0))    "After tax")]]))

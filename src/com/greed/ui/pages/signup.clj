@@ -2,5 +2,5 @@
   (:require [com.greed.ui.components.forms :as forms]))
 
 (defn form [ctx]
-   [:.mt-20
+  [:div {:class "flex items-center justify-center min-h-[80vh] px-4 py-8"}
    (forms/sign-up ctx)])

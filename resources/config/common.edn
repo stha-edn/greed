@@ -8,6 +8,7 @@
 
  :alert/user-saved "Your user has been successfully saved or updated."
  :alert/finances-saved "Your finances have been successfully saved or updated."
+ :alert/tax-profile-saved "Your tax assessment profile has been saved."
  :alert/budget-item-saved "Your budget item has been successfully saved or updated."
  :alert/budget-item-deleted "Your budget item has been successfully deleted."
 

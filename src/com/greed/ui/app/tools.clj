@@ -7,6 +7,6 @@
 (defn page [ctx]
   (ui/app
    ctx
-   [:div.container.mx-auto
+   [:div {:class "space-y-4"}
     (headers/pages-heading ["Tools"])
     (tools/tools)]))
