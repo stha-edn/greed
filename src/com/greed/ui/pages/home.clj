@@ -60,7 +60,7 @@
       :img "/img/avatar.jpg"
       :title "Changed how I manage money"
       :body "Greed helped me understand exactly how much tax I owe each month and where my money is going. I use the tax returns tool every filing season."
-      :author "Rebecca T.")]]
+      :author "Zanele M.")]]
 
    ;; Tools section
    [:div {:class "pb-20 lg:pb-28"}
