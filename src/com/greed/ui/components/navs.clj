@@ -14,6 +14,10 @@
    [:div
     {:class "flex items-center space-x-2 -mx-2 mt-2 sm:mt-0"}
     [:a
+     {:href "/team",
+      :class "px-3 py-1 text-sm font-semibold text-black transition-colors duration-300 transform rounded-md hover:bg-gray-100"}
+     "Team"]
+    [:a
      {:href "/signin",
       :class "px-3 py-1 text-sm font-semibold text-black transition-colors duration-300 transform border-2 border-black rounded-md hover:bg-gray-500"}
      "Sign In"]

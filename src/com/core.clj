@@ -20,6 +20,11 @@
   []
   (read-edn-resource "config/tax.edn"))
 
+(defn get-tax-returns-config
+  "Reads config/tax_returns.edn — 2026 year of assessment rates used by the tax returns simulator."
+  []
+  (read-edn-resource "config/tax_returns.edn"))
+
 (def common-config
   (read-edn-resource "config/common.edn"))
 

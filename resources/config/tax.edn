@@ -1,4 +1,5 @@
-{:tax-brackets
+{;; SARS 2027 year of assessment (1 March 2026 – 28 February 2027)
+ :tax-brackets
  [{:threshold 0        :rate 0.18 :base-tax 0}
   {:threshold 245100   :rate 0.26 :base-tax 44118}
   {:threshold 383100   :rate 0.31 :base-tax 79998}
@@ -17,7 +18,6 @@
   :age-65-plus 153250
   :age-75-plus 171300}
 
- ;; Ages at which secondary (65+) and tertiary (75+) rebates apply
  :age-bands
  {:secondary-rebate-from 65
   :tertiary-rebate-from 75}}

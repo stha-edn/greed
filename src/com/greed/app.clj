@@ -7,7 +7,8 @@
             [com.greed.ui.app.calendar :as calendar]
             [com.greed.ui.app.dashboard :as dashboard]
             [com.greed.ui.components.tables :as tables]
-            [com.greed.ui.tools.income-tax-calculator :as income-tax-calculator]))
+            [com.greed.ui.tools.income-tax-calculator :as income-tax-calculator]
+            [com.greed.ui.tools.tax-returns :as tax-returns]))
 
 
 
@@ -23,7 +24,8 @@
              ["/calendar" {:get calendar/page}]
              ["/tools"
               ["" {:get tools/page}]
-              ["/income-tax-calculator" {:post income-tax-calculator/page}]]
+              ["/income-tax-calculator" {:get income-tax-calculator/page-get :post income-tax-calculator/page}]
+              ["/tax-returns" {:get tax-returns/page :post tax-returns/result-page}]]
              ["/settings" {:get settings/page}]
              ["/profile" {:get account/page}]
              ["/save-user" {:post mid/save-user}]

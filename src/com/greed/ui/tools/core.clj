@@ -53,7 +53,11 @@
      "Make informed decisions about your finances with our free tools."]
     [:div
      {:class "grid grid-cols-1 gap-8 mt-8 xl:mt-12 xl:gap-12 md:grid-cols-2 xl:grid-cols-3"}
-     (modal-tool
+     (link-tool
       :title "Income tax calculator"
       :description "Calculate your income tax in seconds"
-      :link "/income-tax-calculator")]]])
+      :link "/app/tools/income-tax-calculator")
+     (link-tool
+      :title "Tax returns"
+      :description "File and manage your tax returns"
+      :link "/app/tools/tax-returns")]]])

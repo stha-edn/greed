@@ -10,11 +10,12 @@
    Parameters:
    - annual-income: Annual taxable income in Rand
    - age: Age of the taxpayer in years
+   - config: (optional) tax config map — defaults to config/tax.edn
 
    Returns a map with tax calculation details"
-  [annual-income age]
+  ([annual-income age] (calculate-income-tax annual-income age (c/get-tax-config)))
+  ([annual-income age config]
 
-  ; Input validation
   (when (or (not (number? annual-income)) (neg? annual-income))
     (throw (IllegalArgumentException. "Annual income must be a positive number")))
 
@@ -22,8 +23,7 @@
     (throw (IllegalArgumentException. "Age must be a positive number")))
 
 
-  (let [;; All figures from config/tax.edn, read fresh each time via get-tax-config
-        tax (c/get-tax-config)
+  (let [tax config
         rebates-config (or (:rebates tax) {})
         thresholds-config (or (:thresholds tax) {})
         age-bands-config (or (:age-bands tax) {})
@@ -68,7 +68,7 @@
      :net-income (- annual-income net-tax)
      :effective-rate (if (pos? annual-income)
                        (* 100 (/ net-tax annual-income))
-                       0)}))
+                       0)})))
 
 
 (comment
