@@ -12,7 +12,7 @@
   (ui/page
     ctx
     (headers/pages ctx)
-    (p.home/page)))
+    (p.home/page ctx)))
 
 (defn team-page [ctx]
   (ui/page

@@ -21,7 +21,8 @@
     [:svg {:class "w-4 h-4 transition-transform group-hover:translate-x-0.5" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
      [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2" :d "M9 5l7 7-7 7"}]]]])
 
-(defn page []
+(defn page [{:keys [session]}]
+  (let [signed-in? (some? (:uid session))]
   [:div {:class "container mx-auto px-6"}
 
    ;; Hero
@@ -82,7 +83,7 @@
                "Effective vs. marginal rate breakdown"
                "Monthly net income"]
       :cta-label "Calculate your tax"
-      :cta-href "/signup")
+      :cta-href (if signed-in? "/app/tools/income-tax-calculator" "/signin"))
      (tool-card
       :badge "2026 Year of Assessment"
       :title "Tax Returns Simulator (ITR12)"
@@ -93,4 +94,4 @@
                "Out-of-pocket medical expenses (s6B)"
                "Auto assessment from your salary"]
       :cta-label "Simulate your return"
-      :cta-href "/signup")]]])
+      :cta-href (if signed-in? "/app/tools/tax-returns" "/signin"))]]]))
