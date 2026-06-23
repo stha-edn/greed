@@ -8,5 +8,5 @@
   (ui/app
    ctx
    [:div {:class "space-y-4"}
-    (headers/pages-heading ["Tools"])
+    (headers/pages-heading ["Tax"])
     (tools/tools)]))

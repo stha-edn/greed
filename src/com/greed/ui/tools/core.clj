@@ -19,15 +19,20 @@
 (defn tools []
   [:div
    [:p {:class "text-zinc-500 mb-6 text-sm"}
-    "Free tools to help you understand and manage your finances."]
+    "SARS tax calculators and simulators to help you understand what you owe and what you keep."]
    [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"}
     (tool-card
      :title "Income Tax Calculator"
      :description "Quickly estimate your annual income tax, rebates, and take-home pay based on SARS 2026/27 brackets."
-     :link "/app/tools/income-tax-calculator"
+     :link "/app/tax/income-tax-calculator"
      :badge "2026/27")
     (tool-card
      :title "Tax Returns (ITR12)"
      :description "Simulate your SARS tax return including medical aid credits, RA deductions, and travel allowances."
-     :link "/app/tools/tax-returns"
-     :badge "2026 year")]])
+     :link "/app/tax/tax-returns"
+     :badge "2026 year")
+    (tool-card
+     :title "Bonus Tax Calculator"
+     :description "See how much PAYE will be withheld from a bonus or 13th cheque, and what you'll actually take home."
+     :link "/app/tax/bonus-tax-calculator"
+     :badge "2026/27")]])

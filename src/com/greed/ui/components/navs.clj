@@ -45,10 +45,12 @@
      [:div {:class "flex flex-col flex-1 px-3 py-5 overflow-y-auto min-h-0"}
       [:nav {:class "space-y-0.5"
              :x-data "{ currentPath: window.location.pathname }"}
-       (nav-link "/app"          "Dashboard" (svgs/dashboard)   "currentPath === '/app'")
+       (nav-link "/app"           "Dashboard" (svgs/dashboard)   "currentPath === '/app'")
        (nav-link "/app/finances/" "Finances"  (svgs/credit-card) "currentPath.startsWith('/app/finances')")
-       (nav-link "/app/calendar" "Calendar"  (svgs/calendar)    "currentPath.startsWith('/app/calendar')")
-       (nav-link "/app/tools"    "Tools"     (svgs/tools)       "currentPath.startsWith('/app/tools')")]
+       (nav-link "/app/goals"     "Goals"     (svgs/target)      "currentPath.startsWith('/app/goals')")
+       (nav-link "/app/insights"  "Insights"  (svgs/chart-bar)   "currentPath.startsWith('/app/insights')")
+       (nav-link "/app/calendar"  "Calendar"  (svgs/calendar)    "currentPath.startsWith('/app/calendar')")
+       (nav-link "/app/tax"       "Tax"       (svgs/tools)       "currentPath.startsWith('/app/tax')")]
       [:div {:class "mt-auto pt-4 border-t border-zinc-800"}
        [:nav {:class "space-y-0.5 mb-4"}
         [:a {:href "/app/settings"
@@ -111,10 +113,12 @@
       [:div {:class "flex flex-col flex-1 px-3 py-5 overflow-y-auto"}
        [:nav {:class "space-y-0.5"
               :x-data "{ currentPath: window.location.pathname }"}
-        (nav-link "/app"          "Dashboard" (svgs/dashboard)   "currentPath === '/app'")
+        (nav-link "/app"           "Dashboard" (svgs/dashboard)   "currentPath === '/app'")
         (nav-link "/app/finances/" "Finances"  (svgs/credit-card) "currentPath.startsWith('/app/finances')")
-        (nav-link "/app/calendar" "Calendar"  (svgs/calendar)    "currentPath.startsWith('/app/calendar')")
-        (nav-link "/app/tools"    "Tools"     (svgs/tools)       "currentPath.startsWith('/app/tools')")]
+        (nav-link "/app/goals"     "Goals"     (svgs/target)      "currentPath.startsWith('/app/goals')")
+        (nav-link "/app/insights"  "Insights"  (svgs/chart-bar)   "currentPath.startsWith('/app/insights')")
+        (nav-link "/app/calendar"  "Calendar"  (svgs/calendar)    "currentPath.startsWith('/app/calendar')")
+        (nav-link "/app/tax"       "Tax"       (svgs/tools)       "currentPath.startsWith('/app/tax')")]
        [:div {:class "mt-auto pt-4 border-t border-zinc-800"}
         [:nav {:class "space-y-0.5 mb-4"}
          [:a {:href "/app/settings"

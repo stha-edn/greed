@@ -204,7 +204,7 @@
    [:p {:class "mt-1 text-sm text-zinc-500 mb-6"}
     "Estimate your SARS tax refund or amount owed for the 2026 year of assessment."]
    (biff/form
-    {:action "/app/tools/tax-returns"}
+    {:action "/app/tax/tax-returns"}
     [:div {:class "grid grid-cols-1 gap-5 sm:grid-cols-2"}
      (field "annual-income" "Gross Annual Income (R)" "number" "Exclude travel allowance" true)
      (field "age" "Age" "number" nil true)
@@ -224,7 +224,7 @@
   (ui/app
    ctx
    [:div {:class "space-y-4"}
-    (headers/pages-heading ["Tools" "Tax Returns"])
+    (headers/pages-heading ["Tax" "Tax Returns"])
     (auto-assessment-card ctx)
     [:div {:class "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
      (guide)
@@ -257,7 +257,7 @@
     (ui/app
      ctx
      [:div {:class "space-y-4"}
-      (headers/pages-heading ["Tools" "Tax Returns"])
+      (headers/pages-heading ["Tax" "Tax Returns"])
       [:div {:class "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
        (guide)
        [:div {:class "bg-white rounded-lg shadow p-6"}
@@ -295,6 +295,6 @@
          "This is an estimate only. Consult a tax practitioner for advice."]
 
         [:div {:class "mt-5"}
-         [:a {:href "/app/tools/tax-returns"
+         [:a {:href "/app/tax/tax-returns"
               :class "text-sm text-emerald-600 hover:underline"}
           "<- Run another simulation"]]]]])))

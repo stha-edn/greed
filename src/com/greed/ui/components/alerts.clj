@@ -24,24 +24,24 @@
         "Your account was created!")]]]])
 
 
-(defn info [& {:keys [alert]
-               :or {alert nil}}]
-  (let [config c/alert-config
-        key (keyword "alert" alert)
-        message (get config key)]
-    [:div
-     {:class "mx-auto w-full text-white pattern bg-blue-600 rounded-full shadow-xl"}
-     [:div
-      {:class "container flex justify-between px-6 py-4 mx-auto"}
+(defn info [params]
+  (let [alert   (:alert params)
+        message (get c/alert-config (when alert (keyword "alert" alert)))]
+    (when message
       [:div
-       {:class "flex items-center space-x-4"}
-       (svgs/info)
-       [:span
-        message]]
-      [:a
-       {:href "/"
-        :class "p-1 transition-colors duration-300 transform rounded-md hover:bg-opacity-25 hover:bg-zinc-600 focus:outline-none"}
-       (svgs/close)]]]))
+       {:x-data "{ show: true }" :x-show "show" :x-cloak ""
+        :class "mx-auto w-full text-white bg-blue-600 rounded-xl shadow-xl"}
+       [:div
+        {:class "container flex items-center justify-between px-6 py-4 mx-auto"}
+        [:div
+         {:class "flex items-center space-x-4"}
+         (svgs/info)
+         [:span message]]
+        [:button
+         {:type "button"
+          :x-on:click "show = false"
+          :class "p-1 rounded-md transition-colors focus:outline-none"}
+         (svgs/close)]]])))
 
 
 (defn salary-prompt-modal

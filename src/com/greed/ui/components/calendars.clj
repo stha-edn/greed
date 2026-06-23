@@ -3,23 +3,30 @@
   (:import [java.time LocalDate YearMonth]))
 
 
-(defn- event-row [{:event/keys [title date] :xt/keys [id]}]
-  [:div {:class "flex items-center justify-between py-2.5 border-b border-zinc-50 last:border-0"}
-   [:div {:class "flex items-center gap-3"}
-    [:div {:class "w-2 h-2 rounded-full bg-violet-400 flex-shrink-0"}]
-    [:div
-     [:p {:class "text-sm font-medium text-zinc-800"} title]
-     [:p {:class "text-xs text-zinc-400"} date]]]
-   (biff/form {:hx-post "/app/calendar/delete-event"
-               :hx-target "#calendar-events"
-               :hx-swap "outerHTML"
-               :hx-include "#cal-month, #cal-year"
-               :class "flex"}
-     [:input {:type "hidden" :name "event-id" :value (str id)}]
-     [:button {:type "submit"
-               :onclick "return confirm('Remove this event?')"
-               :class "text-xs text-zinc-400 hover:text-red-500 transition-colors px-2 py-1"}
-      "Remove"])])
+(def ^:private type-dot
+  {:bill "bg-rose-400" :income "bg-emerald-400" :general "bg-violet-400"})
+
+(def ^:private type-label
+  {:bill "Bill" :income "Payment in" :general "Event"})
+
+(defn- event-row [{:event/keys [title date type] :xt/keys [id]}]
+  (let [type (or type :general)]
+    [:div {:class "flex items-center justify-between py-2.5 border-b border-zinc-50 last:border-0"}
+     [:div {:class "flex items-center gap-3"}
+      [:div {:class (str "w-2 h-2 rounded-full flex-shrink-0 " (get type-dot type "bg-violet-400"))}]
+      [:div
+       [:p {:class "text-sm font-medium text-zinc-800"} title]
+       [:p {:class "text-xs text-zinc-400"} (str (get type-label type "Event") " · " date)]]]
+     (biff/form {:hx-post "/app/calendar/delete-event"
+                 :hx-target "#calendar-events"
+                 :hx-swap "outerHTML"
+                 :hx-include "#cal-month, #cal-year"
+                 :class "flex"}
+       [:input {:type "hidden" :name "event-id" :value (str id)}]
+       [:button {:type "submit"
+                 :onclick "return confirm('Remove this event?')"
+                 :class "text-xs text-zinc-400 hover:text-red-500 transition-colors px-2 py-1"}
+        "Remove"])]))
 
 (defn events-panel [_ctx events]
   [:div#calendar-events {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card p-5"}
@@ -38,6 +45,11 @@
        [:input {:type "text" :name "title" :required true
                 :placeholder "Event title"
                 :class "flex-1 px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-400"}]
+       [:select {:name "type"
+                 :class "px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-400 text-zinc-700"}
+        [:option {:value "general"} "Event"]
+        [:option {:value "bill"} "Bill"]
+        [:option {:value "income"} "Payment in"]]
        [:input {:type "date" :name "date" :required true
                 :class "px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-400"}]
        [:button {:type "submit"
@@ -71,13 +83,27 @@
   [year month]
   (mod (.getValue (.getDayOfWeek (LocalDate/of year month 1))) 7))
 
-(defn- event-days-set [events year month]
-  (set (keep (fn [{:event/keys [date]}]
+(def ^:private type-priority {:bill 0 :income 1 :general 2})
+
+(defn- event-day-types
+  "Map of day-of-month -> dominant event type for the given month.
+   When a day has multiple events, bills take precedence, then income."
+  [events year month]
+  (->> events
+       (keep (fn [{:event/keys [date type]}]
                (when date
                  (let [d (LocalDate/parse date)]
                    (when (and (= (.getYear d) year) (= (.getMonthValue d) month))
-                     (.getDayOfMonth d)))))
-             events)))
+                     [(.getDayOfMonth d) (or type :general)])))))
+       (reduce (fn [m [day type]]
+                 (if-let [cur (get m day)]
+                   (if (< (get type-priority type 2) (get type-priority cur 2))
+                     (assoc m day type) m)
+                   (assoc m day type)))
+               {})))
+
+(def ^:private type-cell-bg
+  {:bill "bg-rose-50 " :income "bg-emerald-50 " :general "bg-violet-50 "})
 
 (defn calendar [year month payday events]
   (let [today       (LocalDate/now)
@@ -86,7 +112,7 @@
         today-year  (.getYear today)
         days-count  (.lengthOfMonth (YearMonth/of year month))
         blank-count (first-day-of-week year month)
-        event-days  (event-days-set events year month)
+        event-days  (event-day-types events year month)
         [pm py]     (prev-month month year)
         [nm ny]     (next-month month year)]
     [:div#calendar-grid
@@ -118,21 +144,26 @@
        (for [_ (range blank-count)]
          [:div {:class "border-r border-b border-zinc-100 h-10 sm:h-16 w-[14.28%]"}])
        (for [d (range 1 (inc days-count))]
-         (let [is-today  (and (= d today-day) (= month today-month) (= year today-year))
-               is-payday (= d payday)
-               is-event  (contains? event-days d)
-               cell-bg   (cond is-payday "bg-emerald-50 " is-event "bg-violet-50 " :else "")
-               num-cls   (if is-today "bg-zinc-900 text-white shadow-card-md" "text-zinc-700")]
+         (let [is-today    (and (= d today-day) (= month today-month) (= year today-year))
+               is-payday   (= d payday)
+               event-type  (get event-days d)
+               cell-bg     (cond is-payday  "bg-emerald-50 "
+                                 event-type (get type-cell-bg event-type "bg-violet-50 ")
+                                 :else "")
+               num-cls     (if is-today "bg-zinc-900 text-white shadow-card-md" "text-zinc-700")]
            [:div {:class (str "border-r border-b border-zinc-100 h-10 sm:h-16 w-[14.28%] "
                               "flex items-start justify-center pt-1.5 transition-colors hover:bg-zinc-50 "
                               cell-bg)}
             [:div {:class (str "w-7 h-7 flex items-center justify-center rounded-full "
                                "text-sm font-medium transition-colors " num-cls)}
              d]]))]]
-     [:div {:class "flex items-center gap-4 mt-2 px-1"}
+     [:div {:class "flex flex-wrap items-center gap-4 mt-2 px-1"}
       [:div {:class "flex items-center gap-1.5"}
        [:div {:class "w-2.5 h-2.5 rounded bg-emerald-100"}]
        [:span {:class "text-xs text-zinc-400"} "Payday"]]
+      [:div {:class "flex items-center gap-1.5"}
+       [:div {:class "w-2.5 h-2.5 rounded bg-rose-100"}]
+       [:span {:class "text-xs text-zinc-400"} "Bill"]]
       [:div {:class "flex items-center gap-1.5"}
        [:div {:class "w-2.5 h-2.5 rounded bg-violet-100"}]
        [:span {:class "text-xs text-zinc-400"} "Event"]]

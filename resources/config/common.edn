@@ -11,6 +11,8 @@
  :alert/tax-profile-saved "Your tax assessment profile has been saved."
  :alert/budget-item-saved "Your budget item has been successfully saved or updated."
  :alert/budget-item-deleted "Your budget item has been successfully deleted."
+ :alert/goal-saved "Your goal has been successfully saved or updated."
+ :alert/goal-deleted "Your goal has been successfully deleted."
 
  :user/fields #{"firstname" "lastname" "age" "email" "password"}
 
@@ -26,4 +28,6 @@
                         :standard-bank "from-blue-500 to-blue-800"
                         :default "from-gray-600 to-black"}
 
- :budget-item/types #{:income :expenses :savings}}
+ :budget-item/types #{:income :expenses :savings}
+
+ :event/types #{:general :bill :income}}

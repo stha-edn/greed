@@ -1,5 +1,6 @@
 (ns com.greed.data.core
   (:require [com.biffweb :as biff :refer [q]]
+            [clojure.string :as str]
             [clojure.tools.logging :as logger]
             [com.greed.utilities.tax :as tax]
             [com.greed.utilities.core :as utilities]
@@ -185,14 +186,16 @@
               user-id)))
 
 (defn create-event [{:keys [params] :as ctx}]
-  (let [user-id (get-user-id-from-session ctx)]
+  (let [user-id (get-user-id-from-session ctx)
+        type    (or (some-> (:type params) utilities/->keyword) :general)]
     (logger/info "Creating event...")
     (biff/submit-tx ctx
                     [{:db/doc-type :event
                       :xt/id (java.util.UUID/randomUUID)
                       :event/user-id user-id
                       :event/title (:title params)
-                      :event/date (:date params)}])))
+                      :event/date (:date params)
+                      :event/type type}])))
 
 (defn delete-event [{:keys [params] :as ctx}]
   (let [event-id (utilities/->uuid (:event-id params))]
@@ -243,3 +246,64 @@
                             :xt/id budget-item-id
                             :db/op :delete}]))
       (logger/info "Budget item not found"))))
+
+
+;; ---------------------------------------------------------------------------
+;; Goals
+;; ---------------------------------------------------------------------------
+
+(defn get-goals [{:keys [biff/db]} user-id]
+  (q db
+     '{:find (pull goal [*])
+       :in [user-id]
+       :where [[goal :goal/user-id user-id]]}
+     user-id))
+
+(defn get-goal [{:keys [biff/db]} goal-id]
+  (first (q db
+            '{:find (pull goal [*])
+              :in [goal-id]
+              :where [[goal :xt/id goal-id]]}
+            goal-id)))
+
+(defn upsert-goal [{:keys [params] :as ctx}]
+  (let [user-id     (get-user-id-from-session ctx)
+        target-date (:target-date params)]
+    (logger/info "Creating goal...")
+    (biff/submit-tx ctx
+                    [(cond-> {:db/doc-type :goal
+                              :xt/id (java.util.UUID/randomUUID)
+                              :goal/user-id user-id
+                              :goal/title (:title params)
+                              :goal/target (validation/->valid-amount (:target params))
+                              :goal/saved (or (utilities/->int (:saved params)) 0)}
+                       (not (str/blank? target-date))
+                       (assoc :goal/target-date target-date))])))
+
+(defn update-goal [{:keys [params] :as ctx}]
+  (let [goal-id     (utilities/->uuid (:goal-id params))
+        goal        (get-goal ctx goal-id)
+        target-date (:target-date params)]
+    (if goal
+      (do (logger/info "Updating goal...")
+          (biff/submit-tx ctx
+                          [(cond-> {:db/doc-type :goal
+                                    :xt/id goal-id
+                                    :db/op :update
+                                    :goal/title (:title params)
+                                    :goal/target (validation/->valid-amount (:target params))
+                                    :goal/saved (or (utilities/->int (:saved params)) 0)}
+                             (not (str/blank? target-date))
+                             (assoc :goal/target-date target-date))]))
+      (logger/info "Goal not found"))))
+
+(defn delete-goal [{:keys [params] :as ctx}]
+  (let [goal-id (utilities/->uuid (:goal-id params))
+        goal    (get-goal ctx goal-id)]
+    (if goal
+      (do (logger/info "Deleting goal...")
+          (biff/submit-tx ctx
+                          [{:db/doc-type :goal
+                            :xt/id goal-id
+                            :db/op :delete}]))
+      (logger/info "Goal not found"))))

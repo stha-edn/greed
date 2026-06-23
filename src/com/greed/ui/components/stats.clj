@@ -26,19 +26,18 @@
      (metric-card
       :label "Monthly Income"
       :value (utilities/amount->rands total-income)
-      :accent "bg-emerald-400"
       :icon-bg "bg-emerald-50"
-      :icon [:span {:class "text-emerald-600"} (svgs/uptrend)])
+      :icon [:span {:class "text-emerald-600"} (svgs/trending-up)])
      (metric-card
       :label "Monthly Expenses"
       :value (utilities/amount->rands total-expenses)
-      :icon-bg "bg-zinc-100"
-      :icon [:span {:class "text-zinc-500"} (svgs/downtrend)])
+      :icon-bg "bg-rose-50"
+      :icon [:span {:class "text-rose-600"} (svgs/trending-down)])
      (metric-card
       :label "Net Savings"
       :value (utilities/amount->rands total-savings)
-      :icon-bg "bg-zinc-100"
-      :icon [:span {:class "text-zinc-500"} (svgs/banknotes)])]))
+      :icon-bg "bg-indigo-50"
+      :icon [:span {:class "text-indigo-600"} (svgs/wallet)])]))
 
 (defn- chart-card [& {:keys [title subtitle canvas-id attrs]}]
   [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card p-5 transition-all duration-200 hover:shadow-card-md hover:border-zinc-300/70"}

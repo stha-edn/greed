@@ -32,7 +32,17 @@
            [:xt/id          :event/id]
            [:event/user-id  :user/id]
            [:event/title    :string]
-           [:event/date     :string]]
+           [:event/date     :string]
+           [:event/type     {:optional true} [:maybe :keyword]]]
+
+   :goal/id :uuid
+   :goal [:map {:closed true}
+          [:xt/id            :goal/id]
+          [:goal/user-id     :user/id]
+          [:goal/title       :string]
+          [:goal/target      :int]
+          [:goal/saved       :int]
+          [:goal/target-date {:optional true} [:maybe :string]]]
 
    :budget-item/id :uuid
    :budget-item [:map {:closed true}

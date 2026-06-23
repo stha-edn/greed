@@ -72,6 +72,21 @@
   {:status 303
    :headers {"location" "/app/finances?alert=budget-item-deleted"}})
 
+(defn create-goal [ctx]
+  (data/upsert-goal ctx)
+  {:status 303
+   :headers {"location" "/app/goals?alert=goal-saved"}})
+
+(defn update-goal [ctx]
+  (data/update-goal ctx)
+  {:status 303
+   :headers {"location" "/app/goals?alert=goal-saved"}})
+
+(defn delete-goal [ctx]
+  (data/delete-goal ctx)
+  {:status 303
+   :headers {"location" "/app/goals?alert=goal-deleted"}})
+
 (defn logout [{:keys [session]}]
   {:status 303
    :headers {"location" "/"}

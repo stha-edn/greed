@@ -47,7 +47,7 @@
    [:div {:class "bg-blue-50 border border-blue-200 rounded-lg p-4"}
     [:p {:class "text-xs text-blue-800"}
      "This calculator does not account for medical aid credits, retirement annuity deductions, or travel allowances. Use the "
-     [:a {:href "/app/tools/tax-returns" :class "font-medium underline"} "Tax Returns simulator"]
+     [:a {:href "/app/tax/tax-returns" :class "font-medium underline"} "Tax Returns simulator"]
      " for a more complete picture."]]])
 
 (defn- field [id label type hint]
@@ -62,7 +62,7 @@
   (ui/app
    ctx
    [:div {:class "space-y-4"}
-    (headers/pages-heading ["Tools" "Income Tax Calculator"])
+    (headers/pages-heading ["Tax" "Income Tax Calculator"])
     [:div {:class "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
      (guide)
      [:div {:class "bg-white rounded-lg shadow p-6"}
@@ -70,7 +70,7 @@
       [:p {:class "mt-1 text-sm text-zinc-500 mb-6"}
        "Based on SARS 2026/27 brackets and rebates."]
       (biff/form
-       {:action "/app/tools/income-tax-calculator"}
+       {:action "/app/tax/income-tax-calculator"}
        [:div {:class "space-y-5"}
         (field "income" "Monthly Gross Income (R)" "number" "Your salary before any deductions")
         (field "age" "Age" "number" "Determines which rebate tier applies")]
@@ -91,7 +91,7 @@
     (ui/app
      ctx
      [:div {:class "space-y-4"}
-      (headers/pages-heading ["Tools" "Income Tax Calculator"])
+      (headers/pages-heading ["Tax" "Income Tax Calculator"])
       [:div {:class "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
        (guide)
        [:div {:class "bg-white rounded-lg shadow p-6"}
@@ -115,6 +115,6 @@
         (bold-row "Monthly Net Income" (utilities/amount->rands net-monthly))
 
         [:div {:class "mt-6"}
-         [:a {:href "/app/tools/income-tax-calculator"
+         [:a {:href "/app/tax/income-tax-calculator"
               :class "text-sm text-emerald-600 hover:underline"}
           "<- Calculate again"]]]]])))
