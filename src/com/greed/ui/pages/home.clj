@@ -83,7 +83,7 @@
                "Effective vs. marginal rate breakdown"
                "Monthly net income"]
       :cta-label "Calculate your tax"
-      :cta-href (if signed-in? "/app/tools/income-tax-calculator" "/signin"))
+      :cta-href (if signed-in? "/app/tax/income-tax-calculator" "/signin"))
      (tool-card
       :badge "2026 Year of Assessment"
       :title "Tax Returns Simulator (ITR12)"
@@ -94,4 +94,4 @@
                "Out-of-pocket medical expenses (s6B)"
                "Auto assessment from your salary"]
       :cta-label "Simulate your return"
-      :cta-href (if signed-in? "/app/tools/tax-returns" "/signin"))]]]))
+      :cta-href (if signed-in? "/app/tax/tax-returns" "/signin"))]]]))

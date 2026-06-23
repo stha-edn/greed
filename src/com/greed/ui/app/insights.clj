@@ -34,7 +34,7 @@
      (if (pos? income)
        [:div {:class "space-y-4"}
         (bar-row :label "Expenses" :amount expenses :pct (safe-pct expenses income) :colour "bg-rose-400")
-        (bar-row :label "Savings"  :amount savings  :pct (safe-pct savings income)  :colour "bg-indigo-400")
+        (bar-row :label "Savings"  :amount savings  :pct (safe-pct savings income)  :colour "bg-violet-400")
         (bar-row :label "Unallocated" :amount leftover :pct (safe-pct leftover income) :colour "bg-zinc-300")]
        [:p {:class "text-sm text-zinc-400 py-6 text-center"} "Add your income in Finances to see this breakdown."])]))
 
@@ -65,11 +65,8 @@
        "A read on your monthly money based on your budget in Finances."]
       [:div {:class "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"}
        (metric "Monthly Income" (utilities/amount->rands total-income) nil "text-emerald-600")
-       (metric "Savings rate" (utilities/->percentage savings-rate)
-               "Share of income saved" (cond (>= savings-rate 20) "text-emerald-600"
-                                             (>= savings-rate 10) "text-amber-500"
-                                             :else "text-rose-500"))
-       (metric "Expense rate" (utilities/->percentage expense-rate) "Share of income spent" "text-zinc-900")
+       (metric "Savings rate" (utilities/->percentage savings-rate) "Share of income saved" "text-violet-600")
+       (metric "Expense rate" (utilities/->percentage expense-rate) "Share of income spent" "text-rose-600")
        (metric (if (neg? leftover) "Overspending" "Unallocated")
                (utilities/amount->rands (Math/abs (long leftover)))
                (if (neg? leftover) "Expenses + savings exceed income" "Income not yet budgeted")

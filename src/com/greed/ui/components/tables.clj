@@ -41,24 +41,27 @@
     "Add item"]
    (add-modal)])
 
-(defn table-row [& {:keys [item salary-budget-item]}]
+(defn table-row [& {:keys [item protected-titles]}]
   (let [{:budget-item/keys [title amount]
          :or {title "Title" amount 0}} item
-        salary-item? (= title (:budget-item/title salary-budget-item))]
+        protected? (contains? (or protected-titles #{}) title)]
     [:<>
      [:tr {:class "group hover:bg-zinc-50 transition-colors"}
       [:td {:class "px-4 py-3 text-sm text-zinc-700"} title]
       [:td {:class "px-4 py-3 text-sm font-medium text-zinc-900 tabular-nums"} (utilities/amount->rands amount)]
       [:td {:class "px-4 py-3 text-right"}
-       (when-not salary-item?
+       (if protected?
+         [:span {:class "inline-flex items-center text-[10px] font-medium text-zinc-400 uppercase tracking-wide"
+                 :title "Managed automatically — edit in Settings"}
+          "Auto"]
          [:button {:class "inline-flex items-center justify-center w-7 h-7 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors opacity-0 group-hover:opacity-100"
                    :type "button"
                    "@click" "isActionModalOpen = true"}
           (svgs/action)])]]
-     (action-modal item)]))
+     (when-not protected? (action-modal item))]))
 
-(defn budget-table [{:keys [title items salary-budget-item]
-                     :or {salary-budget-item nil}}]
+(defn budget-table [{:keys [title items protected-titles]
+                     :or {protected-titles #{}}}]
   (let [badge-class (case title
                       "income"   "text-emerald-700 bg-emerald-50"
                       "expenses" "text-zinc-600 bg-zinc-100"
@@ -79,7 +82,7 @@
            [:th {:class "px-4 py-2.5 w-12"}]]]
          [:tbody {:class "divide-y divide-zinc-100"}
           (for [item items]
-            (table-row :item item :salary-budget-item salary-budget-item))]]
+            (table-row :item item :protected-titles protected-titles))]]
         [:div {:class "flex flex-col items-center justify-center px-4 py-12 text-center"}
          [:div {:class "w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center mb-3"}
           [:svg {:class "w-5 h-5 text-zinc-300" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}

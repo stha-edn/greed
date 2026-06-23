@@ -187,7 +187,7 @@
    [:h3 {:class "text-base font-semibold text-zinc-900"} "Income Tax Calculator"]
    [:p {:class "mt-1 text-sm text-zinc-500 mb-4"} "Calculate your income tax in seconds"]
    (biff/form
-    {:class "mt-4" :action "/app/tools/income-tax-calculator"}
+    {:class "mt-4" :action "/app/tax/income-tax-calculator"}
     (shared/modal-input :id "income" :type "number" :label "Monthly Income (R)" :required? true)
     (shared/modal-input :id "age" :type "number" :label "Age" :required? true)
     [:div {:class "flex gap-2 mt-5"}

@@ -177,6 +177,51 @@
                             :tax-profile/ra-annual          (or (utilities/->int (:ra-annual params)) 0)}]))
       (logger/info "Tax profile not found"))))
 
+(defn get-medical-budget-item [{:keys [biff/db]} user-id]
+  (first (q db
+            '{:find (pull budget-item [*])
+              :in [user-id]
+              :where [[budget-item :budget-item/user-id user-id]
+                      [budget-item :budget-item/title "Medical Aid"]]}
+            user-id)))
+
+(defn sync-medical-budget-item
+  "Keeps a 'Medical Aid' expense budget item in sync with the tax profile's
+   monthly medical contribution — mirroring how 'Salary' tracks income.
+   Creates it when a contribution is entered, updates it when it changes,
+   and removes it when set back to 0."
+  [{:keys [params] :as ctx}]
+  (let [user-id  (get-user-id-from-session ctx)
+        medical  (or (utilities/->int (:medical-monthly params)) 0)
+        existing (get-medical-budget-item ctx user-id)]
+    (cond
+      (and (pos? medical) existing)
+      (do (logger/info "Updating Medical Aid budget item...")
+          (biff/submit-tx ctx
+                          [{:db/doc-type :budget-item
+                            :xt/id (:xt/id existing)
+                            :db/op :update
+                            :budget-item/title "Medical Aid"
+                            :budget-item/type :expenses
+                            :budget-item/amount medical}]))
+
+      (pos? medical)
+      (do (logger/info "Creating Medical Aid budget item...")
+          (biff/submit-tx ctx
+                          [{:db/doc-type :budget-item
+                            :xt/id (java.util.UUID/randomUUID)
+                            :budget-item/user-id user-id
+                            :budget-item/title "Medical Aid"
+                            :budget-item/type :expenses
+                            :budget-item/amount medical}]))
+
+      existing
+      (do (logger/info "Removing Medical Aid budget item (contribution set to 0)...")
+          (biff/submit-tx ctx
+                          [{:db/doc-type :budget-item
+                            :xt/id (:xt/id existing)
+                            :db/op :delete}])))))
+
 (defn get-events [{:keys [biff/db]} user-id]
   (sort-by :event/date
            (q db
