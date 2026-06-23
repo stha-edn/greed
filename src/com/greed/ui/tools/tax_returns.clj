@@ -31,37 +31,37 @@
       (max 0 (* 0.333 (- total-medical (* 4 mtc)))))))
 
 (defn- row [label value]
-  [:div {:class "flex justify-between py-2 border-b border-gray-100 text-sm"}
-   [:span {:class "text-gray-500"} label]
-   [:span {:class "text-gray-800"} value]])
+  [:div {:class "flex justify-between py-2 border-b border-zinc-100 text-sm"}
+   [:span {:class "text-zinc-500"} label]
+   [:span {:class "text-zinc-800"} value]])
 
 (defn- bold-row [label value]
-  [:div {:class "flex justify-between py-2 border-b border-gray-200 text-sm font-semibold"}
-   [:span {:class "text-gray-700"} label]
-   [:span {:class "text-gray-900"} value]])
+  [:div {:class "flex justify-between py-2 border-b border-zinc-200 text-sm font-semibold"}
+   [:span {:class "text-zinc-700"} label]
+   [:span {:class "text-zinc-900"} value]])
 
 (defn- info-item [source-code label description]
-  [:div {:class "flex gap-4 py-3 border-b border-gray-100 last:border-0"}
-   [:div {:class "shrink-0 w-24 text-xs font-mono bg-gray-100 text-gray-600 rounded px-2 py-1 self-start text-center"}
+  [:div {:class "flex gap-4 py-3 border-b border-zinc-100 last:border-0"}
+   [:div {:class "shrink-0 w-24 text-xs font-mono bg-zinc-100 text-zinc-600 rounded px-2 py-1 self-start text-center"}
     source-code]
    [:div
-    [:p {:class "text-sm font-medium text-gray-800"} label]
-    [:p {:class "text-xs text-gray-500 mt-0.5"} description]]])
+    [:p {:class "text-sm font-medium text-zinc-800"} label]
+    [:p {:class "text-xs text-zinc-500 mt-0.5"} description]]])
 
 (defn- guide []
   [:div {:class "space-y-6"}
    [:div {:class "bg-white rounded-lg shadow p-6"}
-    [:h3 {:class "text-base font-semibold text-gray-800 mb-1"} "How this tool works"]
-    [:p {:class "text-sm text-gray-500"}
+    [:h3 {:class "text-base font-semibold text-zinc-800 mb-1"} "How this tool works"]
+    [:p {:class "text-sm text-zinc-500"}
      "Enter figures from your IRP5 (employee tax certificate) and other documents. The simulator applies SARS 2026 year of assessment tax brackets, rebates, and credits to estimate whether you are owed a refund or have tax to pay."]
-    [:p {:class "text-sm text-gray-500 mt-2"}
+    [:p {:class "text-sm text-zinc-500 mt-2"}
      "Filing opens annually in July on "
      [:a {:href "https://www.sars.gov.za" :class "text-emerald-600 hover:underline" :target "_blank"} "eFiling"]
      ". Non-provisional taxpayers (salaried employees) must submit by late October."]]
 
    [:div {:class "bg-white rounded-lg shadow p-6"}
-    [:h3 {:class "text-base font-semibold text-gray-800 mb-3"} "Where to find each value"]
-    [:p {:class "text-xs text-gray-400 mb-3"} "Your employer must issue an IRP5 by 31 May each year. Log in to eFiling — it is usually pre-populated there."]
+    [:h3 {:class "text-base font-semibold text-zinc-800 mb-3"} "Where to find each value"]
+    [:p {:class "text-xs text-zinc-400 mb-3"} "Your employer must issue an IRP5 by 31 May each year. Log in to eFiling — it is usually pre-populated there."]
     (info-item "3699 / 3601" "Gross Annual Income"
                "Source code 3699 (or 3601 for regular employment income) on your IRP5. Exclude any travel allowance — enter that separately below.")
     (info-item "4102" "Total PAYE Paid to SARS"
@@ -78,27 +78,27 @@
                "Medical costs you paid directly that were not covered or reimbursed by your medical aid. Keep all receipts. Applies the Section 6B additional medical credit.")]
 
    [:div {:class "bg-white rounded-lg shadow p-6"}
-    [:h3 {:class "text-base font-semibold text-gray-800 mb-3"} "Medical aid & tax credits"]
-    [:p {:class "text-sm text-gray-500 mb-4"}
+    [:h3 {:class "text-base font-semibold text-zinc-800 mb-3"} "Medical aid & tax credits"]
+    [:p {:class "text-sm text-zinc-500 mb-4"}
      "Medical aid gives you two potential tax benefits — leave both fields at 0 if you are not on medical aid."]
     [:div {:class "space-y-4"}
      [:div
-      [:p {:class "text-sm font-medium text-gray-800"} "Medical Aid Tax Credit (MTC)"]
-      [:p {:class "text-xs text-gray-500 mt-1"}
+      [:p {:class "text-sm font-medium text-zinc-800"} "Medical Aid Tax Credit (MTC)"]
+      [:p {:class "text-xs text-zinc-500 mt-1"}
        "SARS gives every medical aid member a fixed monthly credit that reduces your tax bill directly — it is not a deduction from income. For 2026: "
-       [:span {:class "font-medium text-gray-700"} "R364/month"]
+       [:span {:class "font-medium text-zinc-700"} "R364/month"]
        " for yourself and your first dependant, "
-       [:span {:class "font-medium text-gray-700"} "R246/month"]
+       [:span {:class "font-medium text-zinc-700"} "R246/month"]
        " for each additional dependant. The credit is applied automatically once you enter your monthly contribution amount."]]
      [:div
-      [:p {:class "text-sm font-medium text-gray-800"} "No medical aid?"]
-      [:p {:class "text-xs text-gray-500 mt-1"}
+      [:p {:class "text-sm font-medium text-zinc-800"} "No medical aid?"]
+      [:p {:class "text-xs text-zinc-500 mt-1"}
        "Leave medical contributions at 0. No MTC will be applied and your result will reflect your tax position accurately without it."]]
      [:div
-      [:p {:class "text-sm font-medium text-gray-800"} "Out-of-pocket medical expenses (Section 6B)"]
-      [:p {:class "text-xs text-gray-500 mt-1"}
+      [:p {:class "text-sm font-medium text-zinc-800"} "Out-of-pocket medical expenses (Section 6B)"]
+      [:p {:class "text-xs text-zinc-500 mt-1"}
        "If you paid medical costs that your scheme did not cover (co-payments, dentist, spectacles, medicines etc.), you may claim an additional credit. SARS applies "
-       [:span {:class "font-medium text-gray-700"} "33.3%"]
+       [:span {:class "font-medium text-zinc-700"} "33.3%"]
        " of qualifying expenses exceeding 4x your annual MTC (under 65), or 33.3% of all such expenses (65 and older). Only enter amounts you have receipts for."]]]]
 
    [:div {:class "bg-amber-50 border border-amber-200 rounded-lg p-4"}
@@ -106,10 +106,10 @@
      "This simulator is an estimate only and does not account for all deductions (e.g. home office, commission expenses). Consult a registered tax practitioner or SARS for your official assessment."]]])
 
 (defn- stat [label value sub]
-  [:div {:class "bg-gray-50 rounded-lg p-4"}
-   [:p {:class "text-xs text-gray-400 mb-1"} label]
-   [:p {:class "text-lg font-bold text-gray-900"} value]
-   (when sub [:p {:class "text-xs text-gray-500 mt-0.5"} sub])])
+  [:div {:class "bg-zinc-50 rounded-lg p-4"}
+   [:p {:class "text-xs text-zinc-400 mb-1"} label]
+   [:p {:class "text-lg font-bold text-zinc-900"} value]
+   (when sub [:p {:class "text-xs text-zinc-500 mt-0.5"} sub])])
 
 (defn- auto-assessment-card [ctx]
   (let [user-id    (data/get-user-id-from-session ctx)
@@ -136,23 +136,23 @@
             credits-applied? (or (pos? mtc) (pos? ra-ded))]
         [:div {:class "bg-white rounded-lg shadow p-6"}
          [:div {:class "flex flex-wrap items-center justify-between gap-2 mb-1"}
-          [:h2 {:class "text-lg font-semibold text-gray-800"} "Auto Assessment"]
+          [:h2 {:class "text-lg font-semibold text-zinc-800"} "Auto Assessment"]
           [:span {:class "text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium"} "2026 Year of Assessment"]]
-         [:p {:class "text-sm text-gray-500 mb-4"}
+         [:p {:class "text-sm text-zinc-500 mb-4"}
           "Based on your salary of "
-          [:span {:class "font-medium text-gray-700"} (utilities/amount->rands salary) "/month"]
-          " and age " [:span {:class "font-medium text-gray-700"} age] "."]
+          [:span {:class "font-medium text-zinc-700"} (utilities/amount->rands salary) "/month"]
+          " and age " [:span {:class "font-medium text-zinc-700"} age] "."]
 
          (when credits-applied?
            [:div {:class "flex flex-wrap gap-2 mb-4"}
             (when (pos? ra-ded)
-              [:span {:class "text-xs bg-gray-100 text-gray-600 rounded-full px-2.5 py-1"}
+              [:span {:class "text-xs bg-zinc-100 text-zinc-600 rounded-full px-2.5 py-1"}
                (str "RA deduction: " (utilities/amount->rands ra-ded))])
             (when (pos? mtc)
-              [:span {:class "text-xs bg-gray-100 text-gray-600 rounded-full px-2.5 py-1"}
+              [:span {:class "text-xs bg-zinc-100 text-zinc-600 rounded-full px-2.5 py-1"}
                (str "Medical credit: " (utilities/amount->rands mtc))])
             (when (pos? add-med)
-              [:span {:class "text-xs bg-gray-100 text-gray-600 rounded-full px-2.5 py-1"}
+              [:span {:class "text-xs bg-zinc-100 text-zinc-600 rounded-full px-2.5 py-1"}
                (str "Additional med credit: " (utilities/amount->rands add-med))])])
 
          [:div {:class "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 mb-5"}
@@ -163,13 +163,13 @@
           (stat "Net Annual Income"    (utilities/amount->rands (- annual-income final-tax)) nil)
           (stat "Net Monthly Income"   (utilities/amount->rands monthly-net)    nil)]
 
-         [:div {:class "flex flex-wrap items-center justify-between gap-4 bg-gray-50 rounded-lg px-4 py-3"}
+         [:div {:class "flex flex-wrap items-center justify-between gap-4 bg-zinc-50 rounded-lg px-4 py-3"}
           [:div
-           [:p {:class "text-sm text-gray-600"}
+           [:p {:class "text-sm text-zinc-600"}
             "Your employer should withhold approximately "
-            [:span {:class "font-semibold text-gray-900"} (utilities/amount->rands monthly-tax) "/month"]
+            [:span {:class "font-semibold text-zinc-900"} (utilities/amount->rands monthly-tax) "/month"]
             " in PAYE."]
-           [:p {:class "text-xs text-gray-400 mt-1"}
+           [:p {:class "text-xs text-zinc-400 mt-1"}
             "Effective tax rate: " (utilities/->percentage effective-rate) "."
             (when-not has-profile?
               " Add your medical aid and RA details in Settings for a more accurate estimate.")]]]])
@@ -183,25 +183,25 @@
 
 (defn- field [id label type & [hint required?]]
   [:div
-   [:label {:for id :class "block text-sm font-medium text-gray-700 mb-1"} label]
-   (when hint [:p {:class "text-xs text-gray-400 mb-1"} hint])
+   [:label {:for id :class "block text-sm font-medium text-zinc-700 mb-1"} label]
+   (when hint [:p {:class "text-xs text-zinc-400 mb-1"} hint])
    [:input {:id id :name id :type type :min "0" :step "any"
-            :class "block w-full px-4 py-2 text-gray-700 bg-white border border-gray-200 rounded-md focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40"
+            :class "block w-full px-4 py-2 text-zinc-700 bg-white border border-zinc-200 rounded-md focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40"
             :required (boolean required?)
             :placeholder "0"}]])
 
 (defn- logbook-select []
   [:div
-   [:label {:for "logbook" :class "block text-sm font-medium text-gray-700 mb-1"} "Travel logbook kept?"]
+   [:label {:for "logbook" :class "block text-sm font-medium text-zinc-700 mb-1"} "Travel logbook kept?"]
    [:select {:id "logbook" :name "logbook"
-             :class "block w-full px-4 py-2 text-gray-700 bg-white border border-gray-200 rounded-md focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40"}
+             :class "block w-full px-4 py-2 text-zinc-700 bg-white border border-zinc-200 rounded-md focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40"}
     [:option {:value "no"} "No (80% taxable)"]
     [:option {:value "yes"} "Yes (20% taxable)"]]])
 
 (defn- form-card []
   [:div {:class "bg-white rounded-lg shadow p-6"}
-   [:h2 {:class "text-lg font-semibold text-gray-800"} "ITR12 Tax Return Simulator"]
-   [:p {:class "mt-1 text-sm text-gray-500 mb-6"}
+   [:h2 {:class "text-lg font-semibold text-zinc-800"} "ITR12 Tax Return Simulator"]
+   [:p {:class "mt-1 text-sm text-zinc-500 mb-6"}
     "Estimate your SARS tax refund or amount owed for the 2026 year of assessment."]
    (biff/form
     {:action "/app/tools/tax-returns"}
@@ -217,7 +217,7 @@
      (field "out-of-pocket-medical" "Out-of-pocket Medical Expenses p/a (R)" "number" "Not covered by medical aid")]
     [:div {:class "mt-6 flex justify-end"}
      [:button {:type "submit"
-               :class "px-8 py-2.5 text-white bg-zinc-900 rounded-md hover:bg-gray-700 focus:outline-none"}
+               :class "px-8 py-2.5 text-white bg-zinc-900 rounded-md hover:bg-zinc-700 focus:outline-none"}
       "Simulate Return"]])])
 
 (defn page [ctx]
@@ -261,9 +261,9 @@
       [:div {:class "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
        (guide)
        [:div {:class "bg-white rounded-lg shadow p-6"}
-        [:h2 {:class "text-lg font-semibold text-gray-800 mb-4"} "2026 Tax Summary"]
+        [:h2 {:class "text-lg font-semibold text-zinc-800 mb-4"} "2026 Tax Summary"]
 
-        [:p {:class "text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1"} "Income"]
+        [:p {:class "text-xs font-semibold uppercase tracking-wide text-zinc-400 mb-1"} "Income"]
         (row "Gross Annual Income" (utilities/amount->rands annual-income))
         (when (pos? travel)
           (row (str "Taxable Travel (" (if logbook? "20%" "80%") ")")
@@ -271,7 +271,7 @@
         (row "Retirement Annuity Deduction" (str "(" (utilities/amount->rands ra-ded) ")"))
         (bold-row "Taxable Income" (utilities/amount->rands taxable-income))
 
-        [:p {:class "text-xs font-semibold uppercase tracking-wide text-gray-400 mt-4 mb-1"} "Tax Calculation"]
+        [:p {:class "text-xs font-semibold uppercase tracking-wide text-zinc-400 mt-4 mb-1"} "Tax Calculation"]
         (row "Gross Tax" (utilities/amount->rands gross-tax))
         (row "Primary / Age Rebates" (str "(" (utilities/amount->rands rebates) ")"))
         (when (pos? mtc)
@@ -280,7 +280,7 @@
           (row "Additional Medical Credit (s6B)" (str "(" (utilities/amount->rands add-med-credit) ")")))
         (bold-row "Net Tax Payable" (utilities/amount->rands final-tax))
 
-        [:p {:class "text-xs font-semibold uppercase tracking-wide text-gray-400 mt-4 mb-1"} "PAYE Reconciliation"]
+        [:p {:class "text-xs font-semibold uppercase tracking-wide text-zinc-400 mt-4 mb-1"} "PAYE Reconciliation"]
         (row "PAYE Paid" (utilities/amount->rands paye-paid))
         (row "Net Tax Payable" (utilities/amount->rands final-tax))
 
@@ -291,7 +291,7 @@
          [:span {:class (str "text-lg font-bold " (if refund? "text-green-700" "text-red-700"))}
           (utilities/amount->rands difference)]]
 
-        [:p {:class "mt-4 text-xs text-gray-400"}
+        [:p {:class "mt-4 text-xs text-zinc-400"}
          "This is an estimate only. Consult a tax practitioner for advice."]
 
         [:div {:class "mt-5"}

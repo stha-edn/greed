@@ -3,7 +3,7 @@
 
 
 (defn- event-row [{:event/keys [title date id]}]
-  [:div {:class "flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0"}
+  [:div {:class "flex items-center justify-between py-2.5 border-b border-zinc-50 last:border-0"}
    [:div {:class "flex items-center gap-3"}
     [:div {:class "w-2 h-2 rounded-full bg-violet-400 flex-shrink-0"}]
     [:div
@@ -17,7 +17,7 @@
     "Remove"]])
 
 (defn events-panel [_ctx events]
-  [:div#calendar-events {:class "bg-white rounded-xl border border-gray-100 shadow-card p-5"}
+  [:div#calendar-events {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card p-5"}
    [:div {:x-data "{ showForm: false }"}
     [:div {:class "flex items-center justify-between mb-4"}
      [:p {:class "text-xs font-medium text-zinc-400 uppercase tracking-wider"} "Events"]
@@ -31,16 +31,22 @@
                  :class "flex flex-col sm:flex-row gap-2"}
        [:input {:type "text" :name "title" :required true
                 :placeholder "Event title"
-                :class "flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-400"}]
+                :class "flex-1 px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-400"}]
        [:input {:type "date" :name "date" :required true
-                :class "px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-400"}]
+                :class "px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-400"}]
        [:button {:type "submit"
                  :class "px-4 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700"}
         "Save"])]]
    (if (seq events)
-     [:div {:class "mt-4 divide-y divide-gray-50"}
+     [:div {:class "mt-4 divide-y divide-zinc-100"}
       (map event-row events)]
-     [:p {:class "mt-4 text-sm text-zinc-400"} "No events yet."])])
+     [:div {:class "mt-2 flex flex-col items-center justify-center py-8 text-center"}
+      [:div {:class "w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center mb-3 text-zinc-300"}
+       [:svg {:class "w-5 h-5" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
+        [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2"
+                :d "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"}]]]
+      [:p {:class "text-sm font-medium text-zinc-500"} "No events yet"]
+      [:p {:class "mt-0.5 text-xs text-zinc-400"} "Add one to track paydays and bills"]])])
 
 (defn calendar [payday event-days]
   [:div
@@ -48,26 +54,26 @@
     :x-init "initDate(); getNoOfDays();",
     :x-cloak ""}
 
-   [:div {:class "bg-white rounded-xl border border-gray-100 shadow-card overflow-hidden"}
+   [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card overflow-hidden"}
     [:div {:class "flex items-center justify-between py-3 px-4 sm:px-6"}
      [:div
       [:span {:x-text "MONTH_NAMES[month]"
-              :class "text-2xl sm:text-3xl font-giza font-bold text-gray-800"}]
+              :class "text-2xl sm:text-3xl font-giza font-bold text-zinc-800"}]
       [:span {:x-text "year"
-              :class "ml-1.5 text-xl sm:text-2xl text-gray-400 font-giza"}]]]
+              :class "ml-1.5 text-xl sm:text-2xl text-zinc-400 font-giza"}]]]
     [:div
-     [:div {:class "flex flex-wrap border-b border-gray-100"}
+     [:div {:class "flex flex-wrap border-b border-zinc-100"}
       [:template {:x-for "(dayName, index) in DAYS" :key "index"}
-       [:div {:class "py-2 w-[14.28%] text-center text-xs text-gray-400 font-medium"}
+       [:div {:class "py-2 w-[14.28%] text-center text-xs text-zinc-400 font-medium"}
         [:span {:x-text "dayName"}]]]]
-     [:div {:class "flex flex-wrap border-l border-gray-100"}
+     [:div {:class "flex flex-wrap border-l border-zinc-100"}
       [:template {:x-for "blankday in blankdays"}
-       [:div {:class "border-r border-b border-gray-100 h-10 sm:h-16 w-[14.28%]"}]]
+       [:div {:class "border-r border-b border-zinc-100 h-10 sm:h-16 w-[14.28%]"}]]
       [:template {:x-for "(date, dateIndex) in no_of_days" :key "dateIndex"}
-       [:div {:class "border-r border-b border-gray-100 h-10 sm:h-16 w-[14.28%] flex items-start justify-center pt-1.5"
+       [:div {:class "border-r border-b border-zinc-100 h-10 sm:h-16 w-[14.28%] flex items-start justify-center pt-1.5 transition-colors hover:bg-zinc-50"
               :x-bind:class "(date === payday ? 'bg-emerald-50 ' : '') + (isEventDay(date) ? 'bg-violet-50' : '')"}
         [:div {:class "w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium transition-colors"
-               :x-bind:class "date === day ? 'bg-zinc-900 text-white' : 'text-gray-700'"}
+               :x-bind:class "date === day ? 'bg-zinc-900 text-white shadow-card-md' : 'text-zinc-700'"}
          [:span {:x-text "date"}]]]]]]]
 
    ;; Legend

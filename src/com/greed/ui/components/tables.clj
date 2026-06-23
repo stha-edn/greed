@@ -46,12 +46,12 @@
          :or {title "Title" amount 0}} item
         salary-item? (= title (:budget-item/title salary-budget-item))]
     [:<>
-     [:tr {:class "group hover:bg-gray-50 transition-colors"}
+     [:tr {:class "group hover:bg-zinc-50 transition-colors"}
       [:td {:class "px-4 py-3 text-sm text-zinc-700"} title]
-      [:td {:class "px-4 py-3 text-sm font-medium text-zinc-900"} (utilities/amount->rands amount)]
+      [:td {:class "px-4 py-3 text-sm font-medium text-zinc-900 tabular-nums"} (utilities/amount->rands amount)]
       [:td {:class "px-4 py-3 text-right"}
        (when-not salary-item?
-         [:button {:class "inline-flex items-center justify-center w-7 h-7 text-zinc-400 hover:text-zinc-600 hover:bg-gray-100 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+         [:button {:class "inline-flex items-center justify-center w-7 h-7 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors opacity-0 group-hover:opacity-100"
                    :type "button"
                    "@click" "isActionModalOpen = true"}
           (svgs/action)])]]
@@ -61,25 +61,28 @@
                      :or {salary-budget-item nil}}]
   (let [badge-class (case title
                       "income"   "text-emerald-700 bg-emerald-50"
-                      "expenses" "text-zinc-600 bg-gray-100"
-                      "savings"  "text-zinc-600 bg-gray-100"
-                      "text-zinc-600 bg-gray-100")]
-    [:div {:class "bg-white rounded-xl border border-gray-100 shadow-card overflow-hidden"}
-     [:div {:class "flex items-center justify-between px-4 py-3 border-b border-gray-100"}
+                      "expenses" "text-zinc-600 bg-zinc-100"
+                      "savings"  "text-zinc-600 bg-zinc-100"
+                      "text-zinc-600 bg-zinc-100")]
+    [:div {:class "flex flex-col bg-white rounded-xl border border-zinc-200/70 shadow-card overflow-hidden transition-shadow duration-200 hover:shadow-card-md"}
+     [:div {:class "flex items-center justify-between px-4 py-3 border-b border-zinc-100"}
       [:span {:class (str "text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full " badge-class)}
        title]
-      [:span {:class "text-xs text-zinc-400"} (str (count items) " items")]]
-     [:div {:class "overflow-x-auto"}
-      [:table {:class "w-full"}
-       [:thead
-        [:tr {:class "border-b border-gray-50"}
-         [:th {:class "px-4 py-2.5 text-left text-xs font-medium text-zinc-400 uppercase tracking-wide"} "Name"]
-         [:th {:class "px-4 py-2.5 text-left text-xs font-medium text-zinc-400 uppercase tracking-wide"} "Amount"]
-         [:th {:class "px-4 py-2.5 w-12"}]]]
-       [:tbody {:class "divide-y divide-gray-50"}
-        (if (seq items)
+      [:span {:class "text-xs font-medium text-zinc-400 tabular-nums"} (str (count items) (if (= 1 (count items)) " item" " items"))]]
+     [:div {:class "flex-1 overflow-x-auto"}
+      (if (seq items)
+        [:table {:class "w-full"}
+         [:thead
+          [:tr {:class "border-b border-zinc-100"}
+           [:th {:class "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Name"]
+           [:th {:class "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Amount"]
+           [:th {:class "px-4 py-2.5 w-12"}]]]
+         [:tbody {:class "divide-y divide-zinc-100"}
           (for [item items]
-            (table-row :item item :salary-budget-item salary-budget-item))
-          [:tr
-           [:td {:colspan "3" :class "px-4 py-8 text-center text-sm text-zinc-400"}
-            "No items yet"]])]]]]))
+            (table-row :item item :salary-budget-item salary-budget-item))]]
+        [:div {:class "flex flex-col items-center justify-center px-4 py-12 text-center"}
+         [:div {:class "w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center mb-3"}
+          [:svg {:class "w-5 h-5 text-zinc-300" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
+           [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2" :d "M12 4v16m8-8H4"}]]]
+         [:p {:class "text-sm font-medium text-zinc-500"} "Nothing here yet"]
+         [:p {:class "mt-0.5 text-xs text-zinc-400"} (str "Add your first " title " item")]])]]))

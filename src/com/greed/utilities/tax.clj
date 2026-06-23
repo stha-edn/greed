@@ -38,9 +38,12 @@
                         :else (get thresholds-config :under-65 0))
         ;; Determine which tax bracket applies (from config)
         brackets (or (:tax-brackets tax) [])
-        applicable-bracket (->> brackets
-                                (filter #(<= (get % :threshold 0) (or annual-income 0)))
-                                last)
+        bracket-index (->> brackets
+                           (keep-indexed (fn [i b] (when (<= (get b :threshold 0) (or annual-income 0)) i)))
+                           last)
+        applicable-bracket (when bracket-index (nth brackets bracket-index))
+        next-bracket (when (and bracket-index (< (inc bracket-index) (count brackets)))
+                       (nth brackets (inc bracket-index)))
         ;; Calculate gross tax (guard when no bracket or missing config)
         excess (if applicable-bracket
                  (- (or annual-income 0) (get applicable-bracket :threshold 0))
@@ -68,7 +71,15 @@
      :net-income (- annual-income net-tax)
      :effective-rate (if (pos? annual-income)
                        (* 100 (/ net-tax annual-income))
-                       0)})))
+                       0)
+     ;; Bracket context for the UI breakdown
+     :brackets brackets
+     :bracket-index bracket-index
+     :bracket-threshold (when applicable-bracket (get applicable-bracket :threshold 0))
+     :marginal-rate (if applicable-bracket (* 100 (get applicable-bracket :rate 0)) 0)
+     :next-threshold (when next-bracket (get next-bracket :threshold 0))
+     :income-to-next-bracket (when next-bracket
+                               (max 0 (- (get next-bracket :threshold 0) (or annual-income 0))))})))
 
 
 (comment

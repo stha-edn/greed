@@ -18,7 +18,7 @@
       {:class "font-semibold text-2xl text-emerald-800"}
       "Success"]
      [:p
-      {:class "text-md text-gray-600"}
+      {:class "text-md text-zinc-600"}
       (if (= type :signin)
         "You are signed in!"
         "Your account was created!")]]]])
@@ -40,7 +40,7 @@
         message]]
       [:a
        {:href "/"
-        :class "p-1 transition-colors duration-300 transform rounded-md hover:bg-opacity-25 hover:bg-gray-600 focus:outline-none"}
+        :class "p-1 transition-colors duration-300 transform rounded-md hover:bg-opacity-25 hover:bg-zinc-600 focus:outline-none"}
        (svgs/close)]]]))
 
 
@@ -80,16 +80,16 @@
          {:class "flex-1 mt-0 ml-4"}
          [:h3
           {:id "salary-prompt-title"
-           :class "text-lg font-medium leading-6 text-gray-900"}
+           :class "text-lg font-medium leading-6 text-zinc-900"}
           "Update your salary"]
          [:p
-          {:class "mt-2 text-sm text-gray-500"}
+          {:class "mt-2 text-sm text-zinc-500"}
           "To get accurate budget and tax insights, please add your salary in your profile."]
          [:div
           {:class "flex justify-end gap-3 mt-6"}
           [:button
            {:type "button"
-            :class "px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+            :class "px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-md hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
             "@click" "showSalaryPrompt = false"}
            "Later"]
           [:a
