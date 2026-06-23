@@ -9,7 +9,7 @@
       [:span {:class "text-3xl font-giza font-bold text-zinc-900"} "greed."]]
      [:div {:class "flex items-center gap-2"}
       [:a {:href "/team"
-           :class "px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-gray-100 transition-colors"}
+           :class "px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors"}
        "Team"]
       (if signed-in?
         [:a {:href "/app"
@@ -17,7 +17,7 @@
          "Go to Dashboard"]
         [:<>
          [:a {:href "/signin"
-              :class "px-4 py-1.5 text-sm font-medium text-zinc-700 border border-gray-300 rounded-lg hover:border-gray-500 hover:bg-gray-50 transition-colors"}
+              :class "px-4 py-1.5 text-sm font-medium text-zinc-700 border border-zinc-300 rounded-lg hover:border-zinc-500 hover:bg-zinc-50 transition-colors"}
           "Sign In"]
          [:a {:href "/signup"
               :class "px-4 py-1.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"}
@@ -25,10 +25,13 @@
 
 (defn- nav-link [href label icon path-expr]
   [:a {:href href
-       :class "group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150"
+       :class "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150"
        :x-bind:class (str path-expr
-                          " ? 'bg-zinc-800 text-emerald-400'"
-                          " : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'")}
+                          " ? 'bg-zinc-800/80 text-emerald-400'"
+                          " : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white'")}
+   ;; Active indicator bar
+   [:span {:class "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-emerald-400 transition-opacity duration-150"
+           :x-bind:class (str path-expr " ? 'opacity-100' : 'opacity-0'")}]
    [:span {:class "w-5 flex-shrink-0"} icon]
    label])
 

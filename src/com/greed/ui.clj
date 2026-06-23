@@ -46,7 +46,7 @@
 (defn app [ctx & body]
   (base
    ctx
-   [:div {:class "flex min-h-screen bg-slate-50"}
+   [:div {:class "flex min-h-screen bg-zinc-50"}
     (headers/app ctx)
     [:main {:class "flex-1 pt-14 md:pt-0 md:ml-64 min-h-screen"}
      [:div {:class "p-6"}
@@ -58,9 +58,9 @@
    :body (rum/render-static-markup
           (page ctx [:div {:class "flex items-center justify-center min-h-screen"}
                      [:div {:class "text-center p-8"}
-                      [:h1 {:class "text-2xl font-semibold text-slate-900 mb-2"}
+                      [:h1 {:class "text-2xl font-semibold text-zinc-900 mb-2"}
                        (if (= status 404) "Page not found" "Something went wrong")]
-                      [:p {:class "text-slate-500 mb-4"}
+                      [:p {:class "text-zinc-500 mb-4"}
                        (if (= status 404) "The page you are looking for does not exist." "An unexpected error occurred.")]
                       [:a {:href "/" :class "text-blue-600 hover:underline"} "Go home"]]]))})
 

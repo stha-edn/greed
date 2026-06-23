@@ -22,7 +22,7 @@
 
 (defn sign-in [{:keys [site-key] :as ctx}]
   [:div {:class "w-full max-w-sm mx-auto"}
-   [:div {:class "bg-white rounded-2xl shadow-card-md border border-gray-100 overflow-hidden"}
+   [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-100 overflow-hidden"}
     [:div {:class "px-8 py-8"}
      [:div {:class "mb-6 text-center"}
       [:a {:href "/"}
@@ -43,14 +43,14 @@
                 :type "submit"})
         "Sign in"]]
       (on-error ctx))]
-    [:div {:class "px-8 py-4 bg-gray-50 border-t border-gray-100 text-center"}
+    [:div {:class "px-8 py-4 bg-zinc-50 border-t border-zinc-100 text-center"}
      [:p {:class "text-sm text-zinc-500"}
       "Don't have an account? "
       [:a {:href "/signup" :class "font-medium text-emerald-600 hover:text-emerald-700 hover:underline"} "Create one"]]]]])
 
 (defn sign-up [{:keys [site-key] :as ctx}]
   [:div {:class "w-full max-w-sm mx-auto"}
-   [:div {:class "bg-white rounded-2xl shadow-card-md border border-gray-100 overflow-hidden"}
+   [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-100 overflow-hidden"}
     [:div {:class "px-8 py-8"}
      [:div {:class "mb-6 text-center"}
       [:a {:href "/"}
@@ -75,13 +75,13 @@
                 :type "submit"})
         "Create account"]]
       (on-error ctx))]
-    [:div {:class "px-8 py-4 bg-gray-50 border-t border-gray-100 text-center"}
+    [:div {:class "px-8 py-4 bg-zinc-50 border-t border-zinc-100 text-center"}
      [:p {:class "text-sm text-zinc-500"}
       "Already have an account? "
       [:a {:href "/signin" :class "font-medium text-zinc-700 hover:text-zinc-900 hover:underline"} "Sign in"]]]]])
 
 (defn user [ctx]
-  [:div {:class "bg-white rounded-xl border border-gray-100 shadow-card p-6"}
+  [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card p-6"}
    [:h2 {:class "text-base font-semibold text-zinc-900 mb-5"} "Personal Information"]
    (biff/form
     {:action "/app/save-user"}
@@ -99,7 +99,7 @@
 (defn finances [ctx]
   (let [bank-options      (sort (:banking/banks c/common-config))
         card-type-options (sort (:banking/card-types c/common-config))]
-    [:div {:class "bg-white rounded-xl border border-gray-100 shadow-card p-6"}
+    [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card p-6"}
      [:div {:class "mb-6"}
       [:h2 {:class "text-base font-semibold text-zinc-900"} "Financial Details"]
       [:p {:class "text-sm text-zinc-400 mt-0.5"} "Personalises your dashboard, bank card, and tax estimates."]]
@@ -124,7 +124,7 @@
         (shared/app-input ctx :id "payday" :type "number" :label "Pay Day" :required? true
                           :hint "Day of the month you receive your salary (1–31)")]]
 
-      [:div {:class "flex justify-end pt-2 border-t border-gray-50"}
+      [:div {:class "flex justify-end pt-2 border-t border-zinc-50"}
        [:button {:class "px-6 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"
                  :type "submit"}
         "Save changes"]])]))
@@ -133,7 +133,7 @@
   (let [user-id (:uid session)
         tp      (data/get-tax-profile ctx user-id)
         val     (fn [k] (str (or (k tp) 0)))]
-    [:div {:class "bg-white rounded-xl border border-gray-100 shadow-card p-6"}
+    [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card p-6"}
      [:div {:class "mb-6"}
       [:h2 {:class "text-base font-semibold text-zinc-900"} "Tax Assessment Profile"]
       [:p {:class "text-sm text-zinc-400 mt-0.5"}
@@ -151,13 +151,13 @@
          [:label {:class "block text-sm font-medium text-zinc-700 mb-1" :for "medical-monthly"} "Monthly Contributions"]
          [:div {:class "relative flex items-center"}
           [:div {:class "absolute left-3 text-zinc-400 text-sm font-medium pointer-events-none select-none"} "R"]
-          [:input {:class "block w-full pl-7 pr-3 py-2 text-sm text-zinc-700 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+          [:input {:class "block w-full pl-7 pr-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                    :id "medical-monthly" :name "medical-monthly" :type "number" :min "0"
                    :value (val :tax-profile/medical-monthly)}]]
          [:p {:class "text-xs text-zinc-400 mt-1"} "Your share of the monthly medical aid premium"]]
         [:div
          [:label {:class "block text-sm font-medium text-zinc-700 mb-1" :for "medical-dependants"} "Dependants"]
-         [:input {:class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+         [:input {:class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                   :id "medical-dependants" :name "medical-dependants" :type "number" :min "0"
                   :value (val :tax-profile/medical-dependants)}]
          [:p {:class "text-xs text-zinc-400 mt-1"} "Number of registered dependants, excluding yourself"]]]]
@@ -172,18 +172,18 @@
          [:label {:class "block text-sm font-medium text-zinc-700 mb-1" :for "ra-annual"} "Annual RA Contributions"]
          [:div {:class "relative flex items-center"}
           [:div {:class "absolute left-3 text-zinc-400 text-sm font-medium pointer-events-none select-none"} "R"]
-          [:input {:class "block w-full pl-7 pr-3 py-2 text-sm text-zinc-700 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+          [:input {:class "block w-full pl-7 pr-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                    :id "ra-annual" :name "ra-annual" :type "number" :min "0"
                    :value (val :tax-profile/ra-annual)}]]
          [:p {:class "text-xs text-zinc-400 mt-1"} "Total personal RA contributions for the year"]]]]
 
-      [:div {:class "flex justify-end pt-2 border-t border-gray-50"}
+      [:div {:class "flex justify-end pt-2 border-t border-zinc-50"}
        [:button {:class "px-6 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"
                  :type "submit"}
         "Save changes"]])]))
 
 (defn income-tax-form []
-  [:div {:class "bg-white rounded-xl border border-gray-100 shadow-card-md p-6 w-full max-w-sm"}
+  [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card-md p-6 w-full max-w-sm"}
    [:h3 {:class "text-base font-semibold text-zinc-900"} "Income Tax Calculator"]
    [:p {:class "mt-1 text-sm text-zinc-500 mb-4"} "Calculate your income tax in seconds"]
    (biff/form
@@ -192,7 +192,7 @@
     (shared/modal-input :id "age" :type "number" :label "Age" :required? true)
     [:div {:class "flex gap-2 mt-5"}
      [:button {:type "button" "@click" "isOpen = false"
-               :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"}
+               :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors"}
       "Cancel"]
      [:button {:type "submit"
                :class "flex-1 px-4 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"}
@@ -200,7 +200,7 @@
 
 (defn budget-item-form []
   (let [budget-item-options (:budget-item/types c/common-config)]
-    [:div {:class "bg-white rounded-xl border border-gray-100 shadow-card-md p-6 w-full max-w-sm"}
+    [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card-md p-6 w-full max-w-sm"}
      [:h3 {:class "text-base font-semibold text-zinc-900"} "Add Budget Item"]
      [:p {:class "mt-1 text-sm text-zinc-500 mb-4"} "Add a new item to your budget"]
      (biff/form
@@ -210,16 +210,16 @@
       (shared/modal-input :id "amount" :type "number" :label "Amount (R)" :required? true)
       [:div {:class "flex gap-2 mt-5"}
        [:button {:type "button" "@click" "isAddButtonOpen = false"
-                 :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"}
+                 :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors"}
         "Cancel"]
        [:button {:type "submit"
                  :class "flex-1 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"}
         "Add item"]])]))
 
 (defn budget-action-form [item]
-  [:div {:class "bg-white rounded-xl border border-gray-100 shadow-card-md p-6 w-full max-w-sm"}
+  [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card-md p-6 w-full max-w-sm"}
    [:h3 {:class "text-base font-semibold text-zinc-900"} "Edit Budget Item"]
-   [:div {:class "mt-3 p-3 bg-gray-50 rounded-lg text-sm text-zinc-600 mb-4"}
+   [:div {:class "mt-3 p-3 bg-zinc-50 rounded-lg text-sm text-zinc-600 mb-4"}
     [:div {:class "flex justify-between"} [:span {:class "text-zinc-400"} "Title"] (:budget-item/title item)]
     [:div {:class "flex justify-between mt-1"} [:span {:class "text-zinc-400"} "Amount"] (str "R" (:budget-item/amount item))]]
    (biff/form
@@ -235,5 +235,5 @@
       "Delete"]]
     [:div {:class "mt-2"}
      [:button {:type "button" "@click" "isActionModalOpen = false"
-               :class "w-full px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-gray-100 rounded-lg transition-colors"}
+               :class "w-full px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"}
       "Cancel"]])])

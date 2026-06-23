@@ -8,11 +8,11 @@
    (svgs/home)
    (for [breadcrumb breadcrumbs]
      [:a
-      {:href "#", :class "text-gray-600 dark:text-gray-200"}
+      {:href "#", :class "text-zinc-600 dark:text-zinc-200"}
       [:span
-       {:class "mx-5 text-gray-500"}
+       {:class "mx-5 text-zinc-500"}
        (svgs/->next)]
       [:a
        {:href "#",
-        :class "text-gray-600 hover:underline"}
+        :class "text-zinc-600 hover:underline"}
        breadcrumb]])])

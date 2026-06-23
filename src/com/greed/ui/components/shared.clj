@@ -4,7 +4,7 @@
             [com.greed.utilities.core :as utilities]))
 
 (defn- base-input-class []
-  "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 placeholder-gray-400 transition-colors duration-150")
+  "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 placeholder-zinc-400 transition-colors duration-150")
 
 (defn determine-placeholder [id user profile]
   (let [config c/common-config]
@@ -37,7 +37,7 @@
      (if prefix
        [:div {:class "relative flex items-center"}
         [:div {:class "absolute left-3 text-zinc-400 text-sm font-medium pointer-events-none select-none"} prefix]
-        [:input {:class "block w-full pl-7 pr-3 py-2 text-sm text-zinc-700 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+        [:input {:class "block w-full pl-7 pr-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                  :id id :name id :type type
                  :value (str current-val)
                  :required required?}]]

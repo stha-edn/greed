@@ -24,7 +24,7 @@
 
 (defn search []
   [:svg
-   {:class "w-5 h-5 text-gray-400",
+   {:class "w-5 h-5 text-zinc-400",
     :viewBox "0 0 24 24",
     :fill "none"}
    [:path

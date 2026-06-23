@@ -7,10 +7,10 @@
     @apply antialiased;
   }
   body {
-    @apply text-zinc-700 bg-gray-50;
+    @apply text-zinc-600 bg-zinc-50;
   }
   h1, h2, h3, h4 {
-    @apply text-zinc-900;
+    @apply text-zinc-900 tracking-tight;
   }
 }
 
@@ -25,18 +25,22 @@
     @apply btn bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500;
   }
   .btn-secondary {
-    @apply btn bg-gray-100 text-zinc-700 hover:bg-gray-200 focus:ring-gray-400;
+    @apply btn bg-zinc-100 text-zinc-700 hover:bg-zinc-200 focus:ring-zinc-400;
   }
   .btn-danger {
     @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
   }
   .card {
-    @apply bg-white rounded-xl shadow-card border border-gray-100;
+    @apply bg-white rounded-xl shadow-card border border-zinc-200/70;
+  }
+  /* Interactive surface: subtle lift + accent border on hover. */
+  .card-interactive {
+    @apply card transition-all duration-200 hover:shadow-card-hover hover:border-zinc-300/80 hover:-translate-y-0.5;
   }
   .form-input-base {
-    @apply block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-gray-200 rounded-lg
+    @apply block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg
            focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500
-           placeholder-gray-400 transition-colors duration-150;
+           placeholder-zinc-400 transition-colors duration-150;
   }
 }
 

@@ -2,7 +2,7 @@
   (:require [com.greed.ui.components.cards :as cards]))
 
 (defn- tool-card [& {:keys [badge title description detail cta-label cta-href]}]
-  [:div {:class "bg-white rounded-2xl border border-gray-100 shadow-card p-8 flex flex-col"}
+  [:div {:class "bg-white rounded-2xl border border-zinc-100 shadow-card p-8 flex flex-col"}
    (when badge
      [:span {:class "self-start text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full mb-5"}
       badge])
@@ -41,17 +41,17 @@
            :class "px-6 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors"}
        "Get started for free"]
       [:a {:href "/signin"
-           :class "px-6 py-3 text-sm font-semibold text-zinc-700 border border-gray-300 rounded-xl hover:border-gray-500 hover:bg-gray-50 transition-colors"}
+           :class "px-6 py-3 text-sm font-semibold text-zinc-700 border border-zinc-300 rounded-xl hover:border-zinc-500 hover:bg-zinc-50 transition-colors"}
        "Sign in"]]
      [:div {:class "flex items-center gap-6 mt-10"}
       [:div
        [:p {:class "text-xl font-bold text-zinc-900"} "SARS"]
        [:p {:class "text-xs text-zinc-400 mt-0.5"} "Tax calculator"]]
-      [:div {:class "w-px h-8 bg-gray-200"}]
+      [:div {:class "w-px h-8 bg-zinc-200"}]
       [:div
        [:p {:class "text-xl font-bold text-zinc-900"} "100%"]
        [:p {:class "text-xs text-zinc-400 mt-0.5"} "Free to use"]]
-      [:div {:class "w-px h-8 bg-gray-200"}]
+      [:div {:class "w-px h-8 bg-zinc-200"}]
       [:div
        [:p {:class "text-xl font-bold text-zinc-900"} "ZAR"]
        [:p {:class "text-xs text-zinc-400 mt-0.5"} "South African Rand"]]]]
