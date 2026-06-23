@@ -3,13 +3,15 @@
             [com.greed.utilities.core :as utilities]
             [com.greed.ui.components.svgs :as svgs]))
 
-(defn- metric-card [& {:keys [label value icon-bg icon]}]
-  [:div {:class "bg-white rounded-xl border border-gray-100 shadow-card p-5"}
-   [:div {:class "flex items-start justify-between"}
+(defn- metric-card [& {:keys [label value icon-bg icon accent]}]
+  [:div {:class "relative bg-white rounded-2xl border border-gray-100 shadow-card hover:shadow-card-md transition-shadow duration-200 p-6 overflow-hidden"}
+   (when accent
+     [:div {:class (str "absolute inset-x-0 top-0 h-1 " accent)}])
+   [:div {:class "flex items-start justify-between pt-1"}
     [:div
-     [:p {:class "text-xs font-medium text-zinc-400 uppercase tracking-wide"} label]
-     [:p {:class "mt-1.5 text-2xl font-semibold text-zinc-900"} value]]
-    [:div {:class (str "flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center " icon-bg)}
+     [:p {:class "text-xs font-semibold text-zinc-400 uppercase tracking-widest"} label]
+     [:p {:class "mt-2 text-2xl font-bold text-zinc-900 tabular-nums"} value]]
+    [:div {:class (str "flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center " icon-bg)}
      icon]]])
 
 (defn savings-stat [budget-items]
@@ -26,18 +28,21 @@
      (metric-card
       :label "Monthly Income"
       :value (utilities/amount->rands total-income)
+      :accent "bg-emerald-400"
       :icon-bg "bg-emerald-50"
       :icon [:span {:class "text-emerald-600"} (svgs/uptrend)])
      (metric-card
       :label "Monthly Expenses"
       :value (utilities/amount->rands total-expenses)
-      :icon-bg "bg-gray-100"
-      :icon [:span {:class "text-zinc-500"} (svgs/downtrend)])
+      :accent "bg-rose-400"
+      :icon-bg "bg-rose-50"
+      :icon [:span {:class "text-rose-500"} (svgs/downtrend)])
      (metric-card
       :label "Net Savings"
       :value (utilities/amount->rands total-savings)
-      :icon-bg "bg-gray-100"
-      :icon [:span {:class "text-zinc-500"} (svgs/banknotes)])]))
+      :accent "bg-indigo-400"
+      :icon-bg "bg-indigo-50"
+      :icon [:span {:class "text-indigo-600"} (svgs/banknotes)])]))
 
 (defn- tax-metric [label value sub]
   [:div {:class "bg-white rounded-xl border border-gray-100 shadow-card p-5"}

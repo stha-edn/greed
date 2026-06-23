@@ -29,11 +29,11 @@
                                      [:link {:href "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" :rel "stylesheet"}]
                                      [:link {:rel "stylesheet" :href (static-path "/css/main.css")}]
                                      [:script {:src (static-path "/js/main.js")}]
-                                     [:script {:src "https://unpkg.com/htmx.org@1.9.12"}]
-                                     [:script {:src "https://unpkg.com/htmx.org@1.9.12/dist/ext/ws.js"}]
-                                     [:script {:src "https://unpkg.com/hyperscript.org@0.9.8"}]
-                                     [:script {:src "https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" :defer "defer"}]
-                                     [:script {:src "https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"}]
+                                     [:script {:src "https://unpkg.com/htmx.org@2.0.10/dist/htmx.min.js"}]
+                                     [:script {:src "https://unpkg.com/htmx-ext-ws@2.0.2/dist/ws.js"}]
+                                     [:script {:src "https://unpkg.com/hyperscript.org@0.9.91"}]
+                                     [:script {:src "https://cdn.jsdelivr.net/npm/alpinejs@3.15.12/dist/cdn.min.js" :defer "defer"}]
+                                     [:script {:src "https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"}]
                                      (when recaptcha
                                        [:script {:src "https://www.google.com/recaptcha/api.js"
                                                  :async "async" :defer "defer"}])]

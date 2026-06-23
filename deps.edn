@@ -1,9 +1,9 @@
 {:paths ["src" "resources" "target/resources"]
- :deps {com.biffweb/biff                    #:git{:url "https://github.com/jacobobryant/biff", :sha "1ade0c3", :tag "v1.8.28"}
+ :deps {com.biffweb/biff                    #:git{:url "https://github.com/jacobobryant/biff", :sha "12d4ac6", :tag "v1.9.0"}
         camel-snake-kebab/camel-snake-kebab {:mvn/version "0.4.3"}
         metosin/muuntaja                    {:mvn/version "0.6.8"}
         ring/ring-defaults                  {:mvn/version "0.3.4"}
-        org.clojure/clojure                 {:mvn/version "1.11.1"}
+        org.clojure/clojure                 {:mvn/version "1.12.0"}
 
         ;; Notes on logging: https://gist.github.com/jacobobryant/76b7a08a07d5ef2cc076b048d078f1f3
         org.slf4j/slf4j-simple     {:mvn/version "2.0.0-alpha5"}
@@ -11,7 +11,7 @@
         org.slf4j/jul-to-slf4j     {:mvn/version "1.7.36"}
         org.slf4j/jcl-over-slf4j   {:mvn/version "1.7.36"}}
  :aliases
- {:dev {:extra-deps {com.biffweb/tasks {:git/url "https://github.com/jacobobryant/biff", :git/sha "1ade0c3", :git/tag "v1.8.28", :deps/root "libs/tasks"}}
+ {:dev {:extra-deps {com.biffweb/tasks {:git/url "https://github.com/jacobobryant/biff", :git/sha "12d4ac6", :git/tag "v1.9.0", :deps/root "libs/tasks"}}
         :extra-paths ["dev" "test"]
         :jvm-opts ["-XX:-OmitStackTraceInFastThrow"
                    "-XX:+CrashOnOutOfMemoryError"
