@@ -22,6 +22,7 @@
               ["/update-budget-item" {:post mid/update-budget-item}]
               ["/delete-budget-item" {:get mid/delete-budget-item}]]
              ["/calendar" {:get calendar/page}]
+             ["/calendar/grid" {:get calendar/calendar-grid}]
              ["/calendar/create-event" {:post calendar/create-event}]
              ["/calendar/delete-event" {:post calendar/delete-event}]
              ["/tools"

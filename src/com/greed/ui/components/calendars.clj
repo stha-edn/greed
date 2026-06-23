@@ -1,20 +1,25 @@
 (ns com.greed.ui.components.calendars
-  (:require [com.biffweb :as biff]))
+  (:require [com.biffweb :as biff])
+  (:import [java.time LocalDate YearMonth]))
 
 
-(defn- event-row [{:event/keys [title date id]}]
+(defn- event-row [{:event/keys [title date] :xt/keys [id]}]
   [:div {:class "flex items-center justify-between py-2.5 border-b border-zinc-50 last:border-0"}
    [:div {:class "flex items-center gap-3"}
     [:div {:class "w-2 h-2 rounded-full bg-violet-400 flex-shrink-0"}]
     [:div
      [:p {:class "text-sm font-medium text-zinc-800"} title]
      [:p {:class "text-xs text-zinc-400"} date]]]
-   [:button {:class "text-xs text-zinc-400 hover:text-red-500 transition-colors px-2 py-1"
-             :hx-post "/app/calendar/delete-event"
-             :hx-vals (str "{\"event-id\": \"" id "\"}")
-             :hx-target "#calendar-events"
-             :hx-swap "outerHTML"}
-    "Remove"]])
+   (biff/form {:hx-post "/app/calendar/delete-event"
+               :hx-target "#calendar-events"
+               :hx-swap "outerHTML"
+               :hx-include "#cal-month, #cal-year"
+               :class "flex"}
+     [:input {:type "hidden" :name "event-id" :value (str id)}]
+     [:button {:type "submit"
+               :onclick "return confirm('Remove this event?')"
+               :class "text-xs text-zinc-400 hover:text-red-500 transition-colors px-2 py-1"}
+      "Remove"])])
 
 (defn events-panel [_ctx events]
   [:div#calendar-events {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card p-5"}
@@ -28,6 +33,7 @@
      (biff/form {:hx-post "/app/calendar/create-event"
                  :hx-target "#calendar-events"
                  :hx-swap "outerHTML"
+                 :hx-include "#cal-month, #cal-year"
                  :class "flex flex-col sm:flex-row gap-2"}
        [:input {:type "text" :name "title" :required true
                 :placeholder "Event title"
@@ -48,43 +54,89 @@
       [:p {:class "text-sm font-medium text-zinc-500"} "No events yet"]
       [:p {:class "mt-0.5 text-xs text-zinc-400"} "Add one to track paydays and bills"]])])
 
-(defn calendar [payday event-days]
-  [:div
-   {:x-data (str "app(" payday ", " event-days ")"),
-    :x-init "initDate(); getNoOfDays();",
-    :x-cloak ""}
+(def ^:private month-names
+  ["January" "February" "March" "April" "May" "June"
+   "July" "August" "September" "October" "November" "December"])
 
-   [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card overflow-hidden"}
-    [:div {:class "flex items-center justify-between py-3 px-4 sm:px-6"}
-     [:div
-      [:span {:x-text "MONTH_NAMES[month]"
-              :class "text-2xl sm:text-3xl font-giza font-bold text-zinc-800"}]
-      [:span {:x-text "year"
-              :class "ml-1.5 text-xl sm:text-2xl text-zinc-400 font-giza"}]]]
-    [:div
-     [:div {:class "flex flex-wrap border-b border-zinc-100"}
-      [:template {:x-for "(dayName, index) in DAYS" :key "index"}
-       [:div {:class "py-2 w-[14.28%] text-center text-xs text-zinc-400 font-medium"}
-        [:span {:x-text "dayName"}]]]]
-     [:div {:class "flex flex-wrap border-l border-zinc-100"}
-      [:template {:x-for "blankday in blankdays"}
-       [:div {:class "border-r border-b border-zinc-100 h-10 sm:h-16 w-[14.28%]"}]]
-      [:template {:x-for "(date, dateIndex) in no_of_days" :key "dateIndex"}
-       [:div {:class "border-r border-b border-zinc-100 h-10 sm:h-16 w-[14.28%] flex items-start justify-center pt-1.5 transition-colors hover:bg-zinc-50"
-              :x-bind:class "(date === payday ? 'bg-emerald-50 ' : '') + (isEventDay(date) ? 'bg-violet-50' : '')"}
-        [:div {:class "w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium transition-colors"
-               :x-bind:class "date === day ? 'bg-zinc-900 text-white shadow-card-md' : 'text-zinc-700'"}
-         [:span {:x-text "date"}]]]]]]]
+(def ^:private day-names ["Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"])
 
-   ;; Legend
-   [:div {:class "flex items-center gap-4 mt-2 px-1"}
-    [:div {:class "flex items-center gap-1.5"}
-     [:div {:class "w-2.5 h-2.5 rounded bg-emerald-100"}]
-     [:span {:class "text-xs text-zinc-400"} "Payday"]]
-    [:div {:class "flex items-center gap-1.5"}
-     [:div {:class "w-2.5 h-2.5 rounded bg-violet-100"}]
-     [:span {:class "text-xs text-zinc-400"} "Event"]]
-    [:div {:class "flex items-center gap-1.5"}
-     [:div {:class "w-5 h-5 rounded-full bg-zinc-900 flex items-center justify-center"}
-      [:span {:class "text-white text-xs"} "9"]]
-     [:span {:class "text-xs text-zinc-400"} "Today"]]]])
+(defn- prev-month [month year]
+  (if (= month 1) [12 (dec year)] [(dec month) year]))
+
+(defn- next-month [month year]
+  (if (= month 12) [1 (inc year)] [(inc month) year]))
+
+(defn- first-day-of-week
+  "Returns 0=Sun..6=Sat for the first day of the given month/year."
+  [year month]
+  (mod (.getValue (.getDayOfWeek (LocalDate/of year month 1))) 7))
+
+(defn- event-days-set [events year month]
+  (set (keep (fn [{:event/keys [date]}]
+               (when date
+                 (let [d (LocalDate/parse date)]
+                   (when (and (= (.getYear d) year) (= (.getMonthValue d) month))
+                     (.getDayOfMonth d)))))
+             events)))
+
+(defn calendar [year month payday events]
+  (let [today       (LocalDate/now)
+        today-day   (.getDayOfMonth today)
+        today-month (.getMonthValue today)
+        today-year  (.getYear today)
+        days-count  (.lengthOfMonth (YearMonth/of year month))
+        blank-count (first-day-of-week year month)
+        event-days  (event-days-set events year month)
+        [pm py]     (prev-month month year)
+        [nm ny]     (next-month month year)]
+    [:div#calendar-grid
+     [:input {:type "hidden" :id "cal-month" :name "cal-month" :value (str month)}]
+     [:input {:type "hidden" :id "cal-year"  :name "cal-year"  :value (str year)}]
+     [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card overflow-hidden"}
+      [:div {:class "flex items-center justify-between py-3 px-4 sm:px-6"}
+       [:div
+        [:span {:class "text-2xl sm:text-3xl font-giza font-bold text-zinc-800"}
+         (nth month-names (dec month))]
+        [:span {:class "ml-1.5 text-xl sm:text-2xl text-zinc-400 font-giza"} (str year)]]
+       [:div {:class "flex items-center gap-1"}
+        [:button {:class "p-1.5 rounded-lg hover:bg-zinc-100 transition-colors text-zinc-500 hover:text-zinc-800"
+                  :hx-get (str "/app/calendar/grid?month=" pm "&year=" py)
+                  :hx-target "#calendar-grid"
+                  :hx-swap "outerHTML"}
+         [:svg {:class "w-4 h-4" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
+          [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2" :d "M15 19l-7-7 7-7"}]]]
+        [:button {:class "p-1.5 rounded-lg hover:bg-zinc-100 transition-colors text-zinc-500 hover:text-zinc-800"
+                  :hx-get (str "/app/calendar/grid?month=" nm "&year=" ny)
+                  :hx-target "#calendar-grid"
+                  :hx-swap "outerHTML"}
+         [:svg {:class "w-4 h-4" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
+          [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2" :d "M9 5l7 7-7 7"}]]]]]
+      [:div {:class "flex flex-wrap border-b border-zinc-100"}
+       (for [d day-names]
+         [:div {:class "py-2 w-[14.28%] text-center text-xs text-zinc-400 font-medium"} d])]
+      [:div {:class "flex flex-wrap border-l border-zinc-100"}
+       (for [_ (range blank-count)]
+         [:div {:class "border-r border-b border-zinc-100 h-10 sm:h-16 w-[14.28%]"}])
+       (for [d (range 1 (inc days-count))]
+         (let [is-today  (and (= d today-day) (= month today-month) (= year today-year))
+               is-payday (= d payday)
+               is-event  (contains? event-days d)
+               cell-bg   (cond is-payday "bg-emerald-50 " is-event "bg-violet-50 " :else "")
+               num-cls   (if is-today "bg-zinc-900 text-white shadow-card-md" "text-zinc-700")]
+           [:div {:class (str "border-r border-b border-zinc-100 h-10 sm:h-16 w-[14.28%] "
+                              "flex items-start justify-center pt-1.5 transition-colors hover:bg-zinc-50 "
+                              cell-bg)}
+            [:div {:class (str "w-7 h-7 flex items-center justify-center rounded-full "
+                               "text-sm font-medium transition-colors " num-cls)}
+             d]]))]]
+     [:div {:class "flex items-center gap-4 mt-2 px-1"}
+      [:div {:class "flex items-center gap-1.5"}
+       [:div {:class "w-2.5 h-2.5 rounded bg-emerald-100"}]
+       [:span {:class "text-xs text-zinc-400"} "Payday"]]
+      [:div {:class "flex items-center gap-1.5"}
+       [:div {:class "w-2.5 h-2.5 rounded bg-violet-100"}]
+       [:span {:class "text-xs text-zinc-400"} "Event"]]
+      [:div {:class "flex items-center gap-1.5"}
+       [:div {:class "w-5 h-5 rounded-full bg-zinc-900 flex items-center justify-center"}
+        [:span {:class "text-white text-xs"} today-day]]
+       [:span {:class "text-xs text-zinc-400"} "Today"]]]]))
