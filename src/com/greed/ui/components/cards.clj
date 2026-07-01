@@ -6,8 +6,8 @@
 (defn testiminial [& {:keys [img title body author]}]
   [:div {:class "bg-white rounded-2xl border border-zinc-200 shadow-card p-8 max-w-md"}
    [:div {:class "flex items-center gap-4 mb-4"}
-    [:img {:class "w-12 h-12 rounded-full object-cover border-2 border-zinc-100"
-           :alt "Avatar" :src img}]
+    [:img {:class "w-12 h-12 rounded-full object-cover border-2 border-zinc-100 flex-shrink-0 bg-zinc-50"
+           :alt author :src img}]
     [:div
      [:h3 {:class "font-semibold text-zinc-900"} title]
      [:p {:class "text-sm text-zinc-400"} author]]]
