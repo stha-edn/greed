@@ -55,7 +55,8 @@
       (data/update-tax-profile ctx)
       (data/upsert-tax-profile ctx))
     ;; Reflect the medical aid contribution as a budget expense, like Salary -> income.
-    (data/sync-medical-budget-item ctx))
+    (data/sync-medical-budget-item ctx)
+    (data/sync-retirment-budget-item ctx))
   {:status 303
    :headers {"location" "/app/settings?alert=tax-profile-saved"}})
 

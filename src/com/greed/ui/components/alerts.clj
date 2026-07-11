@@ -2,7 +2,6 @@
   (:require [com.core :as c]
             [com.greed.ui.components.svgs :as svgs]))
 
-
 (defn success [& {:keys [type]
                   :or {type :signin}}]
   [:div
@@ -23,7 +22,6 @@
         "You are signed in!"
         "Your account was created!")]]]])
 
-
 (defn info [params]
   (let [alert   (:alert params)
         message (get c/alert-config (when alert (keyword "alert" alert)))]
@@ -42,7 +40,6 @@
           :x-on:click "show = false"
           :class "p-1 rounded-md transition-colors focus:outline-none"}
          (svgs/close)]]])))
-
 
 (defn salary-prompt-modal
   "Modal prompting user to update salary. Parent must have Alpine x-data with showSalaryPrompt."
@@ -68,23 +65,23 @@
        :aria-hidden "true"}
       "\u00A0"]
      [:div
-      {:class "relative inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"}
+      {:class "relative inline-block overflow-hidden text-left align-bottom transition-all transform bg-gradient-to-br from-zinc-800 via-zinc-900 to-black rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"}
       [:div
        {:class "px-6 py-5 sm:p-6"}
        [:div
         {:class "flex items-start"}
         [:div
-         {:class "flex items-center justify-center flex-shrink-0 w-12 h-12 rounded-full bg-amber-100"}
+         {:class "flex items-center justify-center flex-shrink-0 w-12 h-12"}
          (svgs/info)]
         [:div
          {:class "flex-1 mt-0 ml-4"}
          [:h3
           {:id "salary-prompt-title"
-           :class "text-lg font-medium leading-6 text-zinc-900"}
-          "Update your salary"]
+           :class "text-lg font-medium leading-6 text-zinc-300"}
+          "Update financial details"]
          [:p
           {:class "mt-2 text-sm text-zinc-500"}
-          "To get accurate budget and tax insights, please add your salary in your profile."]
+          "To get accurate finance and tax insights, please update your financial details."]
          [:div
           {:class "flex justify-end gap-3 mt-6"}
           [:button
@@ -93,6 +90,6 @@
             "@click" "showSalaryPrompt = false"}
            "Later"]
           [:a
-           {:href "/app/profile"
-            :class "inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-amber-600 border border-transparent rounded-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"}
-           "Go to profile"]]]]]]]]])
+           {:href "/app/settings"
+            :class "inline-flex justify-center px-4 py-2 text-sm font-medium text-white  bg-emerald-500/20 border border-transparent rounded-md hover:bg-emerald-600/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"}
+           "Update"]]]]]]]]])

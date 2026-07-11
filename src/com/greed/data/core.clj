@@ -6,7 +6,6 @@
             [com.greed.utilities.core :as utilities]
             [com.greed.data.validation :as validation]))
 
-
 (defn get-users [{:keys [biff/db]}]
   (q db
      '{:find (pull user [*])
@@ -73,14 +72,14 @@
       (do
         (logger/info "Updating user...")
         (biff/submit-tx ctx
-                      [{:db/doc-type :user
-                        :xt/id user-id
-                        :db/op :update
-                        :user/email (:email params)
-                        :user/password (:password params)
-                        :user/firstname (:firstname params)
-                        :user/lastname (:lastname params)
-                        :user/age (utilities/->int (:age params))}]))
+                        [{:db/doc-type :user
+                          :xt/id user-id
+                          :db/op :update
+                          :user/email (:email params)
+                          :user/password (:password params)
+                          :user/firstname (:firstname params)
+                          :user/lastname (:lastname params)
+                          :user/age (utilities/->int (:age params))}]))
       (logger/info "User not found"))))
 
 (defn upsert-finances [{:keys [params] :as ctx}]
@@ -143,7 +142,6 @@
                                                     int)}]))
       (logger/info "Finances not found"))))
 
-
 (defn get-tax-profile [{:keys [biff/db]} user-id]
   (first (q db
             '{:find (pull tp [*])
@@ -185,6 +183,14 @@
                       [budget-item :budget-item/title "Medical Aid"]]}
             user-id)))
 
+(defn get-retirement-budget-item [{:keys [biff/db]} user-id]
+  (first (q db
+            '{:find (pull budget-item [*])
+              :in [user-id]
+              :where [[budget-item :budget-item/user-id user-id]
+                      [budget-item :budget-item/title "Annual RA Contributions"]]}
+            user-id)))
+
 (defn sync-medical-budget-item
   "Keeps a 'Medical Aid' expense budget item in sync with the tax profile's
    monthly medical contribution — mirroring how 'Salary' tracks income.
@@ -217,6 +223,40 @@
 
       existing
       (do (logger/info "Removing Medical Aid budget item (contribution set to 0)...")
+          (biff/submit-tx ctx
+                          [{:db/doc-type :budget-item
+                            :xt/id (:xt/id existing)
+                            :db/op :delete}])))))
+
+(defn sync-retirment-budget-item
+  ""
+  [{:keys [params] :as ctx}]
+  (let [user-id (get-user-id-from-session ctx)
+        ra-annual (or (utilities/->int (:ra-annual params)) 0)
+        existing (get-retirement-budget-item ctx user-id)]
+    (cond
+      (and (pos? ra-annual) existing)
+      (do (logger/info "Updating Annual RA Contributions budget item...")
+          (biff/submit-tx ctx
+                          [{:db/doc-type :budget-item
+                            :xt/id (:xt/id existing)
+                            :db/op :update
+                            :budget-item/title "Annual RA Contributions"
+                            :budget-item/type :expenses
+                            :budget-item/amount ra-annual}]))
+
+      (pos? ra-annual)
+      (do (logger/info "Creating Annual RA Contributions budget item...")
+          (biff/submit-tx ctx
+                          [{:db/doc-type :budget-item
+                            :xt/id (java.util.UUID/randomUUID)
+                            :budget-item/user-id user-id
+                            :budget-item/title "Annual RA Contributions"
+                            :budget-item/type :expenses
+                            :budget-item/amount ra-annual}]))
+
+      existing
+      (do (logger/info "Removing Annual RA Contributions budget item (contribution set to 0)...")
           (biff/submit-tx ctx
                           [{:db/doc-type :budget-item
                             :xt/id (:xt/id existing)
@@ -291,7 +331,6 @@
                             :xt/id budget-item-id
                             :db/op :delete}]))
       (logger/info "Budget item not found"))))
-
 
 ;; ---------------------------------------------------------------------------
 ;; Goals

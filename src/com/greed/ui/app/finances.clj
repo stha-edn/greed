@@ -15,7 +15,7 @@
    (tables/budget-table
     {:title "expenses"
      :items (filterv #(= (:budget-item/type %) :expenses) budget-items)
-     :protected-titles #{"Medical Aid"}})
+     :protected-titles #{"Medical Aid" "Annual RA Contributions"}})
    (tables/budget-table
     {:title "savings"
      :items (filterv #(= (:budget-item/type %) :savings) budget-items)})])
