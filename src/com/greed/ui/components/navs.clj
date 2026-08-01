@@ -17,7 +17,7 @@
       (if signed-in?
         [:a {:href "/app"
              :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"}
-         "Go to Dashboard"]
+         "Dashboard"]
         [:<>
          [:a {:href "/signin"
               :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-zinc-700 border border-zinc-300 rounded-lg hover:border-zinc-500 hover:bg-zinc-50 transition-colors"}

@@ -45,9 +45,9 @@
       "Greed gives you the tools to track your spending, understand your tax obligations, and make smarter financial decisions — all in one place."]
      [:div {:class "flex flex-wrap gap-3 mt-8"}
       (if signed-in?
-        [:a {:href "/app"
-             :class "px-6 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors"}
-         "Go to dashboard"]
+         [:a {:href "/app"
+              :class "px-6 py-3 text-sm font-semibold text-white bg-zinc-900 rounded-xl hover:bg-zinc-800 transition-colors"}
+          "Go to dashboard"]
         [:div {:class "flex flex-wrap gap-3"}
          [:a {:href "/signup"
               :class "px-6 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors"}
