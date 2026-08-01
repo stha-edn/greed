@@ -28,11 +28,12 @@
     (p.about/page ctx)))
 
 (defn signin-page [{:keys [recaptcha/site-key] :as ctx}]
-  (ui/page
-    (assoc ctx :site-key site-key
-               ::ui/recaptcha site-key)
-    (headers/pages ctx)
-    (p.signin/form ctx)))
+  (let [ctx (assoc ctx :site-key site-key
+                      ::ui/recaptcha site-key)]
+    (ui/page
+      ctx
+      (headers/pages ctx)
+      (p.signin/form ctx))))
 
 (defn signin-success-page [{:keys [biff/db session params]}]
   (let [user-id (biff/lookup-id db :user/email (:email params))]
@@ -41,11 +42,12 @@
      :session (assoc session :uid user-id)}))
 
 (defn signup-page [{:keys [recaptcha/site-key] :as ctx}]
-  (ui/page
-    (assoc ctx :site-key site-key
-               ::ui/recaptcha site-key)
-    (headers/pages ctx)
-    (p.signup/form ctx)))
+  (let [ctx (assoc ctx :site-key site-key
+                      ::ui/recaptcha site-key)]
+    (ui/page
+      ctx
+      (headers/pages ctx)
+      (p.signup/form ctx))))
 
 (defn signup-success-page [{:keys [biff/db session params]}]
   (let [user-id (biff/lookup-id db :user/email (:email params))]

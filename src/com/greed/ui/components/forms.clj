@@ -38,11 +38,13 @@
       (shared/input :id "password" :type "password" :label "Password" :required? true)
       [:div {:class "mt-5"}
        [:button
-        (merge (when site-key {:class "g-recaptcha w-full px-4 py-2.5 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"
-                               :data-sitekey site-key
-                               :data-callback "submitSignin"})
-               {:class "w-full px-4 py-2.5 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"
-                :type "submit"})
+        (if site-key
+          {:class "g-recaptcha w-full px-4 py-2.5 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"
+           :data-sitekey site-key
+           :data-callback "submitSignin"
+           :type "submit"}
+          {:class "w-full px-4 py-2.5 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"
+           :type "submit"})
         "Sign in"]]
       (on-error ctx))]
     [:div {:class "px-8 py-4 bg-zinc-50 border-t border-zinc-100 text-center"}
@@ -70,14 +72,16 @@
       (shared/input :id "age" :type "number" :label "Age" :required? true)
       (shared/input :id "email" :type "email" :label "Email address" :required? true)
       (shared/input :id "password" :type "password" :label "Password" :required? true)
-      [:div {:class "mt-5"}
-       [:button
-        (merge (when site-key {:class "g-recaptcha w-full px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
-                               :data-sitekey site-key
-                               :data-callback "submitSignup"})
-               {:class "w-full px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
-                :type "submit"})
-        "Create account"]]
+       [:div {:class "mt-5"}
+        [:button
+         (if site-key
+           {:class "g-recaptcha w-full px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+            :data-sitekey site-key
+            :data-callback "submitSignup"
+            :type "submit"}
+           {:class "w-full px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+            :type "submit"})
+         "Create account"]]
       (on-error ctx))]
     [:div {:class "px-8 py-4 bg-zinc-50 border-t border-zinc-100 text-center"}
      [:p {:class "text-sm text-zinc-500"}
