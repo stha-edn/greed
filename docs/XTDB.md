@@ -1,6 +1,7 @@
 # XTDB setup and usage
 
 XTDB is already wired up in your Biff app. This doc summarizes how it’s configured and how to use it.
+For the production deployment (DigitalOcean + Postgres), see **[DEPLOY.md](DEPLOY.md)**.
 
 ---
 
@@ -10,18 +11,17 @@ XTDB is already wired up in your Biff app. This doc summarizes how it’s config
 
 | Setting | Value | Meaning |
 |--------|--------|--------|
-| `:biff.xtdb/dir` | `"storage/xtdb"` | Directory for XTDB data (relative to app working directory). |
-| `:biff.xtdb/topology` | from env, default `"standalone"` | One in-process node; data on local disk. |
-| `XTDB_TOPOLOGY` | `standalone` (in config.env) | Same for dev. |
-| `PROD_XTDB_TOPOLOGY` | not set | Prod also uses standalone. |
-| `XTDB_JDBC_URL` | not set | Only needed if you switch to JDBC (e.g. Postgres). |
+| `:biff.xtdb/dir` | `"storage/xtdb"` | Where XTDB keeps its RocksDB **index** (both topologies). |
+| `XTDB_TOPOLOGY` | `standalone` (config.env) | Dev: data on local disk, no Postgres needed. |
+| `PROD_XTDB_TOPOLOGY` | `jdbc` (config.env) | Prod: XTDB stores tx-log + documents in Postgres. |
+| `XTDB_JDBC_URL` | `jdbc:postgresql://localhost:5432/greed?...` | Postgres connection for prod (see DEPLOY.md). |
 
 ### Where data lives
 
-- **Dev:** `storage/xtdb` under your project (create it if needed; Biff will use it when you run `clj -M:dev dev`).
-- **Prod (AWS):** `/home/app/storage/xtdb` on the server (created when the app runs; `ExecStart` in the systemd unit uses `/home/app` as `WorkingDirectory`).
-
-No extra “setup” step is required: start the app and XTDB uses that directory.
+- **Dev:** `storage/xtdb` under your project — standalone, no Postgres required.
+- **Prod:** the XTDB **transaction log and documents** live in Postgres (the `greed` database on the
+  droplet); the **index** is a disposable RocksDB cache under `/home/app/storage/xtdb/index` that
+  rebuilds from the tx-log on startup.
 
 ---
 
@@ -52,35 +52,19 @@ So “setting up XTDB” for this project means: **config is already set; just r
 
 ---
 
-## 4. Prod: standalone on the server
+## 4. Production: Postgres storage
 
-- **Topology:** Prod uses **standalone** (single node, one server).
-- **Directory:** `/home/app/storage/xtdb` (created when the app runs).
-- **Backups:** The directory is just a folder on the VM. To back up:
-  - Option A: Cron job on the server that tars or rsyncs `/home/app/storage/xtdb` to another volume or S3.
-  - Option B: Use a managed Postgres and switch prod to JDBC (see below).
+Prod runs XTDB with the **jdbc** topology: tx-log + documents in Postgres, index in RocksDB. Your
+app code (queries, `submit-tx`) is unchanged.
 
-No extra XTDB setup is required for prod beyond what you already did (deploy + app running).
-
----
-
-## 5. Optional: use Postgres for XTDB storage (prod)
-
-If you want XTDB to store its backend in Postgres instead of the filesystem (e.g. for backups or multi-node later):
-
-1. Create a Postgres DB (e.g. AWS RDS, or a small instance).
-2. In `config.env` (and on the server’s env or `config.env` you deploy):
-   ```bash
-   PROD_XTDB_TOPOLOGY=jdbc
-   XTDB_JDBC_URL=jdbc:postgresql://host:5432/dbname?user=...&password=...&sslmode=require
-   ```
-3. Redeploy so the prod app starts with JDBC topology. XTDB will use Postgres for storage; your app code (queries, `submit-tx`) stays the same.
+Full setup — installing Postgres on the droplet, creating the `greed` role/database, the
+`XTDB_JDBC_URL` value, and backups — is in **[DEPLOY.md](DEPLOY.md)**.
 
 Leave `XTDB_TOPOLOGY=standalone` for dev so you don’t need Postgres locally.
 
 ---
 
-## 6. Quick reference: query and write
+## 5. Quick reference: query and write
 
 - **Query:** In a handler or service that receives `ctx` (with `:biff/db`):
   ```clojure

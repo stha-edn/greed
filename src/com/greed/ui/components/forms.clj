@@ -38,7 +38,9 @@
       (shared/input :id "password" :type "password" :label "Password" :required? true)
       [:div {:class "mt-5"}
        [:button
-        (merge (when site-key {:data-sitekey site-key :data-callback "submitSignin"})
+        (merge (when site-key {:class "g-recaptcha w-full px-4 py-2.5 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"
+                               :data-sitekey site-key
+                               :data-callback "submitSignin"})
                {:class "w-full px-4 py-2.5 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"
                 :type "submit"})
         "Sign in"]]
@@ -70,7 +72,9 @@
       (shared/input :id "password" :type "password" :label "Password" :required? true)
       [:div {:class "mt-5"}
        [:button
-        (merge (when site-key {:data-sitekey site-key :data-callback "submitSignup"})
+        (merge (when site-key {:class "g-recaptcha w-full px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+                               :data-sitekey site-key
+                               :data-callback "submitSignup"})
                {:class "w-full px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
                 :type "submit"})
         "Create account"]]

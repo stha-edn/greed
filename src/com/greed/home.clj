@@ -20,9 +20,10 @@
     (headers/pages ctx)
     (p.team/page)))
 
-(defn signin-page [ctx]
+(defn signin-page [{:keys [recaptcha/site-key] :as ctx}]
   (ui/page
-    ctx
+    (assoc ctx :site-key site-key
+               ::ui/recaptcha site-key)
     (headers/pages ctx)
     (p.signin/form ctx)))
 
@@ -32,9 +33,10 @@
      :headers {"Location" "/app"}
      :session (assoc session :uid user-id)}))
 
-(defn signup-page [ctx]
+(defn signup-page [{:keys [recaptcha/site-key] :as ctx}]
   (ui/page
-    ctx
+    (assoc ctx :site-key site-key
+               ::ui/recaptcha site-key)
     (headers/pages ctx)
     (p.signup/form ctx)))
 

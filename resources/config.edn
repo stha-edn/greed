@@ -28,6 +28,8 @@
  :recaptcha/secret-key #biff/secret RECAPTCHA_SECRET_KEY
  :recaptcha/site-key   #biff/env RECAPTCHA_SITE_KEY
 
+ :google-analytics/id #biff/env GOOGLE_ANALYTICS_ID
+
  :biff.nrepl/port #or [#biff/env NREPL_PORT "7888"]
  :biff.nrepl/args ["--port" #ref [:biff.nrepl/port]
                    "--middleware" "[cider.nrepl/cider-middleware,refactor-nrepl.middleware/wrap-refactor]"]

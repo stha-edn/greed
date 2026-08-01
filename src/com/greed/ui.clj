@@ -14,7 +14,7 @@
     (str path "?t=" last-modified)
     path))
 
-(defn base [{:keys [::recaptcha] :as ctx} & body]
+(defn base [{:keys [::recaptcha google-analytics/id] :as ctx} & body]
   (apply
    biff/base-html
    (-> ctx
@@ -24,20 +24,26 @@
                      :description (str settings/app-name " Description")
                      :image "/img/g.png"})
        (update :base/head (fn [head]
-                            (concat [[:link {:rel "preconnect" :href "https://fonts.googleapis.com"}]
-                                     [:link {:rel "preconnect" :href "https://fonts.gstatic.com" :crossorigin ""}]
-                                     [:link {:href "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" :rel "stylesheet"}]
-                                     [:link {:rel "stylesheet" :href (static-path "/css/main.css")}]
-                                     [:script {:src (static-path "/js/main.js")}]
-                                     [:script {:src "https://unpkg.com/htmx.org@2.0.10/dist/htmx.min.js"}]
-                                     [:script {:src "https://unpkg.com/htmx-ext-ws@2.0.2/dist/ws.js"}]
-                                     [:script {:src "https://unpkg.com/hyperscript.org@0.9.91"}]
-                                     [:script {:src "https://cdn.jsdelivr.net/npm/alpinejs@3.15.12/dist/cdn.min.js" :defer "defer"}]
-                                     [:script {:src "https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"}]
-                                     (when recaptcha
-                                       [:script {:src "https://www.google.com/recaptcha/api.js"
-                                                 :async "async" :defer "defer"}])]
-                                    head))))
+                            (concat
+                             (cond-> [[:link {:rel "preconnect" :href "https://fonts.googleapis.com"}]
+                                      [:link {:rel "preconnect" :href "https://fonts.gstatic.com" :crossorigin ""}]
+                                      [:link {:href "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" :rel "stylesheet"}]
+                                      [:link {:rel "stylesheet" :href (static-path "/css/main.css")}]
+                                      [:script {:src (static-path "/js/main.js")}]
+                                      [:script {:src "https://unpkg.com/htmx.org@2.0.10/dist/htmx.min.js"}]
+                                      [:script {:src "https://unpkg.com/htmx-ext-ws@2.0.2/dist/ws.js"}]
+                                      [:script {:src "https://unpkg.com/hyperscript.org@0.9.91"}]
+                                      [:script {:src "https://cdn.jsdelivr.net/npm/alpinejs@3.15.12/dist/cdn.min.js" :defer "defer"}]
+                                      [:script {:src "https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"}]]
+                               id (into [[:script {:async true :src (str "https://www.googletagmanager.com/gtag/js?id=" id)}]
+                                         [:script (biff/unsafe
+                                                   (str "window.dataLayer = window.dataLayer || [];"
+                                                        "function gtag(){dataLayer.push(arguments);}"
+                                                        "gtag('js', new Date());"
+                                                        "gtag('config', '" id "');"))]])
+                               recaptcha (conj [:script {:src "https://www.google.com/recaptcha/api.js"
+                                                         :async "async" :defer "defer"}]))
+                             head))))
    body))
 
 (defn page [ctx & body]

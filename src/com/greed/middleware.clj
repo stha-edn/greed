@@ -1,5 +1,6 @@
 (ns com.greed.middleware
   (:require [com.biffweb :as biff]
+            [com.biffweb.impl.auth :as biff-auth]
             [muuntaja.middleware :as muuntaja]
             [ring.middleware.anti-forgery :as csrf]
             [ring.middleware.defaults :as rd]
@@ -22,13 +23,19 @@
 
 (defn wrap-authenticate [handler]
   (fn [{:keys [uri] :as ctx}]
-    (let [error-location (if (= "/authenticate/signup" uri)
-                           "/signup?error=invalid-email"
-                           "/signin?error=invalid-credentials")]
-      (if (auth/authenticate! ctx)
-        (handler ctx)
+    (let [page (if (= "/authenticate/signup" uri) "signup" "signin")]
+      (cond
+        (not (biff-auth/passed-recaptcha? ctx))
         {:status 303
-         :headers {"location" error-location}}))))
+         :headers {"location" (str "/" page "?error=recaptcha")}}
+
+        (not (auth/authenticate! ctx))
+        {:status 303
+         :headers {"location" (if (= page "signup")
+                                "/signup?error=invalid-email"
+                                "/signin?error=invalid-credentials")}}
+
+        :else (handler ctx)))))
 
 (defn save-user [ctx]
   (let [user-id (data/get-user-id ctx)
