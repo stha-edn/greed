@@ -11,7 +11,8 @@
 (defn- paragraph [text]
   [:p {:class "mt-4 text-zinc-500 leading-relaxed"} text])
 
-(defn page []
+(defn page [{:keys [session]}]
+  (let [signed-in? (some? (:uid session))]
   [:div {:class "container mx-auto px-6"}
 
    ;; Hero
@@ -158,7 +159,7 @@
        [:span {:class "text-emerald-500"} "make sense."]]
       [:p {:class "mt-4 text-lg text-zinc-400 max-w-xl mx-auto"}
        "In one short session, know what you earn, what you owe, where your money is going and what you can build next."]
-      [:a {:href "/signup"
+      [:a {:href (if signed-in? "/app" "/signup")
            :class "mt-8 inline-block px-8 py-3.5 text-sm font-semibold text-emerald-700 bg-white rounded-xl hover:bg-emerald-50 transition-colors"}
        "Build my money plan"]
       [:div {:class "mt-12 pt-6 border-t border-zinc-800 flex flex-wrap justify-center gap-x-8 gap-y-3"}
@@ -166,4 +167,4 @@
          [:div {:class "flex items-center gap-2 text-sm text-zinc-400"}
           [:svg {:class "w-4 h-4 text-emerald-500" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
            [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2.5" :d "M5 13l4 4L19 7"}]]
-          text])]]]]])
+          text])]]]]]))

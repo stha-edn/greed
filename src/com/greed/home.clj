@@ -25,7 +25,7 @@
   (ui/page
     ctx
     (headers/pages ctx)
-    (p.about/page)))
+    (p.about/page ctx)))
 
 (defn signin-page [{:keys [recaptcha/site-key] :as ctx}]
   (ui/page
