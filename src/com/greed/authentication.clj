@@ -1,5 +1,7 @@
 (ns com.greed.authentication
-  (:require [clojure.tools.logging :as logger]
+  (:require [buddy.hashers :as hashers]
+            [clojure.string :as str]
+            [clojure.tools.logging :as logger]
             [com.greed.data.core :as data]))
 
 
@@ -13,8 +15,13 @@
       (data/upsert-user ctx))
     valid?))
 
+(defn hashed-password? [db-password]
+  (str/starts-with? db-password "bcrypt"))
+
 (defn validate-password? [param-password db-password]
-  (let [valid-password? (= param-password db-password)]
+  (let [valid-password? (if (hashed-password? db-password)
+                          (hashers/check param-password db-password)
+                          (= param-password db-password))]
     {:valid? valid-password?
      :message (if valid-password?
                 "Password is valid"

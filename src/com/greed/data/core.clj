@@ -1,5 +1,6 @@
 (ns com.greed.data.core
-  (:require [com.biffweb :as biff :refer [q]]
+  (:require [buddy.hashers :as hashers]
+            [com.biffweb :as biff :refer [q]]
             [clojure.string :as str]
             [clojure.tools.logging :as logger]
             [com.greed.utilities.tax :as tax]
@@ -53,6 +54,9 @@
                       [budget-item :budget-item/title "Salary"]]}
             user-id)))
 
+(defn hash-password [password]
+  (hashers/derive password))
+
 (defn upsert-user [{:keys [params] :as ctx}]
   (let [user-id (java.util.UUID/randomUUID)]
     (logger/info "Creating user...")
@@ -60,7 +64,7 @@
                     [{:db/doc-type :user
                       :xt/id user-id
                       :user/email (:email params)
-                      :user/password (:password params)
+                      :user/password (hash-password (:password params))
                       :user/firstname (:firstname params)
                       :user/lastname (:lastname params)
                       :user/age (utilities/->int (:age params))}])))
@@ -76,7 +80,7 @@
                           :xt/id user-id
                           :db/op :update
                           :user/email (:email params)
-                          :user/password (:password params)
+                          :user/password (hash-password (:password params))
                           :user/firstname (:firstname params)
                           :user/lastname (:lastname params)
                           :user/age (utilities/->int (:age params))}]))

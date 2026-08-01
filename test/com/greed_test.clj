@@ -1,16 +1,30 @@
 (ns com.greed-test
   (:require [cheshire.core :as cheshire]
             [clojure.string :as str]
-            [clojure.test :refer [deftest is]]
+            [clojure.test :refer [deftest is testing]]
             [com.biffweb :as biff :refer [test-xtdb-node]]
             [com.greed :as main]
             [com.greed.app :as app]
+            [com.greed.authentication :as auth]
+            [com.greed.data.core :as data]
             [malli.generator :as mg]
             [rum.core :as rum]
             [xtdb.api :as xt]))
 
 (deftest example-test
   (is (= 4 (+ 2 2))))
+
+(deftest password-hashing-test
+  (let [plaintext "correct horse battery staple"]
+    (testing "hashes are bcrypt and not stored in plaintext"
+      (let [hash (data/hash-password plaintext)]
+        (is (str/starts-with? hash "bcrypt"))
+        (is (not (str/includes? hash plaintext)))
+        (is (:valid? (auth/validate-password? plaintext hash)))
+        (is (not (:valid? (auth/validate-password? "wrong" hash))))))
+    (testing "legacy plaintext passwords still verify"
+      (is (:valid? (auth/validate-password? plaintext plaintext)))
+      (is (not (:valid? (auth/validate-password? "wrong" plaintext)))))))
 
 #_(defn get-context [node]
   {:biff.xtdb/node  node
