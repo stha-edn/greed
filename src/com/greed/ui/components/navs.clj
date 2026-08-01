@@ -4,26 +4,26 @@
 
 (defn nav [{:keys [session]}]
   (let [signed-in? (some? (:uid session))]
-    [:nav {:class "flex items-center justify-between py-5"}
+    [:nav {:class "flex items-center justify-between gap-3 py-5"}
      [:a {:href "/"}
-      [:span {:class "text-3xl font-giza font-bold text-zinc-900"} "greed."]]
-     [:div {:class "flex items-center gap-2"}
+      [:span {:class "text-2xl sm:text-3xl font-giza font-bold text-zinc-900"} "greed."]]
+     [:div {:class "flex items-center gap-1.5 sm:gap-2"}
       [:a {:href "/about"
-           :class "px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors"}
+           :class "whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors"}
        "About"]
       [:a {:href "/team"
-           :class "px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors"}
+           :class "whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors"}
        "Team"]
       (if signed-in?
         [:a {:href "/app"
-             :class "px-4 py-1.5 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"}
+             :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"}
          "Go to Dashboard"]
         [:<>
          [:a {:href "/signin"
-              :class "px-4 py-1.5 text-sm font-medium text-zinc-700 border border-zinc-300 rounded-lg hover:border-zinc-500 hover:bg-zinc-50 transition-colors"}
+              :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-zinc-700 border border-zinc-300 rounded-lg hover:border-zinc-500 hover:bg-zinc-50 transition-colors"}
           "Sign In"]
          [:a {:href "/signup"
-              :class "px-4 py-1.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"}
+              :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"}
           "Sign Up"]])]]))
 
 (defn- nav-link [href label icon path-expr]
