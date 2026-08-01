@@ -8,6 +8,9 @@
      [:a {:href "/"}
       [:span {:class "text-3xl font-giza font-bold text-zinc-900"} "greed."]]
      [:div {:class "flex items-center gap-2"}
+      [:a {:href "/about"
+           :class "px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors"}
+       "About"]
       [:a {:href "/team"
            :class "px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors"}
        "Team"]

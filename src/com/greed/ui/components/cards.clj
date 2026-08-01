@@ -13,6 +13,20 @@
      [:p {:class "text-sm text-zinc-400"} author]]]
    [:p {:class "text-zinc-600 text-sm leading-relaxed"} body]])
 
+(defn note-from-greed []
+  [:div {:class "relative bg-zinc-900 rounded-2xl border border-zinc-800 shadow-card-md p-8 max-w-md overflow-hidden"}
+   [:div {:class "absolute inset-x-0 top-0 h-1 bg-emerald-500"}]
+   [:div {:class "absolute -top-24 -right-24 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl"}]
+   [:div {:class "relative"}
+    [:p {:class "text-xs font-semibold uppercase tracking-[0.2em] text-emerald-500"} "A note from Greed"]
+    [:p {:class "mt-5 text-zinc-100 leading-relaxed"}
+     "Money is private — and so is your ambition. Greed exists to take every part of your financial life off the messy back of your mind and put it in one clear place: salary, tax, spending, savings and the dates that matter."]
+    [:p {:class "mt-4 text-zinc-400 leading-relaxed"}
+     "No judgment, no jargon, no instant-wealth promises. Just a system that lets you feel what you earn and build control, one decision at a time."]
+    [:div {:class "mt-8 flex items-center gap-4"}
+     [:div {:class "h-px w-10 bg-emerald-500"}]
+     [:span {:class "text-xl font-giza font-bold text-zinc-100 leading-none"} "greed."]]]])
+
 (defn get-card-type [card-type]
   (case card-type
     :visa (svgs/visa)

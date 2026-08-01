@@ -4,6 +4,7 @@
             [clojure.java.io :as io]
             [ring.util.response :as ring-response]
             [com.greed.settings :as settings]
+            [com.greed.ui.components.footer :as footer]
             [com.greed.ui.components.headers :as headers]))
 
 (defn static-path [path]
@@ -47,16 +48,19 @@
    body))
 
 (defn page [ctx & body]
-  (base ctx [:.pattern.min-h-screen body]))
+  (base ctx [:div {:class "min-h-screen flex flex-col"}
+             [:div {:class "pattern flex-1"} body]
+             (footer/footer)]))
 
 (defn app [ctx & body]
   (base
    ctx
    [:div {:class "flex min-h-screen bg-zinc-50"}
     (headers/app ctx)
-    [:main {:class "flex-1 pt-14 md:pt-0 md:ml-64 min-h-screen"}
-     [:div {:class "p-6"}
-      body]]]))
+    [:main {:class "flex-1 pt-14 md:pt-0 md:ml-64 min-h-screen flex flex-col"}
+     [:div {:class "p-6 flex-1"}
+      body]
+     (footer/footer)]]))
 
 (defn on-error [{:keys [status] :as ctx}]
   {:status status

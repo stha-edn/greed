@@ -63,11 +63,7 @@
        [:p {:class "text-xl font-bold text-zinc-900"} "ZAR"]
        [:p {:class "text-xs text-zinc-400 mt-0.5"} "South African Rand"]]]]
     [:div {:class "flex-1 flex justify-center lg:justify-end"}
-     (cards/testiminial
-      :img "/img/avatar.svg"
-      :title "Changed how I manage money"
-      :body "Greed helped me understand exactly how much tax I owe each month and where my money is going. I use the tax returns tool every filing season."
-      :author "Zanele M.")]]
+     (cards/note-from-greed)]]
 
    ;; Tools section
    [:div {:class "pb-20 lg:pb-28"}

@@ -2,6 +2,7 @@
   (:require [com.biffweb :as biff]
    [com.greed.middleware :as mid]
    [com.greed.ui :as ui]
+   [com.greed.ui.pages.about :as p.about]
    [com.greed.ui.pages.home :as p.home]
    [com.greed.ui.pages.team :as p.team]
    [com.greed.ui.pages.signin :as p.signin]
@@ -19,6 +20,12 @@
     ctx
     (headers/pages ctx)
     (p.team/page)))
+
+(defn about-page [ctx]
+  (ui/page
+    ctx
+    (headers/pages ctx)
+    (p.about/page)))
 
 (defn signin-page [{:keys [recaptcha/site-key] :as ctx}]
   (ui/page
@@ -48,7 +55,8 @@
 
 (def module
   {:routes [["/"                  {:get home-page}]
-            ["/team"               {:get team-page}]
+            ["/about"             {:get about-page}]
+            ["/team"              {:get team-page}]
             ["/signin"             {:get signin-page}]
             ["/signup"             {:get signup-page}]
             ["/authenticate" {:middleware [mid/wrap-authenticate]}
