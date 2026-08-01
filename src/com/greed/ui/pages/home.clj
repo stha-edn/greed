@@ -44,12 +44,17 @@
      [:p {:class "mt-4 text-lg text-zinc-500 leading-relaxed"}
       "Greed gives you the tools to track your spending, understand your tax obligations, and make smarter financial decisions — all in one place."]
      [:div {:class "flex flex-wrap gap-3 mt-8"}
-      [:a {:href "/signup"
-           :class "px-6 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors"}
-       "Get started for free"]
-      [:a {:href "/signin"
-           :class "px-6 py-3 text-sm font-semibold text-zinc-700 border border-zinc-300 rounded-xl hover:border-zinc-500 hover:bg-zinc-50 transition-colors"}
-       "Sign in"]]
+      (if signed-in?
+        [:a {:href "/app"
+             :class "px-6 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors"}
+         "Go to dashboard"]
+        [:div {:class "flex flex-wrap gap-3"}
+         [:a {:href "/signup"
+              :class "px-6 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors"}
+          "Get started for free"]
+         [:a {:href "/signin"
+              :class "px-6 py-3 text-sm font-semibold text-zinc-700 border border-zinc-300 rounded-xl hover:border-zinc-500 hover:bg-zinc-50 transition-colors"}
+          "Sign in"]])]
      [:div {:class "flex items-center gap-6 mt-10"}
       [:div
        [:p {:class "text-xl font-bold text-zinc-900"} "SARS"]
