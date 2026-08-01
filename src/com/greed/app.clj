@@ -26,7 +26,7 @@
               ["/add-modal" {:get tables/add-modal}]
               ["/create-budget-item" {:post mid/create-budget-item}]
               ["/update-budget-item" {:post mid/update-budget-item}]
-              ["/delete-budget-item" {:get mid/delete-budget-item}]]
+              ["/delete-budget-item" {:post mid/delete-budget-item}]]
              ["/goals"
               ["" {:get goals/page}]
               ["/create-goal" {:post mid/create-goal}]

@@ -74,12 +74,12 @@
   (fn [{:keys [uri] :as ctx}]
     (let [page (if (= "/authenticate/signup" uri) "signup" "signin")]
       (cond
-        (and (= "/authenticate/signin" uri)
+        (and (contains? #{"/authenticate/signin" "/authenticate/signup"} uri)
              (rate-limit-exceeded? (get-client-ip ctx) 5 (* 60 1000)))
-        (do (logger/info (str "Sign-in rate limit exceeded for IP " (get-client-ip ctx)))
+        (do (logger/info (str "Authentication rate limit exceeded for IP " (get-client-ip ctx)))
             {:status 429
              :headers {"content-type" "text/html; charset=utf-8"}
-             :body "<h1>Too many sign-in attempts</h1><p>Please wait a minute and try again.</p>"})
+             :body "<h1>Too many attempts</h1><p>Please wait a minute and try again.</p>"})
 
         (not (biff-auth/passed-recaptcha? ctx))
         {:status 303
@@ -94,13 +94,21 @@
         :else (handler ctx)))))
 
 (defn save-user [ctx]
-  (let [user-id (data/get-user-id ctx)
-        user (data/get-user ctx user-id)]
-    (if user
-      (data/update-user ctx)
-      (data/upsert-user ctx)))
-  {:status 303
-   :headers {"location" "/app/settings?alert=user-saved"}})
+  (let [user-id (data/get-user-id-from-session ctx)
+        user    (data/get-user ctx user-id)]
+    (cond
+      (nil? user)
+      {:status 303
+       :headers {"location" "/signin?error=not-signed-in"}}
+
+      (data/email-taken-by-other? ctx user-id)
+      {:status 303
+       :headers {"location" "/app/settings?error=email-taken"}}
+
+      :else
+      (do (data/update-user ctx)
+          {:status 303
+           :headers {"location" "/app/settings?alert=user-saved"}}))))
 
 (defn save-finances [ctx]
   (let [user-id (data/get-user-id-from-session ctx)

@@ -39,7 +39,7 @@
   (let [user-id (biff/lookup-id db :user/email (:email params))]
     {:status 303
      :headers {"Location" "/app"}
-     :session (assoc session :uid user-id)}))
+     :session (with-meta (assoc session :uid user-id) {:recreate true})}))
 
 (defn signup-page [{:keys [recaptcha/site-key] :as ctx}]
   (let [ctx (assoc ctx :site-key site-key
@@ -53,7 +53,7 @@
   (let [user-id (biff/lookup-id db :user/email (:email params))]
     {:status 303
      :headers {"Location" "/app"}
-     :session (assoc session :uid user-id)}))
+     :session (with-meta (assoc session :uid user-id) {:recreate true})}))
 
 (def module
   {:routes [["/"                  {:get home-page}]

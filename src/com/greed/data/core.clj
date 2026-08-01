@@ -18,6 +18,18 @@
 (defn get-user-id-from-session [{:keys [session]}]
   (:uid session))
 
+(defn owned-by-session?
+  "True when the session's uid matches the owner of the given record."
+  [{:keys [session]} owner-id]
+  (= (:uid session) owner-id))
+
+(defn email-taken-by-other?
+  "True when the submitted email belongs to a user other than the given user-id."
+  [{:keys [biff/db params]} user-id]
+  (let [email       (:email params)
+        existing-id (biff/lookup-id db :user/email email)]
+    (and (some? existing-id) (not= existing-id user-id))))
+
 (defn get-user [{:keys [biff/db]} user-id]
   (first (q db
             '{:find (pull user [*])
@@ -70,20 +82,21 @@
                       :user/age (utilities/->int (:age params))}])))
 
 (defn update-user [{:keys [params] :as ctx}]
-  (let [user-id (get-user-id ctx)
+  (let [user-id (get-user-id-from-session ctx)
         user (get-user ctx user-id)]
     (if user
       (do
         (logger/info "Updating user...")
         (biff/submit-tx ctx
-                        [{:db/doc-type :user
-                          :xt/id user-id
-                          :db/op :update
-                          :user/email (:email params)
-                          :user/password (hash-password (:password params))
-                          :user/firstname (:firstname params)
-                          :user/lastname (:lastname params)
-                          :user/age (utilities/->int (:age params))}]))
+                        (cond-> [{:db/doc-type :user
+                                  :xt/id user-id
+                                  :db/op :update
+                                  :user/email (:email params)
+                                  :user/firstname (:firstname params)
+                                  :user/lastname (:lastname params)
+                                  :user/age (utilities/->int (:age params))}]
+                          (not (str/blank? (:password params)))
+                          (assoc-in [0 :user/password] (hash-password (:password params))))))
       (logger/info "User not found"))))
 
 (defn upsert-finances [{:keys [params] :as ctx}]
@@ -286,13 +299,23 @@
                       :event/date (:date params)
                       :event/type type}])))
 
+(defn get-event [{:keys [biff/db]} event-id]
+  (first (q db
+            '{:find (pull event [*])
+              :in [event-id]
+              :where [[event :xt/id event-id]]}
+            event-id)))
+
 (defn delete-event [{:keys [params] :as ctx}]
-  (let [event-id (utilities/->uuid (:event-id params))]
-    (logger/info "Deleting event...")
-    (biff/submit-tx ctx
-                    [{:db/doc-type :event
-                      :xt/id event-id
-                      :db/op :delete}])))
+  (let [event-id (utilities/->uuid (:event-id params))
+        event    (get-event ctx event-id)]
+    (if (and event (owned-by-session? ctx (:event/user-id event)))
+      (do (logger/info "Deleting event...")
+          (biff/submit-tx ctx
+                          [{:db/doc-type :event
+                            :xt/id event-id
+                            :db/op :delete}]))
+      (logger/info "Event not found or unauthorized"))))
 
 (defn upsert-budget-item [{:keys [params] :as ctx}]
   (let [user-id (get-user-id-from-session ctx)
@@ -308,11 +331,10 @@
 
 (defn update-budget-item [{:keys [params] :as ctx}]
   (let [{:keys [budget-item-id]} params
-        _ (println "Updating budget item with ID:" budget-item-id)
         budget-item-id (utilities/->uuid budget-item-id)
-        {:budget-item/keys [type]
+        {:budget-item/keys [type user-id]
          :as budget-item} (get-budget-item ctx budget-item-id)]
-    (if budget-item
+    (if (and budget-item (owned-by-session? ctx user-id))
       (do
         (logger/info "Updating budget item...")
         (biff/submit-tx ctx
@@ -322,19 +344,20 @@
                           :budget-item/title (:title params)
                           :budget-item/type type
                           :budget-item/amount (validation/->valid-amount (:amount params))}]))
-      (logger/info "Budget item not found"))))
+      (logger/info "Budget item not found or unauthorized"))))
 
 (defn delete-budget-item [{:keys [params] :as ctx}]
   (let [{:keys [budget-item-id]} params
         budget-item-id (utilities/->uuid budget-item-id)
-        budget-item (get-budget-item ctx budget-item-id)]
-    (if budget-item
+        {:budget-item/keys [user-id]
+         :as budget-item} (get-budget-item ctx budget-item-id)]
+    (if (and budget-item (owned-by-session? ctx user-id))
       (do (logger/info "Deleting budget item...")
           (biff/submit-tx ctx
                           [{:db/doc-type :budget-item
                             :xt/id budget-item-id
                             :db/op :delete}]))
-      (logger/info "Budget item not found"))))
+      (logger/info "Budget item not found or unauthorized"))))
 
 ;; ---------------------------------------------------------------------------
 ;; Goals
@@ -372,7 +395,7 @@
   (let [goal-id     (utilities/->uuid (:goal-id params))
         goal        (get-goal ctx goal-id)
         target-date (:target-date params)]
-    (if goal
+    (if (and goal (owned-by-session? ctx (:goal/user-id goal)))
       (do (logger/info "Updating goal...")
           (biff/submit-tx ctx
                           [(cond-> {:db/doc-type :goal
@@ -383,15 +406,15 @@
                                     :goal/saved (or (utilities/->int (:saved params)) 0)}
                              (not (str/blank? target-date))
                              (assoc :goal/target-date target-date))]))
-      (logger/info "Goal not found"))))
+      (logger/info "Goal not found or unauthorized"))))
 
 (defn delete-goal [{:keys [params] :as ctx}]
   (let [goal-id (utilities/->uuid (:goal-id params))
         goal    (get-goal ctx goal-id)]
-    (if goal
+    (if (and goal (owned-by-session? ctx (:goal/user-id goal)))
       (do (logger/info "Deleting goal...")
           (biff/submit-tx ctx
                           [{:db/doc-type :goal
                             :xt/id goal-id
                             :db/op :delete}]))
-      (logger/info "Goal not found"))))
+      (logger/info "Goal not found or unauthorized"))))

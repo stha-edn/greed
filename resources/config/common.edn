@@ -4,6 +4,7 @@
  :error/invalid-credentials "Invalid credentials. Try again."
  :error/send-failed (str "We weren't able to send an email to that address. "
                          "If the problem persists, try another address.")
+ :error/email-taken "That email is already in use by another account."
  :error/default "There was an error."
 
  :alert/user-saved "Your user has been successfully saved or updated."

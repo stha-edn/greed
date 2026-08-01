@@ -7,6 +7,7 @@
             [com.greed.app :as app]
             [com.greed.authentication :as auth]
             [com.greed.data.core :as data]
+            [com.greed.home :as home]
             [com.greed.middleware :as mid]
             [malli.generator :as mg]
             [rum.core :as rum]
@@ -57,10 +58,131 @@
   (testing "falls back to remote-addr"
     (is (= "127.0.0.1" (mid/get-client-ip {:remote-addr "127.0.0.1"})))))
 
-#_(defn get-context [node]
+(defn get-context [node]
   {:biff.xtdb/node  node
    :biff/db         (xt/db node)
    :biff/malli-opts #'main/malli-opts})
+
+(deftest save-user-scoped-to-session-test
+  (let [alice-id #uuid "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+        bob-id   #uuid "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"]
+    (with-open [node (test-xtdb-node [{:xt/id      alice-id
+                                       :user/email "alice@example.com"
+                                       :user/password (data/hash-password "alice-pass")
+                                       :user/firstname "Alice"}
+                                      {:xt/id      bob-id
+                                       :user/email "bob@example.com"
+                                       :user/password (data/hash-password "bob-pass")
+                                       :user/firstname "Bob"}])]
+      (testing "cannot change another user's password by submitting their email"
+        (let [ctx (assoc (get-context node)
+                         :session {:uid bob-id}
+                         :params {:email "alice@example.com"
+                                  :password "hacked"
+                                  :firstname "Bob"
+                                  :lastname "B"
+                                  :age "30"})
+              resp (mid/save-user ctx)
+              alice (data/get-user (assoc (get-context node) :biff/db (xt/db node)) alice-id)]
+          (is (= 303 (:status resp)))
+          (is (str/includes? (get-in resp [:headers "location"]) "error=email-taken"))
+          (is (not (:valid? (auth/validate-password? "hacked" (:user/password alice)))))
+          (is (:valid? (auth/validate-password? "alice-pass" (:user/password alice))))))
+      (testing "updates the session user's own record"
+        (let [ctx (assoc (get-context node)
+                         :session {:uid bob-id}
+                         :params {:email "bob@example.com"
+                                  :password ""
+                                  :firstname "Bobby"
+                                  :lastname "B"
+                                  :age "31"})
+              resp (mid/save-user ctx)
+              bob (data/get-user (assoc (get-context node) :biff/db (xt/db node)) bob-id)]
+          (is (= 303 (:status resp)))
+          (is (= "Bobby" (:user/firstname bob)))
+          (is (:valid? (auth/validate-password? "bob-pass" (:user/password bob)))))))))
+
+(deftest ownership-test
+  (let [alice-id  #uuid "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+        bob-id    #uuid "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+        budget-id #uuid "11111111-1111-1111-1111-111111111111"
+        goal-id   #uuid "22222222-2222-2222-2222-222222222222"
+        event-id  #uuid "33333333-3333-3333-3333-333333333333"]
+    (with-open [node (test-xtdb-node [{:xt/id      alice-id
+                                       :user/email "alice@example.com"
+                                       :user/password (data/hash-password "alice-pass")
+                                       :user/firstname "Alice"}
+                                      {:xt/id      bob-id
+                                       :user/email "bob@example.com"
+                                       :user/password (data/hash-password "bob-pass")
+                                       :user/firstname "Bob"}
+                                      {:xt/id               budget-id
+                                       :budget-item/user-id alice-id
+                                       :budget-item/title   "Groceries"
+                                       :budget-item/type    :expenses
+                                       :budget-item/amount  1000}
+                                      {:xt/id            goal-id
+                                       :goal/user-id     alice-id
+                                       :goal/title       "Holiday"
+                                       :goal/target      50000
+                                       :goal/saved       1000}
+                                      {:xt/id           event-id
+                                       :event/user-id   alice-id
+                                       :event/title     "Dentist"
+                                       :event/date      "2026-08-15"}])]
+      (testing "a user cannot update another user's budget item"
+        (let [ctx (assoc (get-context node)
+                         :session {:uid bob-id}
+                         :params {:budget-item-id (str budget-id) :title "Hacked" :amount "9999"})]
+          (data/update-budget-item ctx)
+          (let [item (data/get-budget-item (assoc (get-context node) :biff/db (xt/db node)) budget-id)]
+            (is (= "Groceries" (:budget-item/title item)))
+            (is (= 1000 (:budget-item/amount item))))))
+      (testing "a user cannot delete another user's budget item"
+        (let [ctx (assoc (get-context node)
+                         :session {:uid bob-id}
+                         :params {:budget-item-id (str budget-id)})]
+          (data/delete-budget-item ctx)
+          (let [db (xt/db node)]
+            (is (some? (data/get-budget-item {:biff/db db} budget-id))))))
+      (testing "a user can update their own budget item"
+        (let [ctx (assoc (get-context node)
+                         :session {:uid alice-id}
+                         :params {:budget-item-id (str budget-id) :title "Groceries+" :amount "1100"})]
+          (data/update-budget-item ctx)
+          (let [item (data/get-budget-item (assoc (get-context node) :biff/db (xt/db node)) budget-id)]
+            (is (= "Groceries+" (:budget-item/title item)))
+            (is (= 1100 (:budget-item/amount item))))))
+      (testing "a user cannot update or delete another user's goal"
+        (let [ctx (assoc (get-context node)
+                         :session {:uid bob-id}
+                         :params {:goal-id (str goal-id) :title "Hacked" :target "1" :saved "0"})]
+          (data/update-goal ctx)
+          (is (= "Holiday" (:goal/title (data/get-goal (assoc (get-context node) :biff/db (xt/db node)) goal-id))))
+          (data/delete-goal ctx)
+          (is (some? (data/get-goal {:biff/db (xt/db node)} goal-id)))))
+      (testing "a user cannot delete another user's event"
+        (let [ctx (assoc (get-context node)
+                         :session {:uid bob-id}
+                         :params {:event-id (str event-id)})]
+          (data/delete-event ctx)
+          (is (some? (data/get-event {:biff/db (xt/db node)} event-id))))))))
+
+(deftest session-recreate-test
+  (testing "login responses carry :recreate metadata to rotate the session id"
+    (with-open [node (test-xtdb-node [{:user/email "alice@example.com"
+                                       :user/password (data/hash-password "alice-pass")
+                                       :user/firstname "Alice"}])]
+      (let [ctx  (assoc (get-context node)
+                        :params {:email "alice@example.com"}
+                        :session {:csrf-token "x"})
+            resp (home/signin-success-page ctx)
+            md   (meta (:session resp))]
+        (is (contains? md :recreate))
+        (is (true? (:recreate md)))
+        (is (= (biff/lookup-id (xt/db node) :user/email "alice@example.com")
+               (:uid (:session resp))))))))
+
 
 #_(deftest send-message-test
   (with-open [node (test-xtdb-node [])]

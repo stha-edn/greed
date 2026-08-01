@@ -18,6 +18,7 @@
             :invalid-email (:error/invalid-email config)
             :invalid-credentials (:error/invalid-credentials config)
             :send-failed (:error/send-failed config)
+            :email-taken (:error/email-taken config)
             (:error/default config)))]])))
 
 (defn sign-in [{:keys [site-key] :as ctx}]
@@ -98,7 +99,12 @@
      (shared/app-input ctx :id "lastname" :type "text" :label "Last Name" :required? true)
      (shared/app-input ctx :id "age" :type "number" :label "Age" :required? true)
      (shared/app-input ctx :id "email" :type "text" :label "Email" :required? true)
-     (shared/app-input ctx :id "password" :type "password" :label "Password" :required? true)]
+     [:div {:class "mt-4"}
+      [:label {:class "block text-sm font-medium text-zinc-700 mb-1" :for "password"} "Password"]
+      [:input {:class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 placeholder-zinc-400 transition-colors duration-150"
+               :id "password" :name "password" :type "password"
+               :placeholder "Leave blank to keep your current password"}]
+      [:p {:class "text-xs text-zinc-400 mt-1"} "Only enter a new password if you want to change it."]]]
     [:div {:class "flex justify-end mt-5"}
      [:button {:class "px-6 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"
                :type "submit"}
@@ -238,10 +244,13 @@
      [:button {:type "submit"
                :class "flex-1 px-4 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"}
       "Update"]
-     [:a {:href (str "/app/finances/delete-budget-item?budget-item-id=" (:xt/id item))
-          :class "flex-1 px-4 py-2 text-sm font-medium text-center text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"}
-      "Delete"]]
-    [:div {:class "mt-2"}
      [:button {:type "button" "@click" "isActionModalOpen = false"
-               :class "w-full px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"}
-      "Cancel"]])])
+               :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"}
+      "Cancel"]])
+   (biff/form
+    {:class "mt-2" :action "/app/finances/delete-budget-item"}
+    [:input {:type "hidden" :name "budget-item-id" :value (str (:xt/id item))}]
+    [:button {:type "submit"
+              :onclick "return confirm('Delete this budget item?')"
+              :class "w-full px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"}
+     "Delete"])])
