@@ -1,11 +1,60 @@
 (ns com.greed.middleware
-  (:require [com.biffweb :as biff]
+  (:require [clojure.tools.logging :as logger]
+            [com.biffweb :as biff]
             [com.biffweb.impl.auth :as biff-auth]
             [muuntaja.middleware :as muuntaja]
             [ring.middleware.anti-forgery :as csrf]
             [ring.middleware.defaults :as rd]
             [com.greed.data.core :as data]
             [com.greed.authentication :as auth]))
+
+(defonce signin-attempts (atom {}))
+
+(defn get-client-ip [ctx]
+  (or (get-in ctx [:headers "x-real-ip"])
+      (:remote-addr ctx)))
+
+(defn rate-limit-exceeded?
+  "Fixed-window rate limit keyed by an arbitrary string.
+  Returns true when `limit` or more attempts happen within `window-ms`.
+  Stale entries are pruned so the atom stays bounded."
+  [key limit window-ms]
+  (let [now (System/currentTimeMillis)
+        window (quot now window-ms)
+        limits (swap! signin-attempts
+                      (fn [m]
+                        (let [pruned (if (< 1000 (count m))
+                                       (into {}
+                                             (filter (fn [[_ e]] (= window (:window e))))
+                                             m)
+                                       m)
+                              entry (get pruned key)]
+                          (if (and entry (= window (:window entry)))
+                            (assoc pruned key (update entry :count inc))
+                            (assoc pruned key {:count 1 :window window})))))]
+    (> (:count (get limits key)) limit)))
+
+(def csp-header
+  (str "default-src 'self'; "
+       "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+       "https://unpkg.com https://cdn.jsdelivr.net "
+       "https://www.googletagmanager.com https://www.google.com https://www.gstatic.com; "
+       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+       "font-src 'self' https://fonts.gstatic.com; "
+       "img-src 'self' data: https://www.google.com https://www.gstatic.com "
+       "https://www.googletagmanager.com; "
+       "connect-src 'self' https://cdn.jsdelivr.net https://www.google.com "
+       "https://www.gstatic.com https://www.google-analytics.com "
+       "https://region1.google-analytics.com ws://mygreed.co.za wss://mygreed.co.za; "
+       "frame-src https://www.google.com https://www.gstatic.com; "
+       "base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'none'"))
+
+(defn wrap-security-headers [handler]
+  (fn [ctx]
+    (let [resp (handler ctx)]
+      (if (map? resp)
+        (update resp :headers assoc "Content-Security-Policy" csp-header)
+        resp))))
 
 (defn wrap-redirect-signed-in [handler]
   (fn [{:keys [session] :as ctx}]
@@ -25,6 +74,13 @@
   (fn [{:keys [uri] :as ctx}]
     (let [page (if (= "/authenticate/signup" uri) "signup" "signin")]
       (cond
+        (and (= "/authenticate/signin" uri)
+             (rate-limit-exceeded? (get-client-ip ctx) 5 (* 60 1000)))
+        (do (logger/info (str "Sign-in rate limit exceeded for IP " (get-client-ip ctx)))
+            {:status 429
+             :headers {"content-type" "text/html; charset=utf-8"}
+             :body "<h1>Too many sign-in attempts</h1><p>Please wait a minute and try again.</p>"})
+
         (not (biff-auth/passed-recaptcha? ctx))
         {:status 303
          :headers {"location" (str "/" page "?error=recaptcha")}}
@@ -128,4 +184,5 @@
       biff/wrap-resource
       biff/wrap-internal-error
       biff/wrap-ssl
-      biff/wrap-log-requests))
+      biff/wrap-log-requests
+      wrap-security-headers))

@@ -7,6 +7,7 @@
             [com.greed.app :as app]
             [com.greed.authentication :as auth]
             [com.greed.data.core :as data]
+            [com.greed.middleware :as mid]
             [malli.generator :as mg]
             [rum.core :as rum]
             [xtdb.api :as xt]))
@@ -25,6 +26,36 @@
     (testing "legacy plaintext passwords still verify"
       (is (:valid? (auth/validate-password? plaintext plaintext)))
       (is (not (:valid? (auth/validate-password? "wrong" plaintext)))))))
+
+(deftest rate-limit-test
+  (reset! mid/signin-attempts {})
+  (testing "allows up to the limit within a window"
+    (doseq [n (range 5)]
+      (is (not (mid/rate-limit-exceeded? "1.2.3.4" 5 (* 60 1000))))))
+  (testing "blocks beyond the limit"
+    (is (mid/rate-limit-exceeded? "1.2.3.4" 5 (* 60 1000))))
+  (testing "different keys are tracked independently"
+    (reset! mid/signin-attempts {})
+    (is (not (mid/rate-limit-exceeded? "5.6.7.8" 5 (* 60 1000)))))
+  (reset! mid/signin-attempts {}))
+
+(deftest csp-header-test
+  (let [wrapped (mid/wrap-security-headers (fn [_] {:status 200 :headers {} :body "ok"}))
+        resp (wrapped {:uri "/"})]
+    (testing "adds a Content-Security-Policy header"
+      (is (some? (get-in resp [:headers "Content-Security-Policy"]))))
+    (testing "policy blocks object/embed injection"
+      (is (str/includes? (get-in resp [:headers "Content-Security-Policy"]) "object-src 'none'")))
+    (testing "policy allows the third-party scripts the app uses"
+      (let [csp (get-in resp [:headers "Content-Security-Policy"])]
+        (is (str/includes? csp "https://unpkg.com"))
+        (is (str/includes? csp "https://cdn.jsdelivr.net"))))))
+
+(deftest client-ip-test
+  (testing "reads the nginx-provided real IP header"
+    (is (= "203.0.113.9" (mid/get-client-ip {:headers {"x-real-ip" "203.0.113.9"}}))))
+  (testing "falls back to remote-addr"
+    (is (= "127.0.0.1" (mid/get-client-ip {:remote-addr "127.0.0.1"})))))
 
 #_(defn get-context [node]
   {:biff.xtdb/node  node
