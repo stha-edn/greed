@@ -1,8 +1,10 @@
 (ns repl
   (:require [com.greed :as main]
             [com.biffweb :as biff :refer [q]]
+            [com.greed.data.core :as data]
             [clojure.edn :as edn]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [clojure.string :as str]))
 
 ;; REPL-driven development
 ;; ----------------------------------------------------------------------------------------
@@ -26,6 +28,39 @@
 ;; the use-jetty component merges the system map into incoming Ring requests.
 (defn get-context []
   (biff/merge-context @main/system))
+
+(defn bcrypt-user-password
+  "Re-hashes a user's stored password to bcrypt, selected by email.
+  Useful for upgrading users who still have legacy plaintext passwords.
+  Returns the user id, or nil if no user has that email."
+  [email]
+  (let [{:keys [biff/db] :as ctx} (get-context)
+        user-id (biff/lookup-id db :user/email email)
+        user    (when user-id (data/get-user ctx user-id))]
+    (when user
+      (biff/submit-tx ctx
+        [{:db/doc-type :user
+          :xt/id user-id
+          :db/op :update
+          :user/password (data/hash-password (:user/password user))}]))))
+
+(defn bcrypt-all-plaintext-passwords
+  "Sweeps the whole db and re-hashes every user whose stored password isn't
+  already bcrypt. Returns the list of emails that were upgraded."
+  []
+  (let [{:keys [biff/db] :as ctx} (get-context)
+        users (q db
+                 '{:find (pull user [*])
+                   :where [[user :user/email]]})
+        plaintext-users (filter #(not (str/starts-with? (:user/password %) "bcrypt"))
+                                users)]
+    (doseq [user plaintext-users]
+      (biff/submit-tx ctx
+        [{:db/doc-type :user
+          :xt/id (:xt/id user)
+          :db/op :update
+          :user/password (data/hash-password (:user/password user))}]))
+    (mapv :user/email plaintext-users)))
 
 (defn add-fixtures []
   (biff/submit-tx (get-context)
@@ -128,6 +163,31 @@
 
   ;; (prod/query-users)
   ;; (prod/query-all)
+
+  ;; --------------------------------------------------------------------------
+  ;; Password hashing / migration
+  ;; --------------------------------------------------------------------------
+  ;;
+  ;; Accounts created before bcrypt hashing store plaintext passwords. They
+  ;; still verify (validate-password? handles both), but re-hash them so they're
+  ;; stored as bcrypt. Both helpers below submit the write transaction.
+
+  ;; Re-hash ONE user's password to bcrypt, selected by email:
+  (bcrypt-user-password "you@example.com")
+
+  ;; Upgrade EVERY user with a non-bcrypt password. Returns the list of emails
+  ;; that were upgraded:
+  (bcrypt-all-plaintext-passwords)
+
+  ;; Or do it manually: fetch the user, then submit an update with a fresh hash.
+  (let [{:keys [biff/db] :as ctx} (get-context)
+        user-id (biff/lookup-id db :user/email "you@example.com")
+        user    (data/get-user ctx user-id)]
+    (biff/submit-tx ctx
+      [{:db/doc-type :user
+        :xt/id user-id
+        :db/op :update
+        :user/password (data/hash-password (:user/password user))}]))
   )
 
 (comment

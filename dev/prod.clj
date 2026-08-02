@@ -91,11 +91,51 @@
     (doseq [d (first docs)]
       (pp/pprint d))))
 
+(defn bcrypt-user-password
+  "Re-hashes a prod user's stored password to bcrypt, selected by email.
+  Returns the user id (or nil if no such email)."
+  [email]
+  (let [code (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+                  "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")"
+                  "        user (when user-id (com.greed.data.core/get-user ctx user-id))]"
+                  "  (when user"
+                  "    (com.biffweb/submit-tx ctx"
+                  "      [{:db/doc-type :user"
+                  "        :xt/id user-id"
+                  "        :db/op :update"
+                  "        :user/password (com.greed.data.core/hash-password (:user/password user))}]))"
+                  "  user-id)")]
+    (first (eval-code code))))
+
+(defn bcrypt-all-plaintext-passwords
+  "Re-hashes every prod user whose stored password isn't already bcrypt.
+  Returns the list of upgraded emails."
+  []
+  (let [code (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+                  "        users (com.biffweb/q db"
+                  "                 '{:find (pull user [*])"
+                  "                   :where [[user :user/email]]})"
+                  "        plaintext (filter #(not (clojure.string/starts-with? (:user/password %) \"bcrypt\")) users)]"
+                  "  (doseq [user plaintext]"
+                  "    (com.biffweb/submit-tx ctx"
+                  "      [{:db/doc-type :user"
+                  "        :xt/id (:xt/id user)"
+                  "        :db/op :update"
+                  "        :user/password (com.greed.data.core/hash-password (:user/password user))}]))"
+                  "  (mapv :user/email plaintext))")]
+    (first (eval-code code))))
+
 (comment
   ;; Make sure the tunnel is up first (see ns docstring), then:
   (query-users)
   (query-budget-items)
   (query-all)
+
+  ;; Re-hash one prod user's password to bcrypt, by email:
+  (bcrypt-user-password "you@example.com")
+
+  ;; Upgrade every prod user with a plaintext password; returns upgraded emails:
+  (bcrypt-all-plaintext-passwords)
 
   ;; Arbitrary query, e.g. count users:
   (query-raw
