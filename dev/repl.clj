@@ -54,6 +54,83 @@
      :dev-secrets (get-secrets dev-config)}))
 
 (comment
+  ;; --------------------------------------------------------------------------
+  ;; Querying the database
+  ;; --------------------------------------------------------------------------
+  ;;
+  ;; The `clj -M:dev dev` command starts an nREPL server on port 7888. Connect
+  ;; your editor to it (e.g. Cursive: "Connect to Running REPL" ->
+  ;; nrepl://localhost:7888; Calva will pick up .nrepl-port automatically).
+  ;;
+  ;; All queries below read from the DEV database (local storage/xtdb). See the
+  ;; "Production" section below for querying prod.
+
+  ;; All users (the "user table")
+  (let [{:keys [biff/db] :as ctx} (get-context)]
+    (q db
+       '{:find (pull user [*])
+         :where [[user :user/email]]}))
+
+  ;; One user by email
+  (biff/lookup-id (:biff/db (get-context)) :user/email "you@example.com")
+
+  ;; All budget items
+  (let [{:keys [biff/db] :as ctx} (get-context)]
+    (q db
+       '{:find (pull b [*])
+         :where [[b :budget-item/user-id]]}))
+
+  ;; All goals
+  (let [{:keys [biff/db] :as ctx} (get-context)]
+    (q db
+       '{:find (pull g [*])
+         :where [[g :goal/user-id]]}))
+
+  ;; All events
+  (let [{:keys [biff/db] :as ctx} (get-context)]
+    (q db
+       '{:find (pull e [*])
+         :where [[e :event/user-id]]}))
+
+  ;; Count users
+  (count (q (:biff/db (get-context))
+            '{:find [user]
+              :where [[user :user/email]]}))
+
+  ;; Every "table" (XTDB doc type) present in the db
+  (sort (map :db/doc-type
+             (q (:biff/db (get-context))
+                '{:find [(pull e [*])]
+                  :where [[e :db/doc-type]]})))
+
+  ;; --------------------------------------------------------------------------
+  ;; Production
+  ;; --------------------------------------------------------------------------
+  ;;
+  ;; The prod app also runs an nREPL server on port 7888 (see NREPL_PORT in
+  ;; config.env), but it's only reachable on the server itself. To connect,
+  ;; open an SSH tunnel from your machine, then connect your editor to the
+  ;; LOCAL port you chose instead of 7888:
+  ;;
+  ;;   ssh -f -N -L 7889:localhost:7888 app@mygreed.co.za
+  ;;
+  ;;   -> connect to nrepl://localhost:7889
+  ;;
+  ;; Once connected, run the same queries as above — they'll hit the prod
+  ;; Postgres-backed XTDB. To make sure you're on prod and not dev, check
+  ;; which users exist (dev and prod have different seed data), e.g.:
+  ;;
+  ;;   (let [{:keys [biff/db]} (get-context)]
+  ;;     (count (q db '{:find [user] :where [[user :user/email]]})))
+  ;;
+  ;; You can also use the `prod` helpers below for the same queries in one go.
+  ;; Note: these only work when the tunnel is up.
+
+  ;; (prod/query-users)
+  ;; (prod/query-all)
+  )
+
+(comment
   ;; Call this function if you make a change to main/initial-system,
   ;; main/components, :tasks, :queues, config.env, or deps.edn.
   (main/refresh)
