@@ -72,7 +72,7 @@
    (section
     "Contact"
     [:p "Questions about your data or this policy? Get in touch at "
-     [:a {:href "mailto:hello@mygreed.co.za" :class "text-emerald-600 font-medium hover:underline"} "hello@mygreed.co.za"]
+     [:a {:href "mailto:support@mygreed.co.za" :class "text-emerald-600 font-medium hover:underline"} "support@mygreed.co.za"]
      "."])))
 
 (defn terms-page [_]
@@ -114,5 +114,5 @@
    (section
     "Contact"
     [:p "Questions about these terms? Get in touch at "
-     [:a {:href "mailto:hello@mygreed.co.za" :class "text-emerald-600 font-medium hover:underline"} "hello@mygreed.co.za"]
+     [:a {:href "mailto:support@mygreed.co.za" :class "text-emerald-600 font-medium hover:underline"} "support@mygreed.co.za"]
      "."])))
