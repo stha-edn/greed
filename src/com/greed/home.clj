@@ -5,6 +5,7 @@
    [com.greed.ui :as ui]
    [com.greed.ui.pages.about :as p.about]
    [com.greed.ui.pages.home :as p.home]
+   [com.greed.ui.pages.legal :as p.legal]
    [com.greed.ui.pages.team :as p.team]
    [com.greed.ui.pages.signin :as p.signin]
    [com.greed.ui.pages.signup :as p.signup]
@@ -27,6 +28,18 @@
     ctx
     (headers/pages ctx)
     (p.about/page ctx)))
+
+(defn privacy-page [ctx]
+  (ui/page
+    ctx
+    (headers/pages ctx)
+    (p.legal/privacy-page ctx)))
+
+(defn terms-page [ctx]
+  (ui/page
+    ctx
+    (headers/pages ctx)
+    (p.legal/terms-page ctx)))
 
 (defn signin-page [{:keys [recaptcha/site-key] :as ctx}]
   (let [ctx (assoc ctx :site-key site-key
@@ -60,6 +73,8 @@
   {:routes [["/"                  {:get home-page}]
             ["/about"             {:get about-page}]
             ["/team"              {:get team-page}]
+            ["/privacy"           {:get privacy-page}]
+            ["/terms"             {:get terms-page}]
             ["/signin"             {:get signin-page}]
             ["/signup"             {:get signup-page}]
             ["/authenticate" {:middleware [mid/wrap-authenticate]}

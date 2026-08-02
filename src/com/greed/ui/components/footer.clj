@@ -7,7 +7,7 @@
 (defn footer []
   [:footer {:class "border-t border-zinc-200 bg-white"}
    [:div {:class "container mx-auto px-6 py-12"}
-    [:div {:class "grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10"}
+    [:div {:class "grid grid-cols-1 sm:grid-cols-4 gap-8 sm:gap-10"}
      [:div
       [:a {:href "/" :class "inline-block"}
        [:span {:class "text-3xl font-giza font-bold text-zinc-900 leading-none"} "greed."]]
@@ -21,6 +21,11 @@
        (footer-link "/team" "Team")
        (footer-link "/signin" "Sign In")
        (footer-link "/signup" "Sign Up")]]
+     [:div {:class "sm:justify-self-center mt-4 sm:mt-0"}
+      [:p {:class "text-sm font-semibold text-zinc-900 mb-3"} "Legal"]
+      [:nav {:class "flex flex-col gap-2.5"}
+       (footer-link "/privacy" "Privacy Policy")
+       (footer-link "/terms" "Terms & Conditions")]]
      [:div {:class "sm:justify-self-end mt-4 sm:mt-0"}
       [:p {:class "text-sm font-semibold text-zinc-900 mb-3"} "Follow us"]
       [:a {:href "https://www.instagram.com/greed_za/"
