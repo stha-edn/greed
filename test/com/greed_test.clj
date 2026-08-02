@@ -69,11 +69,13 @@
     (with-open [node (test-xtdb-node [{:xt/id      alice-id
                                        :user/email "alice@example.com"
                                        :user/password (data/hash-password "alice-pass")
-                                       :user/firstname "Alice"}
+                                       :user/firstname "Alice"
+                                       :user/active true}
                                       {:xt/id      bob-id
                                        :user/email "bob@example.com"
                                        :user/password (data/hash-password "bob-pass")
-                                       :user/firstname "Bob"}])]
+                                       :user/firstname "Bob"
+                                       :user/active true}])]
       (testing "cannot change another user's password by submitting their email"
         (let [ctx (assoc (get-context node)
                          :session {:uid bob-id}
@@ -203,8 +205,9 @@
 
 
 (deftest user-active-predicate-test
-  (testing "a user is active unless explicitly flagged inactive"
-    (is (data/user-active? {}))
+  (testing "a user is active only when explicitly marked active"
+    (is (not (data/user-active? {})))
+    (is (not (data/user-active? {:user/active nil})))
     (is (data/user-active? {:user/active true}))
     (is (not (data/user-active? {:user/active false})))))
 
@@ -226,15 +229,26 @@
     (with-open [node (test-xtdb-node [{:xt/id #uuid "cccccccc-cccc-cccc-cccc-cccccccccccc"
                                        :user/email "dave@example.com"
                                        :user/password (data/hash-password "dave-pass")
-                                       :user/firstname "Dave"}])]
+                                       :user/firstname "Dave"
+                                       :user/active true}])]
       (let [ctx (assoc (get-context node)
                        :params {:email "dave@example.com" :password "dave-pass"})]
         (is (:valid? (auth/signin? ctx))))))
-  (testing "a wrong password is still invalid-credentials for an active user"
+  (testing "users missing :user/active are treated as deactivated"
     (with-open [node (test-xtdb-node [{:xt/id #uuid "cccccccc-cccc-cccc-cccc-cccccccccccc"
                                        :user/email "dave@example.com"
                                        :user/password (data/hash-password "dave-pass")
                                        :user/firstname "Dave"}])]
+      (let [ctx (assoc (get-context node)
+                       :params {:email "dave@example.com" :password "dave-pass"})]
+        (is (not (:valid? (auth/signin? ctx))))
+        (is (= :account-deactivated (:error (auth/signin? ctx)))))))
+  (testing "a wrong password is still invalid-credentials for an active user"
+    (with-open [node (test-xtdb-node [{:xt/id #uuid "cccccccc-cccc-cccc-cccc-cccccccccccc"
+                                       :user/email "dave@example.com"
+                                       :user/password (data/hash-password "dave-pass")
+                                       :user/firstname "Dave"
+                                       :user/active true}])]
       (let [ctx (assoc (get-context node)
                        :params {:email "dave@example.com" :password "wrong"})]
         (is (not (:valid? (auth/signin? ctx))))

@@ -109,9 +109,9 @@
   (add-user-role email :admin))
 
 (defn user-active?
-  "Returns whether the user with the given email is active. Users without an
-  explicit :user/active attribute count as active. Returns nil if no user has
-  that email."
+  "Returns whether the user with the given email is active. Only users with an
+  explicit :user/active true count as active; a missing or nil value counts as
+  deactivated. Returns nil if no user has that email."
   [email]
   (let [{:keys [biff/db] :as ctx} (get-context)
         user-id (biff/lookup-id db :user/email email)
@@ -321,9 +321,10 @@
   (prod-add-user-role email :admin))
 
 (defn prod-user-active?
-  "Returns whether the prod user with the given email is active. Users without
-  an explicit :user/active attribute count as active. Returns nil if no user
-  has that email. Requires the tunnel."
+  "Returns whether the prod user with the given email is active. Only users
+  with an explicit :user/active true count as active; a missing or nil value
+  counts as deactivated. Returns nil if no user has that email. Requires the
+  tunnel."
   [email]
   (first (prod-eval-code
            (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"

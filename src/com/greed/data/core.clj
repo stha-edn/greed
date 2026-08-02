@@ -70,9 +70,10 @@
   (hashers/derive password))
 
 (defn user-active?
-  "A user is active unless explicitly flagged inactive (:user/active false)."
+  "A user is active only when explicitly marked active (:user/active true).
+  A missing or nil :user/active counts as deactivated."
   [user]
-  (not= false (:user/active user)))
+  (true? (:user/active user)))
 
 (defn upsert-user [{:keys [params] :as ctx}]
   (let [user-id (java.util.UUID/randomUUID)]
