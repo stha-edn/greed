@@ -1,12 +1,10 @@
 (ns repl
   (:require [com.greed :as main]
-            [com.biffweb :as biff :refer [q]]
-            [com.greed.data.core :as data]
-            [clojure.edn :as edn]
-            [clojure.java.io :as io]
-            [clojure.pprint :as pp]
-            [clojure.string :as str]
-            [nrepl.core :as nrepl]))
+   [com.biffweb :as biff :refer [q]]
+   [clojure.edn :as edn]
+   [clojure.java.io :as io]
+   [clojure.pprint :as pp]
+   [nrepl.core :as nrepl]))
 
 ;; REPL-driven development
 ;; ----------------------------------------------------------------------------------------
@@ -31,152 +29,29 @@
 (defn get-context []
   (biff/merge-context @main/system))
 
-(defn bcrypt-user-password
-  "Re-hashes a user's stored password to bcrypt, selected by email.
-  Useful for upgrading users who still have legacy plaintext passwords.
-  Returns the user id, or nil if no user has that email."
-  [email]
-  (let [{:keys [biff/db] :as ctx} (get-context)
-        user-id (biff/lookup-id db :user/email email)
-        user    (when user-id (data/get-user ctx user-id))]
-    (when user
-      (biff/submit-tx ctx
-        [{:db/doc-type :user
-          :xt/id user-id
-          :db/op :update
-          :user/password (data/hash-password (:user/password user))}]))))
-
-(defn bcrypt-all-plaintext-passwords
-  "Sweeps the whole db and re-hashes every user whose stored password isn't
-  already bcrypt. Returns the list of emails that were upgraded."
-  []
-  (let [{:keys [biff/db] :as ctx} (get-context)
-        users (q db
-                 '{:find (pull user [*])
-                   :where [[user :user/email]]})
-        plaintext-users (filter #(not (str/starts-with? (:user/password %) "bcrypt"))
-                                users)]
-    (doseq [user plaintext-users]
-      (biff/submit-tx ctx
-        [{:db/doc-type :user
-          :xt/id (:xt/id user)
-          :db/op :update
-          :user/password (data/hash-password (:user/password user))}]))
-    (mapv :user/email plaintext-users)))
-
-(defn get-user-roles
-  "Returns the set of roles for the user with the given email."
-  [email]
-  (let [{:keys [biff/db] :as ctx} (get-context)
-        user-id (biff/lookup-id db :user/email email)
-        user    (when user-id (data/get-user ctx user-id))]
-    (:user/roles user)))
-
-(defn add-user-role
-  "Adds `role` to the user's :user/roles set (idempotent). Returns the
-  user-id, or nil if no user has that email."
-  [email role]
-  (let [{:keys [biff/db] :as ctx} (get-context)
-        user-id (biff/lookup-id db :user/email email)
-        user    (when user-id (data/get-user ctx user-id))]
-    (when user
-      (biff/submit-tx ctx
-        [{:db/doc-type :user
-          :xt/id user-id
-          :db/op :update
-          :user/roles (conj (set (:user/roles user)) role)}])
-      user-id)))
-
-(defn remove-user-role
-  "Removes `role` from the user's :user/roles set (idempotent). Returns the
-  user-id, or nil if no user has that email."
-  [email role]
-  (let [{:keys [biff/db] :as ctx} (get-context)
-        user-id (biff/lookup-id db :user/email email)
-        user    (when user-id (data/get-user ctx user-id))]
-    (when user
-      (biff/submit-tx ctx
-        [{:db/doc-type :user
-          :xt/id user-id
-          :db/op :update
-          :user/roles (disj (set (:user/roles user)) role)}])
-      user-id)))
-
-(defn make-admin
-  "Gives the user with the given email the :admin role. Returns the user-id,
-  or nil if no user has that email."
-  [email]
-  (add-user-role email :admin))
-
-(defn user-active?
-  "Returns whether the user with the given email is active. Only users with an
-  explicit :user/active true count as active; a missing or nil value counts as
-  deactivated. Returns nil if no user has that email."
-  [email]
-  (let [{:keys [biff/db] :as ctx} (get-context)
-        user-id (biff/lookup-id db :user/email email)
-        user    (when user-id (data/get-user ctx user-id))]
-    (when user
-      (data/user-active? user))))
-
-(defn set-user-active
-  "Sets whether the user with the given email is active. Returns the user-id,
-  or nil if no user has that email."
-  [email active?]
-  (let [{:keys [biff/db] :as ctx} (get-context)
-        user-id (biff/lookup-id db :user/email email)]
-    (when user-id
-      (biff/submit-tx ctx
-        [{:db/doc-type :user
-          :xt/id user-id
-          :db/op :update
-          :user/active (boolean active?)}])
-      user-id)))
-
-(defn activate-user
-  "Reactivates the user with the given email. Returns the user-id, or nil if
-  no user has that email."
-  [email]
-  (set-user-active email true))
-
-(defn deactivate-user
-  "Deactivates the user with the given email. Deactivated users can't sign in.
-  Returns the user-id, or nil if no user has that email."
-  [email]
-  (set-user-active email false))
-
-(defn delete-user
-  "Completely removes the user with the given email and all of their data
-  (finances, budget items, tax profile, events, goals). Returns the number of
-  docs deleted, or nil if no user has that email."
-  [email]
-  (let [{:keys [biff/db] :as ctx} (get-context)
-        user-id (biff/lookup-id db :user/email email)]
-    (when user-id
-      (data/delete-user ctx user-id))))
-
 ;; ----------------------------------------------------------------------------
-;; Production
+;; Environment dispatch
 ;; ----------------------------------------------------------------------------
 ;;
-;; The prod app runs its own nREPL server on port 7888 (see NREPL_PORT in
-;; config.env), reachable only on the server itself. To use the prod-* helpers
-;; below, first open an SSH tunnel from your machine, mapping a local port to
-;; the server's 7888:
+;; Every helper below takes an `env` as its first argument: :dev runs in-process
+;; against the local dev database, and :prod runs the same operation on the prod
+;; database by sending the code over an SSH tunnel to the prod nREPL server.
+;;
+;; Open the tunnel with:
 ;;
 ;;   ssh -f -N -L 7889:localhost:7888 app@mygreed.co.za
 ;;
-;; then, if you chose a local port other than 7889, set PROD_REPL_PORT to it.
-;; The helpers send raw code strings over nREPL because prod runs a separate
-;; process that doesn't share this project's classpath.
+;; If you map a local port other than 7889, set PROD_REPL_PORT to it. Prod runs
+;; a separate process that doesn't share this project's classpath, so operations
+;; are sent to it as code strings.
 
 (def prod-port
   (or (some-> (System/getenv "PROD_REPL_PORT") Integer/parseInt)
-      7889))
+    7889))
 
-(defn prod-eval-code
-  "Evaluates `code` on the production nREPL server and returns the result
-  values. Prints any errors the server reports."
+(defn- prod-eval-code
+  "Evaluates `code` on the prod nREPL server and returns the result. Prints any
+  errors the server reports. Requires the tunnel."
   [code]
   (let [conn   (nrepl/connect :host "localhost" :port prod-port)
         client (nrepl/client conn 30000)]
@@ -185,206 +60,202 @@
             errors (filter #(or (:err %) (:ex %)) msgs)]
         (doseq [{:keys [err ex]} errors]
           (println "nREPL error:" (or err ex)))
-        (nrepl/response-values msgs))
+        (first (nrepl/response-values msgs)))
       (finally
         (.close conn)))))
 
-(defn- prod-run-query
-  "Runs an XTDB `pull` query for all docs of the given entity/anchor pair on
-  prod. `anchor` is an attribute guaranteed to exist on every doc of that
-  type (e.g. :user/email for users)."
-  [entity anchor]
-  (let [code (str "(let [{:keys [biff/db]} (repl/get-context)]"
-                  "  (com.biffweb/q db"
-                  "    '{:find (pull " entity " [*])"
-                  "      :where [[" entity " " anchor "]]}))")]
-    (prod-eval-code code)))
+(defn- eval-on
+  "Evaluates `code` on :dev (in-process) or :prod (over the tunnel)."
+  [env code]
+  (if (= env :prod)
+    (prod-eval-code code)
+    (binding [*ns* (the-ns 'repl)]
+      (eval (read-string code)))))
 
-(defn prod-query-users
-  "Returns all users on prod."
-  []
-  (prod-run-query "user" ":user/email"))
+;; ----------------------------------------------------------------------------
+;; Queries
+;; ----------------------------------------------------------------------------
 
-(defn prod-query-finances
-  "Returns all finances docs on prod."
-  []
-  (prod-run-query "finances" ":finances/user-id"))
+(defn- entity-str
+  "Returns the query variable name for an entity, e.g. :user -> \"user\"."
+  [entity]
+  (str (if (keyword? entity) (name entity) entity)))
 
-(defn prod-query-budget-items
-  "Returns all budget items on prod."
-  []
-  (prod-run-query "budget-item" ":budget-item/user-id"))
+(defn docs-of
+  "Returns all docs of the given entity/anchor pair, e.g.
+  (docs-of :dev :user :user/email). Pass :prod to query production instead."
+  [env entity anchor]
+  (eval-on env
+    (str "(let [{:keys [biff/db]} (repl/get-context)]"
+      "  (com.biffweb/q db"
+      "    '{:find (pull " (entity-str entity) " [*])"
+      "      :where [[" (entity-str entity) " " (str anchor) "]]}))")))
 
-(defn prod-query-goals
-  "Returns all goals on prod."
-  []
-  (prod-run-query "goal" ":goal/user-id"))
+(defn query-raw
+  "Runs an arbitrary XTDB query (as a string) on :dev or :prod, printing the
+  result."
+  [env code]
+  (pp/pprint (eval-on env code)))
 
-(defn prod-query-events
-  "Returns all events on prod."
-  []
-  (prod-run-query "event" ":event/user-id"))
+;; ----------------------------------------------------------------------------
+;; User management
+;; ----------------------------------------------------------------------------
+;;
+;; All of these take an `env` as their first argument (:dev or :prod) and return
+;; nil if no user has the given email.
 
-(defn prod-query-tax-profiles
-  "Returns all tax profiles on prod."
-  []
-  (prod-run-query "tax-profile" ":tax-profile/user-id"))
+(defn get-user
+  "Returns the user with the given email, from :dev or :prod, or nil."
+  [env email]
+  (eval-on env
+    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)]"
+      "  (com.greed.data.core/get-user ctx"
+      "    (com.biffweb/lookup-id db :user/email " (pr-str email) ")))")))
 
-(defn prod-query-raw
-  "Runs an arbitrary EDN XTDB query (as a string) on prod, pprinting the result."
-  [code]
-  (doseq [r (prod-eval-code code)]
-    (pp/pprint r)))
+(defn get-user-roles
+  "Returns the set of roles for the user with the given email, from :dev or
+  :prod."
+  [env email]
+  (eval-on env
+    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+      "      user (com.greed.data.core/get-user ctx"
+      "            (com.biffweb/lookup-id db :user/email " (pr-str email) "))]"
+      "  (:user/roles user))")))
 
-(defn prod-query-all
-  "Prints every doc of every doc-type present in the prod db."
-  []
-  (let [code (str "(let [{:keys [biff/db]} (repl/get-context)]"
-                  "  (sort-by :db/doc-type"
-                  "    (com.biffweb/q db"
-                  "      '{:find [(pull e [*])]"
-                  "        :where [[e :db/doc-type]]})))")
-        docs (prod-eval-code code)]
-    (doseq [d (first docs)]
-      (pp/pprint d))))
-
-(defn prod-bcrypt-user-password
-  "Re-hashes a prod user's stored password to bcrypt, selected by email.
-  Returns the user id (or nil if no such email)."
-  [email]
-  (let [code (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
-                  "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")"
-                  "        user (when user-id (com.greed.data.core/get-user ctx user-id))]"
-                  "  (when user"
-                  "    (com.biffweb/submit-tx ctx"
-                  "      [{:db/doc-type :user"
-                  "        :xt/id user-id"
-                  "        :db/op :update"
-                  "        :user/password (com.greed.data.core/hash-password (:user/password user))}]))"
-                  "  user-id)")]
-    (first (prod-eval-code code))))
-
-(defn prod-bcrypt-all-plaintext-passwords
-  "Re-hashes every prod user whose stored password isn't already bcrypt.
-  Returns the list of upgraded emails."
-  []
-  (let [code (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
-                  "        users (com.biffweb/q db"
-                  "                 '{:find (pull user [*])"
-                  "                   :where [[user :user/email]]})"
-                  "        plaintext (filter #(not (clojure.string/starts-with? (:user/password %) \"bcrypt\")) users)]"
-                  "  (doseq [user plaintext]"
-                  "    (com.biffweb/submit-tx ctx"
-                  "      [{:db/doc-type :user"
-                  "        :xt/id (:xt/id user)"
-                  "        :db/op :update"
-                  "        :user/password (com.greed.data.core/hash-password (:user/password user))}]))"
-                  "  (mapv :user/email plaintext))")]
-    (first (prod-eval-code code))))
-
-(defn prod-get-user-roles
-  "Returns the set of roles for the prod user with the given email. Requires
-  the tunnel."
-  [email]
-  (first (prod-eval-code
-           (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
-                "      user (com.greed.data.core/get-user ctx"
-                "            (com.biffweb/lookup-id db :user/email " (pr-str email) "))]"
-                "  (:user/roles user))"))))
-
-(defn prod-add-user-role
-  "Adds `role` to the prod user's :user/roles set (idempotent). Requires the
-  tunnel. Returns the user-id, or nil if no user has that email."
-  [email role]
-  (first (prod-eval-code
-           (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
-                "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")"
-                "        user (when user-id (com.greed.data.core/get-user ctx user-id))]"
-                "  (when user"
-                "    (com.biffweb/submit-tx ctx"
-                "      [{:db/doc-type :user"
-                "        :xt/id user-id"
-                "        :db/op :update"
-                "        :user/roles (conj (set (:user/roles user)) " (pr-str role) ")}]))"
-                "  user-id)"))))
-
-(defn prod-remove-user-role
-  "Removes `role` from the prod user's :user/roles set (idempotent). Requires
-  the tunnel. Returns the user-id, or nil if no user has that email."
-  [email role]
-  (first (prod-eval-code
-           (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
-                "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")"
-                "        user (when user-id (com.greed.data.core/get-user ctx user-id))]"
-                "  (when user"
-                "    (com.biffweb/submit-tx ctx"
-                "      [{:db/doc-type :user"
-                "        :xt/id user-id"
-                "        :db/op :update"
-                "        :user/roles (disj (set (:user/roles user)) " (pr-str role) ")}]))"
-                "  user-id)"))))
-
-(defn prod-make-admin
-  "Gives the prod user with the given email the :admin role. Requires the
-  tunnel. Returns the user-id, or nil if no user has that email."
-  [email]
-  (prod-add-user-role email :admin))
-
-(defn prod-user-active?
-  "Returns whether the prod user with the given email is active. Only users
-  with an explicit :user/active true count as active; a missing or nil value
-  counts as deactivated. Returns nil if no user has that email. Requires the
-  tunnel."
-  [email]
-  (first (prod-eval-code
-           (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
-                "      user (com.greed.data.core/get-user ctx"
-                "            (com.biffweb/lookup-id db :user/email " (pr-str email) "))]"
-                "  (when user (com.greed.data.core/user-active? user)))"))))
-
-(defn prod-set-user-active
-  "Sets whether the prod user with the given email is active. Requires the
-  tunnel. Returns the user-id, or nil if no user has that email."
-  [email active?]
-  (first (prod-eval-code
-           (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
-                "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")]"
-                "  (when user-id"
-                "    (com.biffweb/submit-tx ctx"
-                "      [{:db/doc-type :user"
-                "        :xt/id user-id"
-                "        :db/op :update"
-                "        :user/active " (if active? "true" "false") "}]))"
-                "  user-id)"))))
-
-(defn prod-activate-user
-  "Reactivates the prod user with the given email. Requires the tunnel.
+(defn add-user-role
+  "Adds `role` to the user's :user/roles set (idempotent), on :dev or :prod.
   Returns the user-id, or nil if no user has that email."
-  [email]
-  (prod-set-user-active email true))
+  [env email role]
+  (eval-on env
+    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+      "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")"
+      "        user (when user-id (com.greed.data.core/get-user ctx user-id))]"
+      "  (when user"
+      "    (com.biffweb/submit-tx ctx"
+      "      [{:db/doc-type :user"
+      "        :xt/id user-id"
+      "        :db/op :update"
+      "        :user/roles (conj (set (:user/roles user)) " (pr-str role) ")}]))"
+      "  user-id)")))
 
-(defn prod-deactivate-user
-  "Deactivates the prod user with the given email. Deactivated users can't
-  sign in. Requires the tunnel. Returns the user-id, or nil if no user has
-  that email."
-  [email]
-  (prod-set-user-active email false))
+(defn remove-user-role
+  "Removes `role` from the user's :user/roles set (idempotent), on :dev or
+  :prod. Returns the user-id, or nil if no user has that email."
+  [env email role]
+  (eval-on env
+    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+      "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")"
+      "        user (when user-id (com.greed.data.core/get-user ctx user-id))]"
+      "  (when user"
+      "    (com.biffweb/submit-tx ctx"
+      "      [{:db/doc-type :user"
+      "        :xt/id user-id"
+      "        :db/op :update"
+      "        :user/roles (disj (set (:user/roles user)) " (pr-str role) ")}]))"
+      "  user-id)")))
 
-(defn prod-delete-user
-  "Completely removes the prod user with the given email and all of their data
-  (finances, budget items, tax profile, events, goals). Requires the tunnel.
+(defn make-admin
+  "Gives the user with the given email the :admin role, on :dev or :prod.
+  Returns the user-id, or nil if no user has that email."
+  [env email]
+  (add-user-role env email :admin))
+
+(defn user-active?
+  "Returns whether the user with the given email is active, on :dev or :prod.
+  Only an explicit :user/active true counts as active; a missing or nil value
+  counts as deactivated. Returns nil if no user has that email."
+  [env email]
+  (eval-on env
+    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+      "      user (com.greed.data.core/get-user ctx"
+      "            (com.biffweb/lookup-id db :user/email " (pr-str email) "))]"
+      "  (when user (com.greed.data.core/user-active? user)))")))
+
+(defn set-user-active
+  "Sets whether the user with the given email is active, on :dev or :prod.
+  Returns the user-id, or nil if no user has that email."
+  [env email active?]
+  (eval-on env
+    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+      "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")]"
+      "  (when user-id"
+      "    (com.biffweb/submit-tx ctx"
+      "      [{:db/doc-type :user"
+      "        :xt/id user-id"
+      "        :db/op :update"
+      "        :user/active " (if active? "true" "false") "}]))"
+      "  user-id)")))
+
+(defn activate-user
+  "Reactivates the user with the given email, on :dev or :prod. Deactivated
+  users can't sign in. Returns the user-id, or nil if no user has that email."
+  [env email]
+  (set-user-active env email true))
+
+(defn deactivate-user
+  "Deactivates the user with the given email, on :dev or :prod. Deactivated
+  users can't sign in. Returns the user-id, or nil if no user has that email."
+  [env email]
+  (set-user-active env email false))
+
+(defn delete-user
+  "Completely removes the user with the given email and all of their data
+  (finances, budget items, tax profile, events, goals), on :dev or :prod.
   Returns the number of docs deleted, or nil if no user has that email."
-  [email]
-  (first (prod-eval-code
-           (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
-                "      user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")]"
-                "  (when user-id (com.greed.data.core/delete-user ctx user-id)))"))))
+  [env email]
+  (eval-on env
+    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+      "      user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")]"
+      "  (when user-id (com.greed.data.core/delete-user ctx user-id)))")))
+
+;; ----------------------------------------------------------------------------
+;; Passwords
+;; ----------------------------------------------------------------------------
+
+(defn bcrypt-user-password
+  "Re-hashes the stored password of the user with the given email to bcrypt,
+  on :dev or :prod. Useful for upgrading users who still have legacy plaintext
+  passwords. Returns the user-id, or nil if no user has that email."
+  [env email]
+  (eval-on env
+    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+      "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")"
+      "        user (when user-id (com.greed.data.core/get-user ctx user-id))]"
+      "  (when user"
+      "    (com.biffweb/submit-tx ctx"
+      "      [{:db/doc-type :user"
+      "        :xt/id user-id"
+      "        :db/op :update"
+      "        :user/password (com.greed.data.core/hash-password (:user/password user))}]))"
+      "  user-id)")))
+
+(defn bcrypt-all-plaintext-passwords
+  "Sweeps the whole db and re-hashes every user whose stored password isn't
+  already bcrypt, on :dev or :prod. Returns the list of upgraded emails."
+  [env]
+  (eval-on env
+    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+      "        users (com.biffweb/q db"
+      "                 '{:find (pull user [*])"
+      "                   :where [[user :user/email]]})"
+      "        plaintext (filter #(not (clojure.string/starts-with? (:user/password %) \"bcrypt\")) users)]"
+      "  (doseq [user plaintext]"
+      "    (com.biffweb/submit-tx ctx"
+      "      [{:db/doc-type :user"
+      "        :xt/id (:xt/id user)"
+      "        :db/op :update"
+      "        :user/password (com.greed.data.core/hash-password (:user/password user))}]))"
+      "  (mapv :user/email plaintext))")))
+
+;; ----------------------------------------------------------------------------
+;; Maintenance
+;; ----------------------------------------------------------------------------
 
 (defn add-fixtures []
   (biff/submit-tx (get-context)
     (-> (io/resource "fixtures.edn")
-        slurp
-        edn/read-string)))
+      slurp
+      edn/read-string)))
 
 (defn check-config []
   (let [prod-config (biff/use-aero-config {:biff.config/profile "prod"})
@@ -398,9 +269,9 @@
                      ]
         get-secrets (fn [{:keys [biff/secret] :as config}]
                       (into {}
-                            (map (fn [k]
-                                   [k (secret k)]))
-                            secret-keys))]
+                        (map (fn [k]
+                               [k (secret k)]))
+                        secret-keys))]
     {:prod-config prod-config
      :dev-config dev-config
      :prod-secrets (get-secrets prod-config)
@@ -408,185 +279,90 @@
 
 (comment
   ;; --------------------------------------------------------------------------
-  ;; Querying the database
+  ;; Setup
   ;; --------------------------------------------------------------------------
   ;;
-  ;; The `clj -M:dev dev` command starts an nREPL server on port 7888. Connect
-  ;; your editor to it (e.g. Cursive: "Connect to Running REPL" ->
-  ;; nrepl://localhost:7888; Calva will pick up .nrepl-port automatically).
+  ;; `clj -M:dev dev` starts an nREPL server on port 7888. Connect your editor
+  ;; to nrepl://localhost:7888 (Calva picks up .nrepl-port automatically).
   ;;
-  ;; All queries below read from the DEV database (local storage/xtdb). See the
-  ;; "Production" section below for querying prod.
-
-  ;; All users (the "user table")
-  (let [{:keys [biff/db] :as ctx} (get-context)]
-    (q db
-       '{:find (pull user [*])
-         :where [[user :user/email]]}))
-
-  ;; One user by email
-  (biff/lookup-id (:biff/db (get-context)) :user/email "you@example.com")
-
-  ;; All budget items
-  (let [{:keys [biff/db] :as ctx} (get-context)]
-    (q db
-       '{:find (pull b [*])
-         :where [[b :budget-item/user-id]]}))
-
-  ;; All goals
-  (let [{:keys [biff/db] :as ctx} (get-context)]
-    (q db
-       '{:find (pull g [*])
-         :where [[g :goal/user-id]]}))
-
-  ;; All events
-  (let [{:keys [biff/db] :as ctx} (get-context)]
-    (q db
-       '{:find (pull e [*])
-         :where [[e :event/user-id]]}))
-
-  ;; Count users
-  (count (q (:biff/db (get-context))
-            '{:find [user]
-              :where [[user :user/email]]}))
-
-  ;; Every "table" (XTDB doc type) present in the db
-  (sort (map :db/doc-type
-             (q (:biff/db (get-context))
-                '{:find [(pull e [*])]
-                  :where [[e :db/doc-type]]})))
+  ;; Every helper below takes an `env` as its first argument: :dev hits the
+  ;; local dev database, :prod runs the same operation on production via the
+  ;; SSH tunnel (open it with `ssh -f -N -L 7889:localhost:7888
+  ;; app@mygreed.co.za`; override the local port with PROD_REPL_PORT).
 
   ;; --------------------------------------------------------------------------
-  ;; Production
+  ;; Queries
   ;; --------------------------------------------------------------------------
-  ;;
-  ;; The prod app also runs an nREPL server on port 7888 (see NREPL_PORT in
-  ;; config.env), but it's only reachable on the server itself. To connect,
-  ;; open an SSH tunnel from your machine, then connect your editor to the
-  ;; LOCAL port you chose instead of 7888:
-  ;;
-  ;;   ssh -f -N -L 7889:localhost:7888 app@mygreed.co.za
-  ;;
-  ;;   -> connect to nrepl://localhost:7889
-  ;;
-  ;; Once connected, run the same queries as above — they'll hit the prod
-  ;; Postgres-backed XTDB. To make sure you're on prod and not dev, check
-  ;; which users exist (dev and prod have different seed data), e.g.:
-  ;;
-  ;;   (let [{:keys [biff/db]} (get-context)]
-  ;;     (count (q db '{:find [user] :where [[user :user/email]]})))
-  ;;
-  ;; For one-shot queries you don't need to connect an editor at all: the
-  ;; prod-* helpers below send code strings to the server through the tunnel.
-  ;; They only work while the tunnel is up, and use prod-port (default 7889,
-  ;; override with PROD_REPL_PORT) as the local port.
 
-  ;; (prod-query-users)
-  ;; (prod-query-finances)
-  ;; (prod-query-budget-items)
-  ;; (prod-query-goals)
-  ;; (prod-query-events)
-  ;; (prod-query-tax-profiles)
-  ;; (prod-query-all)
-  ;; (prod-query-raw "(count (com.biffweb/q (:biff/db (repl/get-context)) '{:find [u] :where [[u :user/email]]}))")
+  ;; All users:
+  (docs-of :dev :user :user/email)
+  (docs-of :prod :user :user/email)
+
+  ;; A user's finances — swap the attr for other doc types: budget items
+  ;; (:budget-item/user-id), goals (:goal/user-id), events (:event/user-id),
+  ;; tax profiles (:tax-profile/user-id):
+  (docs-of :dev :finances :finances/user-id)
+
+  ;; A single user by email:
+  (get-user :dev "you@example.com")
+
+  ;; Run an arbitrary query, printing the result:
+  (query-raw :dev "(count (com.biffweb/q (:biff/db (repl/get-context)) '{:find [u] :where [[u :user/email]]}))")
 
   ;; --------------------------------------------------------------------------
-  ;; User roles / admin
+  ;; User management
   ;; --------------------------------------------------------------------------
   ;;
-  ;; Users can carry a set of roles via :user/roles (e.g. #{:admin}). There's
-  ;; no UI for this yet, so assign them from the REPL. The helpers below act on
-  ;; the local dev db; prefix with prod- for the equivalent on prod (tunnel
-  ;; required).
+  ;; Each helper takes :dev or :prod and returns nil if the email doesn't match
+  ;; a user.
 
-  ;; Make a user an admin:
-  (make-admin "you@example.com")
-  ;; (prod-make-admin "you@example.com")
+  ;; Roles: users carry a set of roles (e.g. #{:admin}). There's no UI for
+  ;; this yet, so assign them from the REPL:
+  (make-admin :dev "you@example.com")
+  (add-user-role :dev "you@example.com" :moderator)
+  (remove-user-role :dev "you@example.com" :moderator)
+  (get-user-roles :dev "you@example.com")
 
-  ;; Add / remove an arbitrary role:
-  (add-user-role "you@example.com" :moderator)
-  (remove-user-role "you@example.com" :moderator)
-  ;; (prod-add-user-role "you@example.com" :moderator)
-  ;; (prod-remove-user-role "you@example.com" :moderator)
+  ;; Activation: new signups are active, but a user counts as active only with
+  ;; an explicit :user/active true — missing or nil means deactivated.
+  ;; Deactivated users can't sign in (the signin form tells them to contact
+  ;; support):
+  (activate-user :dev "you@example.com")
+  (deactivate-user :dev "you@example.com")
+  (user-active? :dev "you@example.com")
 
-  ;; Check what roles a user has:
-  (get-user-roles "you@example.com")
-  ;; (prod-get-user-roles "you@example.com")
+  ;; Deletion: removes the user and all of their data (finances, budget items,
+  ;; tax profile, events, goals). Returns the number of docs deleted:
+  (delete-user :dev "you@example.com")
 
-  ;; --------------------------------------------------------------------------
-  ;; Account status / activation
-  ;; --------------------------------------------------------------------------
-  ;;
-  ;; Users are active by default. Deactivated users can't sign in (the signin
-  ;; form tells them to contact support). The helpers below act on the local
-  ;; dev db; prefix with prod- for the equivalent on prod (tunnel required).
-
-  ;; Deactivate / reactivate a user:
-  (deactivate-user "you@example.com")
-  (activate-user "you@example.com")
-  ;; (prod-deactivate-user "you@example.com")
-  ;; (prod-activate-user "you@example.com")
-
-  ;; Check whether a user is active (nil means no such email):
-  (user-active? "you@example.com")
-  ;; (prod-user-active? "you@example.com")
-
-  ;; Completely remove a user and all of their data (finances, budget items,
-  ;; tax profile, events, goals). Returns the number of docs deleted, or nil
-  ;; if no user has that email:
-  (delete-user "you@example.com")
-  ;; (prod-delete-user "you@example.com")
+  ;; To run any of the above against prod, pass :prod instead (tunnel
+  ;; required):
+  ;; (user-active? :prod "you@example.com")
+  ;; (activate-user :prod "you@example.com")
 
   ;; --------------------------------------------------------------------------
-  ;; Password hashing / migration
+  ;; Passwords
   ;; --------------------------------------------------------------------------
   ;;
   ;; Accounts created before bcrypt hashing store plaintext passwords. They
-  ;; still verify (validate-password? handles both), but re-hash them so they're
-  ;; stored as bcrypt. The helpers below submit the write transaction.
-  ;; Use the plain bcrypt-* helpers against the local dev db; use the
-  ;; prod-bcrypt-* helpers (with the tunnel up) to do the same on prod.
+  ;; still verify, but re-hash them so they're stored as bcrypt:
+  (bcrypt-user-password :dev "you@example.com")
+  (bcrypt-all-plaintext-passwords :dev)
 
-  ;; Re-hash ONE user's password to bcrypt, selected by email (local dev db):
-  (bcrypt-user-password "you@example.com")
-
-  ;; Upgrade EVERY user with a non-bcrypt password in the local dev db.
-  ;; Returns the list of emails that were upgraded:
-  (bcrypt-all-plaintext-passwords)
-
-  ;; Same as the two above, but against production (requires the tunnel):
-  ;; (prod-bcrypt-user-password "you@example.com")
-  ;; (prod-bcrypt-all-plaintext-passwords)
-
-  ;; Or do it manually: fetch the user, then submit an update with a fresh hash.
-  (let [{:keys [biff/db] :as ctx} (get-context)
-        user-id (biff/lookup-id db :user/email "you@example.com")
-        user    (data/get-user ctx user-id)]
-    (biff/submit-tx ctx
-      [{:db/doc-type :user
-        :xt/id user-id
-        :db/op :update
-        :user/password (data/hash-password (:user/password user))}]))
-  )
-
-(comment
-  ;; Call this function if you make a change to main/initial-system,
-  ;; main/components, :tasks, :queues, config.env, or deps.edn.
+  ;; --------------------------------------------------------------------------
+  ;; Maintenance
+  ;; --------------------------------------------------------------------------
+  ;;
+  ;; After changing main/initial-system, main/components, :tasks, :queues,
+  ;; config.env, or deps.edn:
   (main/refresh)
 
-  ;; Call this in dev if you'd like to add some seed data to your database. If
-  ;; you edit the seed data (in resources/fixtures.edn), you can reset the
-  ;; database by running `rm -r storage/xtdb` (DON'T run that in prod),
-  ;; restarting your app, and calling add-fixtures again.
+  ;; Add fixture/seed data (dev only). After editing resources/fixtures.edn,
+  ;; reset the db with `rm -r storage/xtdb` (never in prod), restart the app,
+  ;; then call this again:
   (add-fixtures)
 
-  ;; Query the database
-  (let [{:keys [biff/db] :as ctx} (get-context)]
-    (q db
-       '{:find (pull user [*])
-         :where [[user :user/email]]}))
-
-  ;; Update an existing user's email address
+  ;; Update an existing user's email address:
   (let [{:keys [biff/db] :as ctx} (get-context)
         user-id (biff/lookup-id db :user/email "hello@example.com")]
     (biff/submit-tx ctx
@@ -595,8 +371,6 @@
         :db/op :update
         :user/email "new.address@example.com"}]))
 
-  (sort (keys (get-context)))
-
-  ;; Check the terminal for output.
+  ;; Test the job system (check the terminal for output):
   (biff/submit-job (get-context) :echo {:foo "bar"})
   (deref (biff/submit-job-for-result (get-context) :echo {:foo "bar"})))
