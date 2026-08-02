@@ -168,6 +168,24 @@
           (data/delete-event ctx)
           (is (some? (data/get-event {:biff/db (xt/db node)} event-id))))))))
 
+(deftest signup-auto-signin-test
+  (testing "a freshly signed-up user is signed in even though the ctx db is stale"
+    (with-open [node (test-xtdb-node [])]
+      (let [ctx  (assoc (get-context node)
+                        :params {:email "carol@example.com"
+                                 :password "carol-pass"
+                                 :firstname "Carol"
+                                 :lastname "C"
+                                 :age "25"}
+                        :session {:csrf-token "x"})
+            _    (data/upsert-user ctx)
+            resp (home/signup-success-page ctx)
+            md   (meta (:session resp))]
+        (is (contains? md :recreate))
+        (is (true? (:recreate md)))
+        (is (= (biff/lookup-id (xt/db node) :user/email "carol@example.com")
+               (:uid (:session resp))))))))
+
 (deftest session-recreate-test
   (testing "login responses carry :recreate metadata to rotate the session id"
     (with-open [node (test-xtdb-node [{:user/email "alice@example.com"
