@@ -4,7 +4,9 @@
             [com.greed.data.core :as data]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.pprint :as pp]
+            [clojure.string :as str]
+            [nrepl.core :as nrepl]))
 
 ;; REPL-driven development
 ;; ----------------------------------------------------------------------------------------
@@ -61,6 +63,133 @@
           :db/op :update
           :user/password (data/hash-password (:user/password user))}]))
     (mapv :user/email plaintext-users)))
+
+;; ----------------------------------------------------------------------------
+;; Production
+;; ----------------------------------------------------------------------------
+;;
+;; The prod app runs its own nREPL server on port 7888 (see NREPL_PORT in
+;; config.env), reachable only on the server itself. To use the prod-* helpers
+;; below, first open an SSH tunnel from your machine, mapping a local port to
+;; the server's 7888:
+;;
+;;   ssh -f -N -L 7889:localhost:7888 app@mygreed.co.za
+;;
+;; then, if you chose a local port other than 7889, set PROD_REPL_PORT to it.
+;; The helpers send raw code strings over nREPL because prod runs a separate
+;; process that doesn't share this project's classpath.
+
+(def prod-port
+  (or (some-> (System/getenv "PROD_REPL_PORT") Integer/parseInt)
+      7889))
+
+(defn prod-eval-code
+  "Evaluates `code` on the production nREPL server and returns the result
+  values. Prints any errors the server reports."
+  [code]
+  (let [conn   (nrepl/connect :host "localhost" :port prod-port)
+        client (nrepl/client conn 30000)]
+    (try
+      (let [msgs (nrepl/message client {:op "eval" :code code})
+            errors (filter #(or (:err %) (:ex %)) msgs)]
+        (doseq [{:keys [err ex]} errors]
+          (println "nREPL error:" (or err ex)))
+        (nrepl/response-values msgs))
+      (finally
+        (.close conn)))))
+
+(defn- prod-run-query
+  "Runs an XTDB `pull` query for all docs of the given entity/anchor pair on
+  prod. `anchor` is an attribute guaranteed to exist on every doc of that
+  type (e.g. :user/email for users)."
+  [entity anchor]
+  (let [code (str "(let [{:keys [biff/db]} (repl/get-context)]"
+                  "  (com.biffweb/q db"
+                  "    '{:find (pull " entity " [*])"
+                  "      :where [[" entity " " anchor "]]}))")]
+    (prod-eval-code code)))
+
+(defn prod-query-users
+  "Returns all users on prod."
+  []
+  (prod-run-query "user" ":user/email"))
+
+(defn prod-query-finances
+  "Returns all finances docs on prod."
+  []
+  (prod-run-query "finances" ":finances/user-id"))
+
+(defn prod-query-budget-items
+  "Returns all budget items on prod."
+  []
+  (prod-run-query "budget-item" ":budget-item/user-id"))
+
+(defn prod-query-goals
+  "Returns all goals on prod."
+  []
+  (prod-run-query "goal" ":goal/user-id"))
+
+(defn prod-query-events
+  "Returns all events on prod."
+  []
+  (prod-run-query "event" ":event/user-id"))
+
+(defn prod-query-tax-profiles
+  "Returns all tax profiles on prod."
+  []
+  (prod-run-query "tax-profile" ":tax-profile/user-id"))
+
+(defn prod-query-raw
+  "Runs an arbitrary EDN XTDB query (as a string) on prod, pprinting the result."
+  [code]
+  (doseq [r (prod-eval-code code)]
+    (pp/pprint r)))
+
+(defn prod-query-all
+  "Prints every doc of every doc-type present in the prod db."
+  []
+  (let [code (str "(let [{:keys [biff/db]} (repl/get-context)]"
+                  "  (sort-by :db/doc-type"
+                  "    (com.biffweb/q db"
+                  "      '{:find [(pull e [*])]"
+                  "        :where [[e :db/doc-type]]})))")
+        docs (prod-eval-code code)]
+    (doseq [d (first docs)]
+      (pp/pprint d))))
+
+(defn prod-bcrypt-user-password
+  "Re-hashes a prod user's stored password to bcrypt, selected by email.
+  Returns the user id (or nil if no such email)."
+  [email]
+  (let [code (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+                  "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")"
+                  "        user (when user-id (com.greed.data.core/get-user ctx user-id))]"
+                  "  (when user"
+                  "    (com.biffweb/submit-tx ctx"
+                  "      [{:db/doc-type :user"
+                  "        :xt/id user-id"
+                  "        :db/op :update"
+                  "        :user/password (com.greed.data.core/hash-password (:user/password user))}]))"
+                  "  user-id)")]
+    (first (prod-eval-code code))))
+
+(defn prod-bcrypt-all-plaintext-passwords
+  "Re-hashes every prod user whose stored password isn't already bcrypt.
+  Returns the list of upgraded emails."
+  []
+  (let [code (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+                  "        users (com.biffweb/q db"
+                  "                 '{:find (pull user [*])"
+                  "                   :where [[user :user/email]]})"
+                  "        plaintext (filter #(not (clojure.string/starts-with? (:user/password %) \"bcrypt\")) users)]"
+                  "  (doseq [user plaintext]"
+                  "    (com.biffweb/submit-tx ctx"
+                  "      [{:db/doc-type :user"
+                  "        :xt/id (:xt/id user)"
+                  "        :db/op :update"
+                  "        :user/password (com.greed.data.core/hash-password (:user/password user))}]))"
+                  "  (mapv :user/email plaintext))")]
+    (first (prod-eval-code code))))
 
 (defn add-fixtures []
   (biff/submit-tx (get-context)
@@ -158,11 +287,14 @@
   ;;   (let [{:keys [biff/db]} (get-context)]
   ;;     (count (q db '{:find [user] :where [[user :user/email]]})))
   ;;
-  ;; You can also use the `prod` helpers below for the same queries in one go.
-  ;; Note: these only work when the tunnel is up.
+  ;; For one-shot queries you don't need to connect an editor at all: the
+  ;; prod-* helpers below send code strings to the server through the tunnel.
+  ;; They only work while the tunnel is up, and use prod-port (default 7889,
+  ;; override with PROD_REPL_PORT) as the local port.
 
-  ;; (prod/query-users)
-  ;; (prod/query-all)
+  ;; (prod-query-users)
+  ;; (prod-query-all)
+  ;; (prod-query-raw "(count (com.biffweb/q (:biff/db (repl/get-context)) '{:find [u] :where [[u :user/email]]}))")
 
   ;; --------------------------------------------------------------------------
   ;; Password hashing / migration
@@ -170,14 +302,20 @@
   ;;
   ;; Accounts created before bcrypt hashing store plaintext passwords. They
   ;; still verify (validate-password? handles both), but re-hash them so they're
-  ;; stored as bcrypt. Both helpers below submit the write transaction.
+  ;; stored as bcrypt. The helpers below submit the write transaction.
+  ;; Use the plain bcrypt-* helpers against the local dev db; use the
+  ;; prod-bcrypt-* helpers (with the tunnel up) to do the same on prod.
 
-  ;; Re-hash ONE user's password to bcrypt, selected by email:
+  ;; Re-hash ONE user's password to bcrypt, selected by email (local dev db):
   (bcrypt-user-password "you@example.com")
 
-  ;; Upgrade EVERY user with a non-bcrypt password. Returns the list of emails
-  ;; that were upgraded:
+  ;; Upgrade EVERY user with a non-bcrypt password in the local dev db.
+  ;; Returns the list of emails that were upgraded:
   (bcrypt-all-plaintext-passwords)
+
+  ;; Same as the two above, but against production (requires the tunnel):
+  ;; (prod-bcrypt-user-password "you@example.com")
+  ;; (prod-bcrypt-all-plaintext-passwords)
 
   ;; Or do it manually: fetch the user, then submit an update with a fresh hash.
   (let [{:keys [biff/db] :as ctx} (get-context)
