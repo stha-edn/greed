@@ -69,6 +69,11 @@
 (defn hash-password [password]
   (hashers/derive password))
 
+(defn user-active?
+  "A user is active unless explicitly flagged inactive (:user/active false)."
+  [user]
+  (not= false (:user/active user)))
+
 (defn upsert-user [{:keys [params] :as ctx}]
   (let [user-id (java.util.UUID/randomUUID)]
     (logger/info "Creating user...")
@@ -79,7 +84,8 @@
                       :user/password (hash-password (:password params))
                       :user/firstname (:firstname params)
                       :user/lastname (:lastname params)
-                      :user/age (utilities/->int (:age params))}])))
+                      :user/age (utilities/->int (:age params))
+                      :user/active true}])))
 
 (defn update-user [{:keys [params] :as ctx}]
   (let [user-id (get-user-id-from-session ctx)

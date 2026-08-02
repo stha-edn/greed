@@ -9,7 +9,8 @@
           [:user/firstname :string]
           [:user/lastname  :string]
           [:user/age       :int]
-          [:user/roles     {:optional true} [:maybe [:set :keyword]]]]
+          [:user/roles     {:optional true} [:maybe [:set :keyword]]]
+          [:user/active    {:optional true} [:maybe :boolean]]]
 
    :finances/id :uuid
    :finances [:map {:closed true}

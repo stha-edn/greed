@@ -2,6 +2,8 @@
                        "and make sure you aren't blocking scripts from Google.")
  :error/invalid-email "Invalid email. Try again with a different address."
  :error/invalid-credentials "Invalid credentials. Try again."
+ :error/account-deactivated (str "This account has been deactivated. "
+                                 "Please contact support to get reactivated.")
  :error/send-failed (str "We weren't able to send an email to that address. "
                          "If the problem persists, try another address.")
  :error/email-taken "That email is already in use by another account."

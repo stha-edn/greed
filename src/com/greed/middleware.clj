@@ -72,7 +72,8 @@
 
 (defn wrap-authenticate [handler]
   (fn [{:keys [uri] :as ctx}]
-    (let [page (if (= "/authenticate/signup" uri) "signup" "signin")]
+    (let [page (if (= "/authenticate/signup" uri) "signup" "signin")
+          result (auth/authenticate! ctx)]
       (cond
         (and (contains? #{"/authenticate/signin" "/authenticate/signup"} uri)
              (rate-limit-exceeded? (get-client-ip ctx) 5 (* 60 1000)))
@@ -85,10 +86,16 @@
         {:status 303
          :headers {"location" (str "/" page "?error=recaptcha")}}
 
-        (not (auth/authenticate! ctx))
+        (not (:valid? result))
         {:status 303
-         :headers {"location" (if (= page "signup")
+         :headers {"location" (cond
+                                (= :account-deactivated (:error result))
+                                "/signin?error=account-deactivated"
+
+                                (= page "signup")
                                 "/signup?error=invalid-email"
+
+                                :else
                                 "/signin?error=invalid-credentials")}}
 
         :else (handler ctx)))))

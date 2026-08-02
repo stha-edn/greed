@@ -108,6 +108,43 @@
   [email]
   (add-user-role email :admin))
 
+(defn user-active?
+  "Returns whether the user with the given email is active. Users without an
+  explicit :user/active attribute count as active. Returns nil if no user has
+  that email."
+  [email]
+  (let [{:keys [biff/db] :as ctx} (get-context)
+        user-id (biff/lookup-id db :user/email email)
+        user    (when user-id (data/get-user ctx user-id))]
+    (when user
+      (data/user-active? user))))
+
+(defn set-user-active
+  "Sets whether the user with the given email is active. Returns the user-id,
+  or nil if no user has that email."
+  [email active?]
+  (let [{:keys [biff/db] :as ctx} (get-context)
+        user-id (biff/lookup-id db :user/email email)]
+    (when user-id
+      (biff/submit-tx ctx
+        [{:db/doc-type :user
+          :xt/id user-id
+          :db/op :update
+          :user/active (boolean active?)}])
+      user-id)))
+
+(defn activate-user
+  "Reactivates the user with the given email. Returns the user-id, or nil if
+  no user has that email."
+  [email]
+  (set-user-active email true))
+
+(defn deactivate-user
+  "Deactivates the user with the given email. Deactivated users can't sign in.
+  Returns the user-id, or nil if no user has that email."
+  [email]
+  (set-user-active email false))
+
 ;; ----------------------------------------------------------------------------
 ;; Production
 ;; ----------------------------------------------------------------------------
@@ -283,6 +320,45 @@
   [email]
   (prod-add-user-role email :admin))
 
+(defn prod-user-active?
+  "Returns whether the prod user with the given email is active. Users without
+  an explicit :user/active attribute count as active. Returns nil if no user
+  has that email. Requires the tunnel."
+  [email]
+  (first (prod-eval-code
+           (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+                "      user (com.greed.data.core/get-user ctx"
+                "            (com.biffweb/lookup-id db :user/email " (pr-str email) "))]"
+                "  (when user (com.greed.data.core/user-active? user)))"))))
+
+(defn prod-set-user-active
+  "Sets whether the prod user with the given email is active. Requires the
+  tunnel. Returns the user-id, or nil if no user has that email."
+  [email active?]
+  (first (prod-eval-code
+           (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+                "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")]"
+                "  (when user-id"
+                "    (com.biffweb/submit-tx ctx"
+                "      [{:db/doc-type :user"
+                "        :xt/id user-id"
+                "        :db/op :update"
+                "        :user/active " (if active? "true" "false") "}]))"
+                "  user-id)"))))
+
+(defn prod-activate-user
+  "Reactivates the prod user with the given email. Requires the tunnel.
+  Returns the user-id, or nil if no user has that email."
+  [email]
+  (prod-set-user-active email true))
+
+(defn prod-deactivate-user
+  "Deactivates the prod user with the given email. Deactivated users can't
+  sign in. Requires the tunnel. Returns the user-id, or nil if no user has
+  that email."
+  [email]
+  (prod-set-user-active email false))
+
 (defn add-fixtures []
   (biff/submit-tx (get-context)
     (-> (io/resource "fixtures.edn")
@@ -415,6 +491,24 @@
   ;; Check what roles a user has:
   (get-user-roles "you@example.com")
   ;; (prod-get-user-roles "you@example.com")
+
+  ;; --------------------------------------------------------------------------
+  ;; Account status / activation
+  ;; --------------------------------------------------------------------------
+  ;;
+  ;; Users are active by default. Deactivated users can't sign in (the signin
+  ;; form tells them to contact support). The helpers below act on the local
+  ;; dev db; prefix with prod- for the equivalent on prod (tunnel required).
+
+  ;; Deactivate / reactivate a user:
+  (deactivate-user "you@example.com")
+  (activate-user "you@example.com")
+  ;; (prod-deactivate-user "you@example.com")
+  ;; (prod-activate-user "you@example.com")
+
+  ;; Check whether a user is active (nil means no such email):
+  (user-active? "you@example.com")
+  ;; (prod-user-active? "you@example.com")
 
   ;; --------------------------------------------------------------------------
   ;; Password hashing / migration

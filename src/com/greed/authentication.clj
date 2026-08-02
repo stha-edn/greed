@@ -30,13 +30,28 @@
 (defn signin? [{:keys [params] :as ctx}]
   (let [user-id (data/get-user-id ctx)
         user (data/get-user ctx user-id)
-        {:keys [valid?
-                message]} (validate-password? (:password params)
-                                              (:user/password user))]
-    (logger/info message)
-    valid?))
+        result (cond
+                 (nil? user)
+                 {:valid? false :error :invalid-credentials}
+
+                 (not (data/user-active? user))
+                 {:valid? false
+                  :error :account-deactivated
+                  :message (str "This account has been deactivated. "
+                                "Please contact support to get reactivated.")}
+
+                 :else
+                 (let [{:keys [valid? message]} (validate-password? (:password params)
+                                                                    (:user/password user))]
+                   (if valid?
+                     {:valid? true :message message}
+                     {:valid? false :error :invalid-credentials :message message})))]
+    (logger/info (str "Signin for " (:email params) ": " (or (:error result) :ok)))
+    result))
 
 (defn authenticate! [{:keys [uri] :as ctx}]
   (if (= "/authenticate/signup" uri)
-    (signup!? ctx)
+    (if (signup!? ctx)
+      {:valid? true}
+      {:valid? false :error :invalid-email})
     (signin? ctx)))

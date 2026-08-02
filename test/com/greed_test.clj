@@ -202,6 +202,63 @@
                (:uid (:session resp))))))))
 
 
+(deftest user-active-predicate-test
+  (testing "a user is active unless explicitly flagged inactive"
+    (is (data/user-active? {}))
+    (is (data/user-active? {:user/active true}))
+    (is (not (data/user-active? {:user/active false})))))
+
+(deftest signin-active-status-test
+  (testing "deactivated users can't sign in and get a contact-support message"
+    (with-open [node (test-xtdb-node [{:xt/id #uuid "cccccccc-cccc-cccc-cccc-cccccccccccc"
+                                       :user/email "dave@example.com"
+                                       :user/password (data/hash-password "dave-pass")
+                                       :user/firstname "Dave"
+                                       :user/active false}])]
+      (let [ctx (assoc (get-context node)
+                       :params {:email "dave@example.com" :password "dave-pass"})
+            result (auth/signin? ctx)]
+        (is (not (:valid? result)))
+        (is (= :account-deactivated (:error result)))
+        (is (str/includes? (:message result) "contact support"))
+        (is (str/includes? (:message result) "reactivated")))))
+  (testing "active users sign in normally"
+    (with-open [node (test-xtdb-node [{:xt/id #uuid "cccccccc-cccc-cccc-cccc-cccccccccccc"
+                                       :user/email "dave@example.com"
+                                       :user/password (data/hash-password "dave-pass")
+                                       :user/firstname "Dave"}])]
+      (let [ctx (assoc (get-context node)
+                       :params {:email "dave@example.com" :password "dave-pass"})]
+        (is (:valid? (auth/signin? ctx))))))
+  (testing "a wrong password is still invalid-credentials for an active user"
+    (with-open [node (test-xtdb-node [{:xt/id #uuid "cccccccc-cccc-cccc-cccc-cccccccccccc"
+                                       :user/email "dave@example.com"
+                                       :user/password (data/hash-password "dave-pass")
+                                       :user/firstname "Dave"}])]
+      (let [ctx (assoc (get-context node)
+                       :params {:email "dave@example.com" :password "wrong"})]
+        (is (not (:valid? (auth/signin? ctx))))
+        (is (= :invalid-credentials (:error (auth/signin? ctx))))))))
+
+(deftest deactivated-signin-redirect-test
+  (testing "the signin route redirects deactivated users to the contact-support page"
+    (with-open [node (test-xtdb-node [{:xt/id #uuid "dddddddd-dddd-dddd-dddd-dddddddddddd"
+                                       :user/email "erin@example.com"
+                                       :user/password (data/hash-password "erin-pass")
+                                       :user/firstname "Erin"
+                                       :user/active false}])]
+      (let [handler (mid/wrap-authenticate (fn [_] {:status 200}))
+            ctx (assoc (get-context node)
+                       :uri "/authenticate/signin"
+                       :params {:email "erin@example.com" :password "erin-pass"}
+                       :biff/secret (constantly nil))
+            resp (handler ctx)]
+        (reset! mid/signin-attempts {})
+        (is (= 303 (:status resp)))
+        (is (= "/signin?error=account-deactivated"
+               (get-in resp [:headers "location"])))))))
+
+
 #_(deftest send-message-test
   (with-open [node (test-xtdb-node [])]
     (let [message (mg/generate :string)

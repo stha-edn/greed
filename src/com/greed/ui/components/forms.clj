@@ -17,6 +17,7 @@
             :recaptcha (:error/recaptcha config)
             :invalid-email (:error/invalid-email config)
             :invalid-credentials (:error/invalid-credentials config)
+            :account-deactivated (:error/account-deactivated config)
             :send-failed (:error/send-failed config)
             :email-taken (:error/email-taken config)
             (:error/default config)))]])))
