@@ -2,6 +2,7 @@
   (:require [com.biffweb :as biff]
    [xtdb.api :as xt]
    [com.greed.middleware :as mid]
+   [com.greed.email :as email]
    [com.greed.ui :as ui]
    [com.greed.ui.pages.about :as p.about]
    [com.greed.ui.pages.home :as p.home]
@@ -63,8 +64,12 @@
       (headers/pages ctx)
       (p.signup/form ctx))))
 
-(defn signup-success-page [{:keys [biff.xtdb/node session params]}]
+(defn signup-success-page [{:keys [biff.xtdb/node session params biff/base-url] :as ctx}]
   (let [user-id (biff/lookup-id (xt/db node) :user/email (:email params))]
+    (email/send-email ctx {:template :welcome
+                           :to (:email params)
+                           :firstname (:firstname params)
+                           :app-url (str base-url "/app")})
     {:status 303
      :headers {"Location" "/app"}
      :session (with-meta (assoc session :uid user-id) {:recreate true})}))
