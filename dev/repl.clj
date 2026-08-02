@@ -64,6 +64,50 @@
           :user/password (data/hash-password (:user/password user))}]))
     (mapv :user/email plaintext-users)))
 
+(defn get-user-roles
+  "Returns the set of roles for the user with the given email."
+  [email]
+  (let [{:keys [biff/db] :as ctx} (get-context)
+        user-id (biff/lookup-id db :user/email email)
+        user    (when user-id (data/get-user ctx user-id))]
+    (:user/roles user)))
+
+(defn add-user-role
+  "Adds `role` to the user's :user/roles set (idempotent). Returns the
+  user-id, or nil if no user has that email."
+  [email role]
+  (let [{:keys [biff/db] :as ctx} (get-context)
+        user-id (biff/lookup-id db :user/email email)
+        user    (when user-id (data/get-user ctx user-id))]
+    (when user
+      (biff/submit-tx ctx
+        [{:db/doc-type :user
+          :xt/id user-id
+          :db/op :update
+          :user/roles (conj (set (:user/roles user)) role)}])
+      user-id)))
+
+(defn remove-user-role
+  "Removes `role` from the user's :user/roles set (idempotent). Returns the
+  user-id, or nil if no user has that email."
+  [email role]
+  (let [{:keys [biff/db] :as ctx} (get-context)
+        user-id (biff/lookup-id db :user/email email)
+        user    (when user-id (data/get-user ctx user-id))]
+    (when user
+      (biff/submit-tx ctx
+        [{:db/doc-type :user
+          :xt/id user-id
+          :db/op :update
+          :user/roles (disj (set (:user/roles user)) role)}])
+      user-id)))
+
+(defn make-admin
+  "Gives the user with the given email the :admin role. Returns the user-id,
+  or nil if no user has that email."
+  [email]
+  (add-user-role email :admin))
+
 ;; ----------------------------------------------------------------------------
 ;; Production
 ;; ----------------------------------------------------------------------------
@@ -191,6 +235,54 @@
                   "  (mapv :user/email plaintext))")]
     (first (prod-eval-code code))))
 
+(defn prod-get-user-roles
+  "Returns the set of roles for the prod user with the given email. Requires
+  the tunnel."
+  [email]
+  (first (prod-eval-code
+           (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+                "      user (com.greed.data.core/get-user ctx"
+                "            (com.biffweb/lookup-id db :user/email " (pr-str email) "))]"
+                "  (:user/roles user))"))))
+
+(defn prod-add-user-role
+  "Adds `role` to the prod user's :user/roles set (idempotent). Requires the
+  tunnel. Returns the user-id, or nil if no user has that email."
+  [email role]
+  (first (prod-eval-code
+           (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+                "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")"
+                "        user (when user-id (com.greed.data.core/get-user ctx user-id))]"
+                "  (when user"
+                "    (com.biffweb/submit-tx ctx"
+                "      [{:db/doc-type :user"
+                "        :xt/id user-id"
+                "        :db/op :update"
+                "        :user/roles (conj (set (:user/roles user)) " (pr-str role) ")}]))"
+                "  user-id)"))))
+
+(defn prod-remove-user-role
+  "Removes `role` from the prod user's :user/roles set (idempotent). Requires
+  the tunnel. Returns the user-id, or nil if no user has that email."
+  [email role]
+  (first (prod-eval-code
+           (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+                "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")"
+                "        user (when user-id (com.greed.data.core/get-user ctx user-id))]"
+                "  (when user"
+                "    (com.biffweb/submit-tx ctx"
+                "      [{:db/doc-type :user"
+                "        :xt/id user-id"
+                "        :db/op :update"
+                "        :user/roles (disj (set (:user/roles user)) " (pr-str role) ")}]))"
+                "  user-id)"))))
+
+(defn prod-make-admin
+  "Gives the prod user with the given email the :admin role. Requires the
+  tunnel. Returns the user-id, or nil if no user has that email."
+  [email]
+  (prod-add-user-role email :admin))
+
 (defn add-fixtures []
   (biff/submit-tx (get-context)
     (-> (io/resource "fixtures.edn")
@@ -293,8 +385,36 @@
   ;; override with PROD_REPL_PORT) as the local port.
 
   ;; (prod-query-users)
+  ;; (prod-query-finances)
+  ;; (prod-query-budget-items)
+  ;; (prod-query-goals)
+  ;; (prod-query-events)
+  ;; (prod-query-tax-profiles)
   ;; (prod-query-all)
   ;; (prod-query-raw "(count (com.biffweb/q (:biff/db (repl/get-context)) '{:find [u] :where [[u :user/email]]}))")
+
+  ;; --------------------------------------------------------------------------
+  ;; User roles / admin
+  ;; --------------------------------------------------------------------------
+  ;;
+  ;; Users can carry a set of roles via :user/roles (e.g. #{:admin}). There's
+  ;; no UI for this yet, so assign them from the REPL. The helpers below act on
+  ;; the local dev db; prefix with prod- for the equivalent on prod (tunnel
+  ;; required).
+
+  ;; Make a user an admin:
+  (make-admin "you@example.com")
+  ;; (prod-make-admin "you@example.com")
+
+  ;; Add / remove an arbitrary role:
+  (add-user-role "you@example.com" :moderator)
+  (remove-user-role "you@example.com" :moderator)
+  ;; (prod-add-user-role "you@example.com" :moderator)
+  ;; (prod-remove-user-role "you@example.com" :moderator)
+
+  ;; Check what roles a user has:
+  (get-user-roles "you@example.com")
+  ;; (prod-get-user-roles "you@example.com")
 
   ;; --------------------------------------------------------------------------
   ;; Password hashing / migration

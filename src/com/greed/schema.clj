@@ -8,7 +8,8 @@
           [:user/password  :string]
           [:user/firstname :string]
           [:user/lastname  :string]
-          [:user/age       :int]]
+          [:user/age       :int]
+          [:user/roles     {:optional true} [:maybe [:set :keyword]]]]
 
    :finances/id :uuid
    :finances [:map {:closed true}
