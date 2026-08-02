@@ -272,6 +272,41 @@
         (is (= "/signin?error=account-deactivated"
                (get-in resp [:headers "location"])))))))
 
+(deftest delete-user-test
+  (let [uid #uuid "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"]
+    (with-open [node (test-xtdb-node [{:xt/id uid
+                                       :user/email "frank@example.com"
+                                       :user/password (data/hash-password "frank-pass")
+                                       :user/firstname "Frank"
+                                       :user/active true}
+                                      {:xt/id #uuid "00000000-0000-0000-0000-000000000001"
+                                       :finances/user-id uid}
+                                      {:xt/id #uuid "00000000-0000-0000-0000-000000000002"
+                                       :budget-item/user-id uid}
+                                      {:xt/id #uuid "00000000-0000-0000-0000-000000000003"
+                                       :tax-profile/user-id uid}
+                                      {:xt/id #uuid "00000000-0000-0000-0000-000000000004"
+                                       :event/user-id uid}
+                                      {:xt/id #uuid "00000000-0000-0000-0000-000000000005"
+                                       :goal/user-id uid}])]
+      (let [ctx (get-context node)]
+        (testing "deletes the user and all of their data"
+          (is (= 6 (data/delete-user ctx uid)))
+          (let [db (xt/db node)]
+            (is (nil? (biff/lookup-id db :user/email "frank@example.com")))
+            (is (empty? (biff/q db '{:find [id]
+                                     :where [[id :finances/user-id uid]]})))
+            (is (empty? (biff/q db '{:find [id]
+                                     :where [[id :budget-item/user-id uid]]})))
+            (is (empty? (biff/q db '{:find [id]
+                                     :where [[id :tax-profile/user-id uid]]})))
+            (is (empty? (biff/q db '{:find [id]
+                                     :where [[id :event/user-id uid]]})))
+            (is (empty? (biff/q db '{:find [id]
+                                     :where [[id :goal/user-id uid]]})))))
+        (testing "returns nil when the user doesn't exist"
+          (is (nil? (data/delete-user ctx #uuid "ffffffff-ffff-ffff-ffff-ffffffffffff"))))))))
+
 
 #_(deftest send-message-test
   (with-open [node (test-xtdb-node [])]

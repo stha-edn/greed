@@ -145,6 +145,16 @@
   [email]
   (set-user-active email false))
 
+(defn delete-user
+  "Completely removes the user with the given email and all of their data
+  (finances, budget items, tax profile, events, goals). Returns the number of
+  docs deleted, or nil if no user has that email."
+  [email]
+  (let [{:keys [biff/db] :as ctx} (get-context)
+        user-id (biff/lookup-id db :user/email email)]
+    (when user-id
+      (data/delete-user ctx user-id))))
+
 ;; ----------------------------------------------------------------------------
 ;; Production
 ;; ----------------------------------------------------------------------------
@@ -360,6 +370,16 @@
   [email]
   (prod-set-user-active email false))
 
+(defn prod-delete-user
+  "Completely removes the prod user with the given email and all of their data
+  (finances, budget items, tax profile, events, goals). Requires the tunnel.
+  Returns the number of docs deleted, or nil if no user has that email."
+  [email]
+  (first (prod-eval-code
+           (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+                "      user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")]"
+                "  (when user-id (com.greed.data.core/delete-user ctx user-id)))"))))
+
 (defn add-fixtures []
   (biff/submit-tx (get-context)
     (-> (io/resource "fixtures.edn")
@@ -510,6 +530,12 @@
   ;; Check whether a user is active (nil means no such email):
   (user-active? "you@example.com")
   ;; (prod-user-active? "you@example.com")
+
+  ;; Completely remove a user and all of their data (finances, budget items,
+  ;; tax profile, events, goals). Returns the number of docs deleted, or nil
+  ;; if no user has that email:
+  (delete-user "you@example.com")
+  ;; (prod-delete-user "you@example.com")
 
   ;; --------------------------------------------------------------------------
   ;; Password hashing / migration

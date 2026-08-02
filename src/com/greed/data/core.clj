@@ -425,3 +425,34 @@
                             :xt/id goal-id
                             :db/op :delete}]))
       (logger/info "Goal not found or unauthorized"))))
+
+(defn delete-user
+  "Permanently deletes the user with the given id and all of their data
+  (finances, budget items, tax profile, events, goals). Returns the number
+  of docs deleted (including the user itself), or nil if no user exists
+  with that id."
+  [ctx user-id]
+  (let [{:keys [biff/db]} ctx
+        user-doc (q db '{:find [id]
+                         :in [user-id]
+                         :where [[id :xt/id user-id]]}
+                    user-id)]
+    (when (seq user-doc)
+      (let [owned (q db
+                     '{:find [id]
+                       :in [user-id]
+                       :where [(or [id :finances/user-id user-id]
+                                   [id :budget-item/user-id user-id]
+                                   [id :tax-profile/user-id user-id]
+                                   [id :event/user-id user-id]
+                                   [id :goal/user-id user-id]
+                                   [id :session/uid user-id])]}
+                     user-id)
+            owned (conj (into #{} (map first) owned) user-id)]
+        (logger/info (str "Deleting user " user-id " (" (count owned) " docs)..."))
+        (biff/submit-tx ctx
+                        (for [id owned]
+                          {:db/doc-type :user
+                           :db/op :delete
+                           :xt/id id}))
+        (count owned)))))
