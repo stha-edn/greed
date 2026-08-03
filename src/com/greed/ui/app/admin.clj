@@ -136,11 +136,11 @@
      "All users"]
     [:span {:class "text-xs font-medium text-zinc-400 tabular-nums"}
      (str (count users) (if (= 1 (count users)) " user" " users"))]]
-   [:div {:class "overflow-auto max-h-[520px]"}
+   [:div {:class "overflow-x-auto min-w-0"}
     [:table {:class "w-full min-w-[720px]"}
-     [:thead {:class "sticky top-0 z-10 bg-white"}
+     [:thead
       [:tr {:class "border-b border-zinc-100"}
-       [:th {:class "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Name"]
+       [:th {:class "sticky left-0 z-20 bg-white px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Name"]
        [:th {:class "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Email"]
        [:th {:class "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Age"]
        [:th {:class "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Status"]
@@ -149,8 +149,8 @@
        [:th {:class "px-4 py-2.5 w-20"}]]]
      [:tbody {:class "divide-y divide-zinc-100"}
       (for [{:user/keys [firstname lastname email age active roles] :as user} (sort-by :user/email users)]
-        [:tr {:class "hover:bg-zinc-50 transition-colors"}
-         [:td {:class "px-4 py-3 text-sm text-zinc-700 whitespace-nowrap"} (str firstname " " lastname)]
+        [:tr {:class "group hover:bg-zinc-50 transition-colors"}
+         [:td {:class "sticky left-0 z-10 bg-white group-hover:bg-zinc-50 transition-colors px-4 py-3 text-sm text-zinc-700 whitespace-nowrap"} (str firstname " " lastname)]
          [:td {:class "px-4 py-3 text-sm text-zinc-500 whitespace-nowrap"} email]
          [:td {:class "px-4 py-3 text-sm text-zinc-500 tabular-nums"} age]
          [:td {:class "px-4 py-3"} (status-badge active)]
