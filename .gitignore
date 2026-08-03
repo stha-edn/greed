@@ -9,6 +9,7 @@
 /storage/
 /tailwindcss
 /target
+/resources/public/css/main.css
 .calva/
 .clj-kondo/
 .lsp/
