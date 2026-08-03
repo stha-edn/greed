@@ -200,7 +200,11 @@
                             :finances/bank (utilities/->keyword (:bank params))
                             :finances/account-type (not-empty (:account-type params))
                             :finances/salary (utilities/->int (:salary params))
-                            :finances/payday (validation/->valid-payday (:payday params))}])
+                            :finances/payday (validation/->valid-payday (:payday params))
+                            :finances/card-type :db/dissoc
+                            :finances/title :db/dissoc
+                            :finances/type :db/dissoc
+                            :finances/amount :db/dissoc}])
           (logger/info "Updating budget item...")
           (biff/submit-tx ctx
                           [{:db/doc-type :budget-item

@@ -308,6 +308,47 @@
           (is (nil? (data/delete-user ctx #uuid "ffffffff-ffff-ffff-ffff-ffffffffffff"))))))))
 
 
+(deftest update-finances-purges-legacy-keys-test
+  (let [uid #uuid "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"
+        finances-id #uuid "11111111-2222-3333-4444-555555555555"]
+    (with-open [node (test-xtdb-node [{:xt/id uid
+                                       :user/email "frank@example.com"
+                                       :user/password (data/hash-password "frank-pass")
+                                       :user/firstname "Frank"
+                                       :user/age 30
+                                       :user/active true
+                                       :user/roles #{:user}}
+                                      {:xt/id finances-id
+                                       :finances/user-id uid
+                                       :finances/bank :fnb
+                                       :finances/card-type :credit
+                                       :finances/salary 50000
+                                       :finances/payday 25}
+                                      {:xt/id #uuid "22222222-2222-3333-4444-555555555555"
+                                       :budget-item/user-id uid
+                                       :budget-item/title "Salary"
+                                       :budget-item/type :income
+                                       :budget-item/amount 41000}])]
+      (testing "updating a user with legacy card-type data doesn't throw"
+        (let [ctx (assoc (get-context node)
+                         :session {:uid uid}
+                         :params {:bank "standard-bank"
+                                  :account-type "Private Banking"
+                                  :salary "52500"
+                                  :payday "25"})
+              resp (mid/save-finances ctx)
+              db (xt/db node)
+              finances (first (biff/q db '{:find (pull finances [*])
+                                           :in [user-id]
+                                           :where [[finances :finances/user-id user-id]]}
+                                      uid))]
+          (is (= 303 (:status resp)))
+          (is (nil? (:finances/card-type finances)))
+          (is (= :standard-bank (:finances/bank finances)))
+          (is (= "Private Banking" (:finances/account-type finances)))
+          (is (= 52500 (:finances/salary finances))))))))
+
+
 #_(deftest send-message-test
   (with-open [node (test-xtdb-node [])]
     (let [message (mg/generate :string)
