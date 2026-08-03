@@ -166,6 +166,7 @@
                       :xt/id (java.util.UUID/randomUUID)
                       :finances/user-id user-id
                       :finances/bank (utilities/->keyword (:bank params))
+                      :finances/account-type (not-empty (:account-type params))
                       :finances/salary (utilities/->int (:salary params))
                       :finances/payday (validation/->valid-payday (:payday params))}])
     (logger/info "Creating budget item...")
@@ -197,7 +198,8 @@
                             :xt/id finances-id
                             :db/op :update
                             :finances/bank (utilities/->keyword (:bank params))
-                                  :finances/salary (utilities/->int (:salary params))
+                            :finances/account-type (not-empty (:account-type params))
+                            :finances/salary (utilities/->int (:salary params))
                             :finances/payday (validation/->valid-payday (:payday params))}])
           (logger/info "Updating budget item...")
           (biff/submit-tx ctx

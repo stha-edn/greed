@@ -14,11 +14,12 @@
 
    :finances/id :uuid
    :finances [:map {:closed true}
-              [:xt/id              :finances/id]
-              [:finances/user-id   :user/id]
-              [:finances/bank      :keyword]
-              [:finances/salary    :int]
-              [:finances/payday    :int]]
+              [:xt/id                :finances/id]
+              [:finances/user-id     :user/id]
+              [:finances/bank        :keyword]
+              [:finances/account-type {:optional true} [:maybe :string]]
+              [:finances/salary      :int]
+              [:finances/payday      :int]]
 
    :tax-profile/id :uuid
    :tax-profile [:map {:closed true}

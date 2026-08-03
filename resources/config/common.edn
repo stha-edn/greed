@@ -23,7 +23,7 @@
 
  :user/fields #{"firstname" "lastname" "age" "email" "password"}
 
- :finances/fields #{"bank" "salary" "payday"}
+ :finances/fields #{"bank" "account-type" "salary" "payday"}
 
  :banking/banks #{:absa :capitec :discovery-bank :fnb :nedbank :standard-bank}
  :banking/card-colours {:absa "from-red-500 to-red-800"
@@ -33,6 +33,27 @@
                         :nedbank "from-emerald-500 to-green-800"
                         :standard-bank "from-blue-500 to-blue-800"
                         :default "from-gray-600 to-black"}
+
+ :banking/account-types {:absa #{"Cheque account" "Transact" "Gold Cheque" "Platinum Cheque"
+                                 "Private Banking" "Wealth" "Student" "Savings account"
+                                 "Fixed deposit" "Tax-free savings" "Credit card"}
+                         :capitec #{"Global One" "Global One Savings Plan" "Global One Credit Card"
+                                    "Fixed deposit"}
+                         :discovery-bank #{"Gold credit account" "Platinum credit account"
+                                           "Black credit account" "Purple credit account"
+                                           "Transaction account" "Full banking suite"
+                                           "Savings account" "Tax-free savings account"
+                                           "Real-time forex account" "Fixed deposit account"}
+                         :fnb #{"Easy" "Easy Zero" "Aspire" "Premier" "Private Client"
+                                "Private Wealth" "Student" "Savings account" "Money Maximiser"
+                                "Tax-free savings account" "Credit card"}
+                         :nedbank #{"Pay-as-you-use" "Transactor" "Gold" "Platinum"
+                                    "Private Client" "Private Wealth" "Student" "JustSave"
+                                    "Fixed deposit" "Credit card"}
+                         :standard-bank #{"MyMo" "Current account" "Blue" "Platinum"
+                                          "Premium Banking" "Private Banking" "Student"
+                                          "PureSave" "SaveUp" "Fixed deposit"
+                                          "Tax-free savings account" "Credit card"}}
 
  :budget-item/types #{:income :expenses :savings}
 

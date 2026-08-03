@@ -111,8 +111,25 @@
                :type "submit"}
       "Save changes"]])])
 
+(defn- account-type-options
+  [bank]
+  (sort (get-in c/common-config [:banking/account-types bank] #{})))
+
+(defn account-type-field
+  "htmx fragment: the account-type select (and wrapper) for the given bank.
+   Returned from /app/account-type-options when the bank select changes."
+  [{:keys [params]}]
+  (shared/app-account-type-select :id "account-type" :label "Account Type"
+                                  :hint "The type of account you hold at this bank"
+                                  :options (account-type-options (some-> (:bank params) keyword))))
+
 (defn finances [ctx]
-  (let [bank-options (sort (:banking/banks c/common-config))]
+  (let [{:keys [session]} ctx
+        user-id            (:uid session)
+        finances           (data/get-finances ctx user-id)
+        bank-options       (sort (:banking/banks c/common-config))
+        current-bank       (or (:finances/bank finances) (first bank-options))
+        current-account-type (:finances/account-type finances)]
     [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card p-6"}
      [:div {:class "mb-6"}
       [:h2 {:class "text-base font-semibold text-zinc-900"} "Financial Details"]
@@ -125,7 +142,17 @@
        [:p {:class "text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3"} "Banking"]
        [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
         (shared/app-select ctx :id "bank" :label "Bank" :options bank-options :required? true
-                           :hint "Your primary banking institution")]]
+                           :hint "Your primary banking institution"
+                           :attrs {"hx-get" "/app/finances/account-type-options"
+                                   "hx-trigger" "change"
+                                   "hx-target" "#account-type-field"
+                                   "hx-swap" "outerHTML"
+                                   "_" "on htmx:beforeRequest add .opacity-50 to #account-type-field
+on htmx:afterRequest remove .opacity-50 from #account-type-field"})
+        (shared/app-account-type-select :id "account-type" :label "Account Type"
+                                        :hint "The type of account you hold at this bank"
+                                        :options (account-type-options current-bank)
+                                        :selected current-account-type)]]
 
       ;; Income
       [:div {:class "mb-6"}

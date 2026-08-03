@@ -54,7 +54,8 @@
         finances           (data/get-finances ctx user-id)
         income-tax-data    (c.greed/get-income-tax-data user finances)
         budget-items       (data/get-budget-items ctx user-id)
-        show-salary-prompt (not (salary-set? finances))]
+        show-salary-prompt (and (not (data/admin? user))
+                                (not (salary-set? finances)))]
     (ui/app
      ctx
      [:div {:class "space-y-7"

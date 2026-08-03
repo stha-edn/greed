@@ -48,7 +48,7 @@
      (when hint
        [:p {:class "text-xs text-zinc-400 mt-1"} hint])]))
 
-(defn app-select [ctx & {:keys [id label options required? hint]
+(defn app-select [ctx & {:keys [id label options required? hint attrs]
                          :or {required? false}}]
   (let [{:keys [session]} ctx
         user-id     (:uid session)
@@ -56,15 +56,31 @@
         current-val ((keyword (str "finances/" id)) finances)]
     [:div
      [:label {:class "block text-sm font-medium text-zinc-700 mb-1" :for id} label]
-     [:select {:class (base-input-class)
-               :id id :name id
-               :required required?}
+     [:select (merge {:class (base-input-class)
+                      :id id :name id
+                      :required required?}
+                     attrs)
       (for [option options]
         [:option (cond-> {:value option}
                    (= option current-val) (assoc :selected true))
          (utilities/->string option)])]
      (when hint
        [:p {:class "text-xs text-zinc-400 mt-1"} hint])]))
+
+(defn app-account-type-select [& {:keys [id label required? hint options selected]
+                                  :or {required? false}}]
+  [:div {:id (str id "-field")}
+   [:label {:class "block text-sm font-medium text-zinc-700 mb-1" :for id} label]
+   [:select {:class (base-input-class)
+             :id id :name id
+             :required required?}
+    [:option {:value ""} "Select an account type"]
+    (for [option options]
+      [:option (cond-> {:value option}
+                 (= option selected) (assoc :selected true))
+       option])]
+   (when hint
+     [:p {:class "text-xs text-zinc-400 mt-1"} hint])])
 
 (defn modal-input [& {:keys [id type label required?]
                       :or {required? false}}]

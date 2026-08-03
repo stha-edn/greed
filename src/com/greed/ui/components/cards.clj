@@ -36,7 +36,7 @@
 
 (defn bank-card [& {:keys [budget-items finances net-monthly-income]}]
   (let [{:keys [total-income total-expenses]} (c.ui/get-budget-data budget-items)
-        {:finances/keys [bank user-id]} finances
+        {:finances/keys [bank user-id account-type]} finances
         last-four (mock-last-four (or user-id bank))
         salary-budget-amount (or (some (fn [item]
                                          (when (and (= (:budget-item/type item) :income)
@@ -56,7 +56,7 @@
      [:div {:class "relative flex justify-between items-start"}
       [:div
        [:p {:class "text-xs font-semibold text-zinc-300 uppercase tracking-widest"} (utilities/->string bank)]
-       [:p {:class "mt-0.5 text-xs text-zinc-500"} "Debit Card"]]
+       [:p {:class "mt-0.5 text-xs text-zinc-500"} (or account-type "Debit Card")]]
       [:div {:class "flex items-center gap-2 text-zinc-300 opacity-90"}
        (svgs/card-chip)
        (svgs/contactless)]]
