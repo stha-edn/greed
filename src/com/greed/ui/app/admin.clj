@@ -136,9 +136,9 @@
      "All users"]
     [:span {:class "text-xs font-medium text-zinc-400 tabular-nums"}
      (str (count users) (if (= 1 (count users)) " user" " users"))]]
-   [:div {:class "overflow-x-auto"}
+   [:div {:class "overflow-auto max-h-[520px]"}
     [:table {:class "w-full min-w-[720px]"}
-     [:thead
+     [:thead {:class "sticky top-0 z-10 bg-white"}
       [:tr {:class "border-b border-zinc-100"}
        [:th {:class "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Name"]
        [:th {:class "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Email"]
