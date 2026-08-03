@@ -82,11 +82,27 @@
      :stroke-linejoin "round",
      :d "M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"}]])
 
-(defn visa []
-  [:img {:src "/img/visa.svg"}])
+(defn card-chip []
+  [:svg
+   {:viewBox "0 0 24 18",
+    :class "w-7 h-5 fill-current"}
+   [:rect {:x "0.5" :y "0.5" :width "23" :height "17" :rx "3" :stroke "currentColor" :stroke-width "1" :fill "none" :fill-opacity "0.15"}]
+   [:rect {:x "4" :y "4" :width "16" :height "10" :rx "1.5" :fill "currentColor" :fill-opacity "0.35"}]
+   [:line {:x1 "9" :y1 "4" :x2 "9" :y2 "14" :stroke "currentColor" :stroke-width "1"}]
+   [:line {:x1 "15" :y1 "4" :x2 "15" :y2 "14" :stroke "currentColor" :stroke-width "1"}]
+   [:line {:x1 "4" :y1 "9" :x2 "20" :y2 "9" :stroke "currentColor" :stroke-width "1"}]])
 
-(defn mastercard []
-  [:img {:src "/img/mastercard.svg"}])
+(defn contactless []
+  [:svg
+   {:viewBox "0 0 24 24",
+    :fill "none",
+    :stroke "currentColor",
+    :stroke-width "1.75",
+    :stroke-linecap "round",
+    :class "w-5 h-5"}
+   [:path {:d "M8 16.5a6 6 0 0 1 0-9"}]
+   [:path {:d "M12 19a10 10 0 0 1 0-14"}]
+   [:path {:d "M16 21a14 14 0 0 1 0-18"}]])
 
 (defn info []
   [:svg

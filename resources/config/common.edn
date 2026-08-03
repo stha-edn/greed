@@ -16,10 +16,9 @@
 
  :user/fields #{"firstname" "lastname" "age" "email" "password"}
 
- :finances/fields #{"bank" "card-type" "salary" "payday"}
+ :finances/fields #{"bank" "salary" "payday"}
 
  :banking/banks #{:absa :capitec :discovery-bank :fnb :nedbank :standard-bank}
- :banking/card-types #{:visa :mastercard}
  :banking/card-colours {:absa "from-red-500 to-red-800"
                         :capitec "from-gray-600 to-black"
                         :discovery-bank "from-yellow-500 to-amber-800"

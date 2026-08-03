@@ -112,8 +112,7 @@
       "Save changes"]])])
 
 (defn finances [ctx]
-  (let [bank-options      (sort (:banking/banks c/common-config))
-        card-type-options (sort (:banking/card-types c/common-config))]
+  (let [bank-options (sort (:banking/banks c/common-config))]
     [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card p-6"}
      [:div {:class "mb-6"}
       [:h2 {:class "text-base font-semibold text-zinc-900"} "Financial Details"]
@@ -126,9 +125,7 @@
        [:p {:class "text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3"} "Banking"]
        [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
         (shared/app-select ctx :id "bank" :label "Bank" :options bank-options :required? true
-                           :hint "Your primary banking institution")
-        (shared/app-select ctx :id "card-type" :label "Card Type" :options card-type-options :required? true
-                           :hint "The network on your debit card")]]
+                           :hint "Your primary banking institution")]]
 
       ;; Income
       [:div {:class "mb-6"}

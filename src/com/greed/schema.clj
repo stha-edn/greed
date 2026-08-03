@@ -17,7 +17,6 @@
               [:xt/id              :finances/id]
               [:finances/user-id   :user/id]
               [:finances/bank      :keyword]
-              [:finances/card-type :keyword]
               [:finances/salary    :int]
               [:finances/payday    :int]]
 

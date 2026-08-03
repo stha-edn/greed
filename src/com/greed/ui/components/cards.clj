@@ -27,15 +27,17 @@
      [:div {:class "h-px w-10 bg-emerald-500"}]
      [:span {:class "text-xl font-giza font-bold text-zinc-100 leading-none"} "greed."]]]])
 
-(defn get-card-type [card-type]
-  (case card-type
-    :visa (svgs/visa)
-    :mastercard (svgs/mastercard)
-    (svgs/visa)))
+(defn- mock-last-four
+  "Deterministic decorative last-4 digits for the card mockup, derived from a
+   stable seed so it doesn't shuffle on every render. Purely cosmetic — never
+   sourced from or resembling a real card number."
+  [seed]
+  (format "%04d" (mod (Math/abs (hash seed)) 10000)))
 
 (defn bank-card [& {:keys [budget-items finances net-monthly-income]}]
   (let [{:keys [total-income total-expenses]} (c.ui/get-budget-data budget-items)
-        {:finances/keys [bank card-type]} finances
+        {:finances/keys [bank user-id]} finances
+        last-four (mock-last-four (or user-id bank))
         salary-budget-amount (or (some (fn [item]
                                          (when (and (= (:budget-item/type item) :income)
                                                     (= (:budget-item/title item) "Salary"))
@@ -47,8 +49,7 @@
                        (+ net-monthly-income (max 0 other-income))
                        (or total-income 0))
         balance      (- income total-expenses)
-        bank         (or bank :bank)
-        card-type    (get-card-type (or card-type :visa))]
+        bank         (or bank :bank)]
     [:div {:class "group relative h-48 w-full max-w-sm rounded-2xl p-6 text-white shadow-card-md ring-1 ring-white/10 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black overflow-hidden transition-all duration-300 hover:shadow-card-hover hover:-translate-y-0.5"}
      [:div {:class "absolute top-0 right-0 w-44 h-44 bg-emerald-500/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3 transition-transform duration-500 group-hover:scale-125"}]
      [:div {:class "absolute bottom-0 left-0 w-28 h-28 bg-white/5 rounded-full blur-xl translate-y-1/2 -translate-x-1/2"}]
@@ -56,13 +57,14 @@
       [:div
        [:p {:class "text-xs font-semibold text-zinc-300 uppercase tracking-widest"} (utilities/->string bank)]
        [:p {:class "mt-0.5 text-xs text-zinc-500"} "Debit Card"]]
-      [:div {:class "opacity-90"} card-type]]
-     [:div {:class "relative absolute bottom-6 left-6 right-6 mt-8"}
-      [:div {:class "flex items-center gap-1 mb-4"}
+      [:div {:class "flex items-center gap-2 text-zinc-300 opacity-90"}
+       (svgs/card-chip)
+       (svgs/contactless)]]
+     [:div {:class "absolute bottom-6 left-6 right-6"}
+      [:div {:class "flex items-center gap-2 mb-4"}
        (for [_ (range 3)]
          [:span {:class "text-zinc-500 text-sm tracking-widest"} "...."])
-       [:span {:class "text-sm font-mono text-zinc-300 ml-1"} "4242"]]
-      [:div {:class "flex justify-between items-end"}
-       [:div
-        [:p {:class "text-xs text-zinc-500 uppercase tracking-wider"} "Balance"]
-        [:p {:class "mt-0.5 text-2xl font-bold text-white tabular-nums tracking-tight"} (utilities/amount->rands balance)]]]]]))
+       [:span {:class "text-sm font-mono text-zinc-300"} last-four]]
+      [:div
+       [:p {:class "text-xs text-zinc-500 uppercase tracking-wider"} "Balance"]
+       [:p {:class "mt-0.5 text-2xl font-bold text-white tabular-nums tracking-tight"} (utilities/amount->rands balance)]]]]))

@@ -13,9 +13,9 @@
   [:h2 {:class "text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3"} title])
 
 (defn- hero-substat [label value]
-  [:div
-   [:p {:class "text-[11px] font-medium uppercase tracking-wider text-zinc-500"} label]
-   [:p {:class "mt-1 text-base sm:text-lg font-semibold tabular-nums text-zinc-100"} value]])
+  [:div {:class "min-w-0"}
+   [:p {:class "text-[11px] font-medium uppercase tracking-wider text-zinc-500 whitespace-nowrap"} label]
+   [:p {:class "mt-1 text-sm sm:text-lg font-semibold tabular-nums text-zinc-100 whitespace-nowrap"} value]])
 
 (defn- hero
   "Bold feature card leading with monthly net take-home."
@@ -35,7 +35,7 @@
           (str "Payday · " (utilities/ordinal payday))])]
       [:p {:class "mt-3 text-4xl sm:text-5xl font-bold tracking-tight tabular-nums"}
        (if monthly-net (utilities/amount->rands monthly-net) "—")]
-      [:div {:class "mt-auto grid grid-cols-3 gap-4 border-t border-white/10 pt-5"}
+      [:div {:class "mt-auto grid grid-cols-3 gap-2 sm:gap-4 border-t border-white/10 pt-5"}
        (hero-substat "Gross salary"   (utilities/amount->rands (or salary 0)))
        (hero-substat "Est. tax / mo"  (if monthly-tax (utilities/amount->rands monthly-tax) "—"))
        (hero-substat "Effective rate" (utilities/->percentage (or effective-rate 0)))]]]))
