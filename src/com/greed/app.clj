@@ -1,5 +1,6 @@
 (ns com.greed.app
   (:require [com.greed.middleware :as mid]
+            [com.greed.ui.app.admin :as admin]
             [com.greed.ui.app.tools :as tools]
             [com.greed.ui.app.goals :as goals]
             [com.greed.ui.app.account :as account]
@@ -47,6 +48,11 @@
              ["/tools/income-tax-calculator" {:get (redirect-to "/app/tax/income-tax-calculator")}]
              ["/tools/tax-returns" {:get (redirect-to "/app/tax/tax-returns")}]
              ["/settings" {:get settings/page}]
+             ["/admin" {:middleware [mid/wrap-admin]}
+              ["/users" {:get admin/page}]
+              ["/users/update" {:post mid/admin-update-user}]
+              ["/users/hash-password" {:post mid/admin-hash-user-password}]
+              ["/users/delete" {:post mid/admin-delete-user}]]
              ["/profile" {:get account/page}]
              ["/save-user" {:post mid/save-user}]
              ["/save-finances" {:post mid/save-finances}]

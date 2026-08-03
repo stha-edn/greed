@@ -38,7 +38,7 @@
    [:span {:class "w-5 flex-shrink-0"} icon]
    label])
 
-(defn- sidebar-inner [firstname lastname]
+(defn- sidebar-inner [firstname lastname admin?]
   (let [initials (str (or (first firstname) \?) (or (first lastname) \?))]
     [:<>
      [:div {:class "flex items-center h-16 px-5 border-b border-zinc-800 flex-shrink-0"}
@@ -53,7 +53,9 @@
        (nav-link "/app/goals"     "Goals"     (svgs/target)      "currentPath.startsWith('/app/goals')")
        (nav-link "/app/insights"  "Insights"  (svgs/chart-bar)   "currentPath.startsWith('/app/insights')")
        (nav-link "/app/calendar"  "Calendar"  (svgs/calendar)    "currentPath.startsWith('/app/calendar')")
-       (nav-link "/app/tax"       "Tax"       (svgs/tools)       "currentPath.startsWith('/app/tax')")]
+       (nav-link "/app/tax"       "Tax"       (svgs/tools)       "currentPath.startsWith('/app/tax')")
+       (when admin?
+         (nav-link "/app/admin/users" "Users" (svgs/users) "currentPath.startsWith('/app/admin/users')"))]
       [:div {:class "mt-auto pt-4 border-t border-zinc-800"}
        [:nav {:class "space-y-0.5 mb-4"}
         [:a {:href "/app/settings"
@@ -74,13 +76,16 @@
 
 (defn sidebar [{:keys [session] :as ctx}]
   (let [user-id (:uid session)
-        {:user/keys [firstname lastname]} (data/get-user ctx user-id)]
+        user (data/get-user ctx user-id)
+        {:user/keys [firstname lastname]} user]
     [:aside {:class "hidden md:flex flex-col w-64 h-screen bg-black fixed top-0 left-0 z-30"}
-     (sidebar-inner firstname lastname)]))
+     (sidebar-inner firstname lastname (data/admin? user))]))
 
 (defn mobile-sidebar [{:keys [session] :as ctx}]
   (let [user-id (:uid session)
-        {:user/keys [firstname lastname]} (data/get-user ctx user-id)
+        user (data/get-user ctx user-id)
+        {:user/keys [firstname lastname]} user
+        admin? (data/admin? user)
         initials (str (or (first firstname) \?) (or (first lastname) \?))]
     [:div {:x-data "{ open: false }"}
      [:div {:class "md:hidden fixed top-0 left-0 right-0 h-14 bg-black z-20 flex items-center justify-between px-4"}
@@ -121,7 +126,9 @@
         (nav-link "/app/goals"     "Goals"     (svgs/target)      "currentPath.startsWith('/app/goals')")
         (nav-link "/app/insights"  "Insights"  (svgs/chart-bar)   "currentPath.startsWith('/app/insights')")
         (nav-link "/app/calendar"  "Calendar"  (svgs/calendar)    "currentPath.startsWith('/app/calendar')")
-        (nav-link "/app/tax"       "Tax"       (svgs/tools)       "currentPath.startsWith('/app/tax')")]
+        (nav-link "/app/tax"       "Tax"       (svgs/tools)       "currentPath.startsWith('/app/tax')")
+        (when admin?
+          (nav-link "/app/admin/users" "Users" (svgs/users) "currentPath.startsWith('/app/admin/users')"))]
        [:div {:class "mt-auto pt-4 border-t border-zinc-800"}
         [:nav {:class "space-y-0.5 mb-4"}
          [:a {:href "/app/settings"

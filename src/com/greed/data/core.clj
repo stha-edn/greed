@@ -37,6 +37,9 @@
               :where [[user :xt/id user-id]]}
             user-id)))
 
+(defn admin? [user]
+  (contains? (:user/roles user) :admin))
+
 (defn get-finances [{:keys [biff/db]} user-id]
   (first (q db
             '{:find (pull finances [*])
@@ -69,6 +72,14 @@
 (defn hash-password [password]
   (hashers/derive password))
 
+(defn hashed-password?
+  "True when `password` is already a properly hashed buddy.hashers value,
+  as opposed to e.g. legacy plaintext that slipped in via a script or import."
+  [password]
+  (try
+    (boolean (hashers/parse-password password))
+    (catch Exception _ false)))
+
 (defn user-active?
   "A user is active only when explicitly marked active (:user/active true).
   A missing or nil :user/active counts as deactivated."
@@ -86,11 +97,11 @@
                       :user/firstname (:firstname params)
                       :user/lastname (:lastname params)
                       :user/age (utilities/->int (:age params))
-                      :user/active true}])))
+                      :user/active true
+                      :user/roles #{:user}}])))
 
-(defn update-user [{:keys [params] :as ctx}]
-  (let [user-id (get-user-id-from-session ctx)
-        user (get-user ctx user-id)]
+(defn update-user-fields [ctx user-id params]
+  (let [user (get-user ctx user-id)]
     (if user
       (do
         (logger/info "Updating user...")
@@ -105,6 +116,42 @@
                           (not (str/blank? (:password params)))
                           (assoc-in [0 :user/password] (hash-password (:password params))))))
       (logger/info "User not found"))))
+
+(defn update-user [{:keys [params] :as ctx}]
+  (update-user-fields ctx (get-user-id-from-session ctx) params))
+
+(defn set-user-role
+  "Admin-only: replaces the target user's roles with the single given role."
+  [ctx user-id role]
+  (biff/submit-tx ctx
+                  [{:db/doc-type :user
+                    :xt/id user-id
+                    :db/op :update
+                    :user/roles #{role}}]))
+
+(defn admin-update-user [{:keys [params] :as ctx}]
+  (let [user-id (utilities/->uuid (:user-id params))]
+    (update-user-fields ctx user-id params)
+    (set-user-role ctx user-id (utilities/->keyword (:role params)))))
+
+(defn admin-hash-user-password
+  "If the target user's stored password isn't a proper hash (e.g. legacy
+  plaintext that slipped in via a script or import), re-hashes it in place.
+  Returns :hashed, :already-hashed, or :not-found."
+  [{:keys [params] :as ctx}]
+  (let [user-id (utilities/->uuid (:user-id params))
+        user (get-user ctx user-id)]
+    (cond
+      (nil? user) :not-found
+      (hashed-password? (:user/password user)) :already-hashed
+      :else
+      (do (logger/info (str "Hashing plaintext password for user " user-id))
+          (biff/submit-tx ctx
+                          [{:db/doc-type :user
+                            :xt/id user-id
+                            :db/op :update
+                            :user/password (hash-password (:user/password user))}])
+          :hashed))))
 
 (defn upsert-finances [{:keys [params] :as ctx}]
   (let [user-id (get-user-id-from-session ctx)
@@ -454,3 +501,13 @@
                            :db/op :delete
                            :xt/id id}))
         (count owned)))))
+
+(defn admin-delete-user
+  "Deletes the target user unless they're the signed-in admin themselves.
+  Returns :self, :not-found, or the number of docs deleted."
+  [{:keys [session params] :as ctx}]
+  (let [user-id (utilities/->uuid (:user-id params))]
+    (cond
+      (= user-id (:uid session)) :self
+      (nil? (get-user ctx user-id)) :not-found
+      :else (delete-user ctx user-id))))

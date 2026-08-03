@@ -13,6 +13,13 @@
  :alert/budget-item-deleted "Your budget item has been successfully deleted."
  :alert/goal-saved "Your goal has been successfully saved or updated."
  :alert/goal-deleted "Your goal has been successfully deleted."
+ :alert/user-deleted "The user and all of their data has been deleted."
+ :alert/user-not-found "That user could not be found."
+ :alert/email-taken "That email is already in use by another account."
+ :alert/cannot-delete-self "You can't delete your own account from here."
+ :alert/cannot-remove-own-admin-role "You can't remove your own admin role from here."
+ :alert/password-hashed "That user's plaintext password has been securely hashed."
+ :alert/password-already-hashed "That user's password was already securely hashed."
 
  :user/fields #{"firstname" "lastname" "age" "email" "password"}
 

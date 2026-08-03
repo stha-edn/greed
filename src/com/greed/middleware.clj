@@ -6,6 +6,7 @@
             [ring.middleware.anti-forgery :as csrf]
             [ring.middleware.defaults :as rd]
             [com.greed.data.core :as data]
+            [com.greed.utilities.core :as utilities]
             [com.greed.authentication :as auth]))
 
 (defonce signin-attempts (atom {}))
@@ -69,6 +70,13 @@
       (handler ctx)
       {:status 303
        :headers {"location" "/signin?error=not-signed-in"}})))
+
+(defn wrap-admin [handler]
+  (fn [{:keys [session] :as ctx}]
+    (if (data/admin? (data/get-user ctx (:uid session)))
+      (handler ctx)
+      {:status 303
+       :headers {"location" "/app"}})))
 
 (defn wrap-authenticate [handler]
   (fn [{:keys [uri] :as ctx}]
@@ -167,6 +175,44 @@
   (data/delete-goal ctx)
   {:status 303
    :headers {"location" "/app/goals?alert=goal-deleted"}})
+
+(defn admin-update-user [{:keys [session params] :as ctx}]
+  (let [user-id (utilities/->uuid (:user-id params))]
+    (cond
+      (nil? (data/get-user ctx user-id))
+      {:status 303
+       :headers {"location" "/app/admin/users?alert=user-not-found"}}
+
+      (data/email-taken-by-other? ctx user-id)
+      {:status 303
+       :headers {"location" "/app/admin/users?alert=email-taken"}}
+
+      (and (= user-id (:uid session)) (not= (:role params) "admin"))
+      {:status 303
+       :headers {"location" "/app/admin/users?alert=cannot-remove-own-admin-role"}}
+
+      :else
+      (do (data/admin-update-user ctx)
+          {:status 303
+           :headers {"location" "/app/admin/users?alert=user-saved"}}))))
+
+(defn admin-hash-user-password [ctx]
+  (let [result (data/admin-hash-user-password ctx)
+        alert (case result
+                :hashed "password-hashed"
+                :already-hashed "password-already-hashed"
+                "user-not-found")]
+    {:status 303
+     :headers {"location" (str "/app/admin/users?alert=" alert)}}))
+
+(defn admin-delete-user [ctx]
+  (let [result (data/admin-delete-user ctx)
+        alert (case result
+                :self "cannot-delete-self"
+                :not-found "user-not-found"
+                "user-deleted")]
+    {:status 303
+     :headers {"location" (str "/app/admin/users?alert=" alert)}}))
 
 (defn logout [{:keys [session]}]
   {:status 303
