@@ -1,7 +1,7 @@
 (ns com.greed.ui.components.cards
   (:require [com.greed.ui.core :as c.ui]
-            [com.greed.ui.components.svgs :as svgs]
-            [com.greed.utilities.core :as utilities]))
+   [com.greed.ui.components.svgs :as svgs]
+   [com.greed.utilities.core :as utilities]))
 
 (defn testiminial [& {:keys [img title body author]}]
   [:div {:class "bg-white rounded-2xl border border-zinc-200 shadow-card p-8 max-w-md"}
@@ -40,10 +40,10 @@
         last-four (mock-last-four (or user-id bank))
         salary-budget-amount (or (some (fn [item]
                                          (when (and (= (:budget-item/type item) :income)
-                                                    (= (:budget-item/title item) "Salary"))
+                                                 (= (:budget-item/title item) "Salary"))
                                            (:budget-item/amount item)))
-                                       (or budget-items []))
-                                 0)
+                                   (or budget-items []))
+                               0)
         other-income (- (or total-income 0) salary-budget-amount)
         income       (if net-monthly-income
                        (+ net-monthly-income (max 0 other-income))
@@ -58,8 +58,8 @@
        [:p {:class "text-xs font-semibold text-zinc-300 uppercase tracking-widest"} (utilities/->string bank)]
        [:p {:class "mt-0.5 text-xs text-zinc-500"} (or account-type "Debit Card")]]
       [:div {:class "flex items-center gap-2 text-zinc-300 opacity-90"}
-       (svgs/card-chip)
-       (svgs/contactless)]]
+       (svgs/contactless)
+       (svgs/card-chip)]]
      [:div {:class "absolute bottom-6 left-6 right-6"}
       [:div {:class "flex items-center gap-2 mb-4"}
        (for [_ (range 3)]

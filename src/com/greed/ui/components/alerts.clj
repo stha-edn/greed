@@ -41,17 +41,18 @@
           :class "p-1 rounded-md transition-colors focus:outline-none"}
          (svgs/close)]]])))
 
-(defn salary-prompt-modal
-  "Modal prompting user to update salary. Parent must have Alpine x-data with showSalaryPrompt."
+(defn finance-tax-prompt-modal
+  "Modal prompting the user to complete their finance & tax profile.
+   Parent must have Alpine x-data with showFinanceTaxPrompt."
   []
   [:div
    {:class "relative flex justify-center"}
    [:div
     {:role "dialog"
-     :aria-labelledby "salary-prompt-title"
+     :aria-labelledby "finance-tax-prompt-title"
      :aria-modal "true"
      :class "fixed inset-0 z-10 overflow-y-auto"
-     :x-show "showSalaryPrompt"
+     :x-show "showFinanceTaxPrompt"
      "x-transition:enter" "transition duration-300 ease-out"
      "x-transition:enter-start" "translate-y-4 opacity-0 sm:translate-y-0 sm:scale-95"
      "x-transition:enter-end" "translate-y-0 opacity-100 sm:scale-100"
@@ -72,24 +73,62 @@
         {:class "flex items-start"}
         [:div
          {:class "flex items-center justify-center flex-shrink-0 w-12 h-12"}
-         (svgs/info)]
+         (svgs/chart-bar)]
         [:div
          {:class "flex-1 mt-0 ml-4"}
          [:h3
-          {:id "salary-prompt-title"
+          {:id "finance-tax-prompt-title"
            :class "text-lg font-medium leading-6 text-zinc-300"}
-          "Update financial details"]
+          "Complete your finance & tax profile"]
          [:p
           {:class "mt-2 text-sm text-zinc-500"}
-          "To get accurate finance and tax insights, please update your financial details."]
+          "A few details help us personalise your dashboard, bank card, and tax estimates."]]]
+       [:div
+        {:class "mt-5 space-y-3"}
+        [:div
+         {:class "flex items-center gap-3"}
          [:div
-          {:class "flex justify-end gap-3 mt-6"}
-          [:button
-           {:type "button"
-            :class "px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-md hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
-            "@click" "showSalaryPrompt = false"}
-           "Later"]
-          [:a
-           {:href "/app/settings"
-            :class "inline-flex justify-center px-4 py-2 text-sm font-medium text-white  bg-emerald-500/20 border border-transparent rounded-md hover:bg-emerald-600/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"}
-           "Update"]]]]]]]]])
+          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-300"}
+          (svgs/banknotes)]
+         [:div
+          {:class "min-w-0"}
+          [:p {:class "text-sm font-medium text-zinc-200"} "Banking"]
+          [:p {:class "text-xs text-zinc-500"} "Bank and account type"]]]
+        [:div
+         {:class "flex items-center gap-3"}
+         [:div
+          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-300"}
+          (svgs/money)]
+         [:div
+          {:class "min-w-0"}
+          [:p {:class "text-sm font-medium text-zinc-200"} "Income"]
+          [:p {:class "text-xs text-zinc-500"} "Monthly gross salary and pay day"]]]
+        [:div
+         {:class "flex items-center gap-3"}
+         [:div
+          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-300"}
+          (svgs/suit-case)]
+         [:div
+          {:class "min-w-0"}
+          [:p {:class "text-sm font-medium text-zinc-200"} "Medical aid"]
+          [:p {:class "text-xs text-zinc-500"} "Monthly contributions and dependants"]]]
+        [:div
+         {:class "flex items-center gap-3"}
+         [:div
+          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-300"}
+          (svgs/target)]
+         [:div
+          {:class "min-w-0"}
+          [:p {:class "text-sm font-medium text-zinc-200"} "Retirement annuity"]
+          [:p {:class "text-xs text-zinc-500"} "Annual RA contributions"]]]]
+       [:div
+        {:class "flex justify-end gap-3 mt-6"}
+        [:button
+         {:type "button"
+          :class "px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-md hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+          "@click" "showFinanceTaxPrompt = false"}
+         "Later"]
+        [:a
+         {:href "/app/settings"
+          :class "inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-emerald-500/20 border border-transparent rounded-md hover:bg-emerald-600/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"}
+         "Update"]]]]]]])

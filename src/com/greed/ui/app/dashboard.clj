@@ -54,13 +54,13 @@
         finances           (data/get-finances ctx user-id)
         income-tax-data    (c.greed/get-income-tax-data user finances)
         budget-items       (data/get-budget-items ctx user-id)
-        show-salary-prompt (and (not (data/admin? user))
-                                (not (salary-set? finances)))]
+        show-finance-tax-prompt (and (not (data/admin? user))
+                                     (not (salary-set? finances)))]
     (ui/app
      ctx
      [:div {:class "space-y-7"
-            :x-data (str "{ showSalaryPrompt: " (boolean show-salary-prompt) " }")}
-      (when show-salary-prompt (alerts/salary-prompt-modal))
+            :x-data (str "{ showFinanceTaxPrompt: " (boolean show-finance-tax-prompt) " }")}
+      (when show-finance-tax-prompt (alerts/finance-tax-prompt-modal))
       (when (:alert params) (alerts/info params))
       (headers/home-heading :user user :date (today-str))
 
