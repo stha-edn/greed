@@ -4,7 +4,7 @@
             [com.greed.ui.components.svgs :as svgs]))
 
 (defn- metric-card [& {:keys [label value icon-bg icon]}]
-  [:div {:class "group bg-white rounded-xl border border-zinc-200/70 shadow-card p-5 transition-all duration-200 hover:shadow-card-md hover:border-zinc-300/70"}
+  [:div {:class "group bg-gradient-to-br from-white via-white to-emerald-50/80 rounded-xl ring-1 ring-zinc-200 shadow-card p-5 transition-all duration-200 hover:shadow-card-md hover:ring-emerald-200"}
    [:div {:class "flex items-start justify-between"}
     [:div
      [:p {:class "text-xs font-medium text-zinc-400 uppercase tracking-wider"} label]
@@ -40,7 +40,7 @@
       :icon [:span {:class "text-indigo-600"} (svgs/wallet)])]))
 
 (defn- chart-card [& {:keys [title subtitle canvas-id attrs]}]
-  [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card p-5 transition-all duration-200 hover:shadow-card-md hover:border-zinc-300/70"}
+  [:div {:class "bg-gradient-to-br from-white via-white to-emerald-50/80 rounded-xl ring-1 ring-zinc-200 shadow-card p-5 transition-all duration-200 hover:shadow-card-md hover:ring-emerald-200"}
    [:h3 {:class "text-sm font-semibold text-zinc-900"} title]
    [:p {:class "text-xs text-zinc-400 mt-0.5"} subtitle]
    [:div {:class "relative mt-4 h-56"}
@@ -99,7 +99,7 @@
           progress (when next-threshold
                      (min 100 (max 0 (* 100.0 (/ (- (or annual-income 0) from) span)))))
           next-rate (when next-threshold (rate-label (get-in brackets [(inc bracket-index) :rate] 0)))]
-      [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card p-5 transition-all duration-200 hover:shadow-card-md hover:border-zinc-300/70"}
+      [:div {:class "bg-gradient-to-br from-white via-white to-emerald-50/80 rounded-xl ring-1 ring-zinc-200 shadow-card p-5 transition-all duration-200 hover:shadow-card-md hover:ring-emerald-200"}
        [:div {:class "flex items-start justify-between gap-3 mb-4"}
         [:div {:class "min-w-0"}
          [:h3 {:class "text-sm font-semibold text-zinc-900"} "Your tax bracket"]
@@ -132,6 +132,6 @@
        [:div {:class "space-y-4"}
         (tax-charts income-tax-data)
         (tax-bracket-breakdown income-tax-data)]
-       [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card p-8 text-center"}
+       [:div {:class "bg-gradient-to-br from-white via-white to-emerald-50/80 rounded-xl ring-1 ring-zinc-200 shadow-card p-8 text-center"}
         [:p {:class "text-sm font-medium text-zinc-500"} "No tax data yet"]
         [:p {:class "mt-0.5 text-xs text-zinc-400"} "Add your salary to see your tax breakdown and bracket."]])]))
