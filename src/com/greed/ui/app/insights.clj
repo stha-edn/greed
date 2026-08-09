@@ -11,7 +11,7 @@
     0.0))
 
 (defn- metric [label value sub value-cls]
-  [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card p-5"}
+  [:div {:class "p-5 bg-white border border-zinc-200/70 rounded-xl shadow-card"}
    [:p {:class "text-xs font-medium text-zinc-400 uppercase tracking-wider"} label]
    [:p {:class (str "mt-2 text-2xl font-semibold tabular-nums " (or value-cls "text-zinc-900"))} value]
    (when sub [:p {:class "mt-1 text-xs text-zinc-400"} sub])])
@@ -19,35 +19,35 @@
 (defn- bar-row [& {:keys [label amount pct colour]}]
   [:div
    [:div {:class "flex items-center justify-between mb-1"}
-    [:span {:class "text-sm text-zinc-600 truncate pr-2"} label]
-    [:span {:class "text-sm font-medium text-zinc-900 tabular-nums flex-shrink-0"} (utilities/amount->rands amount)]]
-   [:div {:class "h-2 w-full rounded-full bg-zinc-100 overflow-hidden"}
+    [:span {:class "pr-2 text-sm text-zinc-600 truncate"} label]
+    [:span {:class "flex-shrink-0 text-sm font-medium text-zinc-900 tabular-nums"} (utilities/amount->rands amount)]]
+   [:div {:class "overflow-hidden h-2 w-full bg-zinc-100 rounded-full"}
     [:div {:class (str "h-full rounded-full " colour)
            :style {:width (str (int (min 100 (max 0 (Math/round (double pct))))) "%")}}]]])
 
 (defn- allocation-card [income expenses savings]
   (let [leftover (max 0 (- income expenses savings))]
-    [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card p-6"}
+    [:div {:class "p-6 bg-white border border-zinc-200/70 rounded-xl shadow-card"}
      [:h3 {:class "text-sm font-semibold text-zinc-900"} "Where your income goes"]
-     [:p {:class "text-xs text-zinc-400 mt-0.5 mb-5"}
+     [:p {:class "mt-0.5 mb-5 text-xs text-zinc-400"}
       "How your monthly income splits across expenses, savings, and what's left over."]
      (if (pos? income)
        [:div {:class "space-y-4"}
         (bar-row :label "Expenses" :amount expenses :pct (safe-pct expenses income) :colour "bg-rose-400")
         (bar-row :label "Savings"  :amount savings  :pct (safe-pct savings income)  :colour "bg-violet-400")
         (bar-row :label "Unallocated" :amount leftover :pct (safe-pct leftover income) :colour "bg-zinc-300")]
-       [:p {:class "text-sm text-zinc-400 py-6 text-center"} "Add your income in Finances to see this breakdown."])]))
+       [:p {:class "text-center py-6 text-sm text-zinc-400"} "Add your income in Finances to see this breakdown."])]))
 
 (defn- expense-breakdown-card [expense-items total-expenses]
-  [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card p-6"}
+  [:div {:class "p-6 bg-white border border-zinc-200/70 rounded-xl shadow-card"}
    [:h3 {:class "text-sm font-semibold text-zinc-900"} "Expense breakdown"]
-   [:p {:class "text-xs text-zinc-400 mt-0.5 mb-5"} "Each expense as a share of your total monthly spending."]
+   [:p {:class "mt-0.5 mb-5 text-xs text-zinc-400"} "Each expense as a share of your total monthly spending."]
    (if (seq expense-items)
      [:div {:class "space-y-4"}
       (for [{:budget-item/keys [title amount]} (sort-by :budget-item/amount > expense-items)]
         (bar-row :label title :amount amount
                  :pct (safe-pct amount total-expenses) :colour "bg-rose-400"))]
-     [:p {:class "text-sm text-zinc-400 py-6 text-center"} "No expenses recorded yet."])])
+     [:p {:class "text-center py-6 text-sm text-zinc-400"} "No expenses recorded yet."])])
 
 (defn page [{:keys [session] :as ctx}]
   (let [user-id      (:uid session)
@@ -63,7 +63,7 @@
       (headers/pages-heading ["Insights"])
       [:p {:class "text-sm text-zinc-500"}
        "A read on your monthly money based on your budget in Finances."]
-      [:div {:class "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"}
+      [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"}
        (metric "Monthly Income" (utilities/amount->rands total-income) nil "text-emerald-600")
        (metric "Savings rate" (utilities/->percentage savings-rate) "Share of income saved" "text-violet-600")
        (metric "Expense rate" (utilities/->percentage expense-rate) "Share of income spent" "text-rose-600")
@@ -71,6 +71,6 @@
                (utilities/amount->rands (Math/abs (long leftover)))
                (if (neg? leftover) "Expenses + savings exceed income" "Income not yet budgeted")
                (if (neg? leftover) "text-rose-500" "text-zinc-900"))]
-      [:div {:class "grid grid-cols-1 lg:grid-cols-2 gap-4 items-start"}
+      [:div {:class "grid grid-cols-1 items-start gap-4 lg:grid-cols-2"}
        (allocation-card total-income total-expenses total-savings)
        (expense-breakdown-card expense-items total-expenses)]])))

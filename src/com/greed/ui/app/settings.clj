@@ -11,6 +11,6 @@
    [:div {:class "space-y-4"}
     (when (:alert (:params ctx)) (alerts/info (:params ctx)))
     (headers/pages-heading ["Settings"])
-    [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-2 items-start"}
+    [:div {:class "grid grid-cols-1 items-start gap-4 lg:grid-cols-2"}
      (forms/finances ctx)
      (forms/tax-profile ctx)]]))

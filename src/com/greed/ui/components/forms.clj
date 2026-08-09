@@ -91,7 +91,7 @@
       [:a {:href "/signin" :class "font-medium text-zinc-700 hover:text-zinc-900 hover:underline"} "Sign in"]]]]])
 
 (defn user [ctx]
-  [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card p-6"}
+  (shared/card {:class "p-6"}
    [:h2 {:class "text-base font-semibold text-zinc-900 mb-5"} "Personal Information"]
    (biff/form
     {:action "/app/save-user"}
@@ -107,9 +107,8 @@
                :placeholder "Leave blank to keep your current password"}]
       [:p {:class "text-xs text-zinc-400 mt-1"} "Only enter a new password if you want to change it."]]]
     [:div {:class "flex justify-end mt-5"}
-     [:button {:class "px-6 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"
-               :type "submit"}
-      "Save changes"]])])
+     (shared/btn :variant :dark :type "submit"
+      "Save changes")])))
 
 (defn- account-type-options
   [bank]
@@ -130,7 +129,7 @@
         bank-options       (sort (:banking/banks c/common-config))
         current-bank       (or (:finances/bank finances) (first bank-options))
         current-account-type (:finances/account-type finances)]
-    [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card p-6"}
+    (shared/card {:class "p-6"}
      [:div {:class "mb-6"}
       [:h2 {:class "text-base font-semibold text-zinc-900"} "Financial Details"]
       [:p {:class "text-sm text-zinc-400 mt-0.5"} "Personalises your dashboard, bank card, and tax estimates."]]
@@ -164,15 +163,14 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
                           :hint "Day of the month you receive your salary (1–31)")]]
 
       [:div {:class "flex justify-end pt-2 border-t border-zinc-50"}
-       [:button {:class "px-6 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"
-                 :type "submit"}
-        "Save changes"]])]))
+       (shared/btn :variant :dark :type "submit"
+        "Save changes")]))))
 
 (defn tax-profile [{:keys [session] :as ctx}]
   (let [user-id (:uid session)
         tp      (data/get-tax-profile ctx user-id)
         val     (fn [k] (str (or (k tp) 0)))]
-    [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card p-6"}
+    (shared/card {:class "p-6"}
      [:div {:class "mb-6"}
       [:h2 {:class "text-base font-semibold text-zinc-900"} "Tax Assessment Profile"]
       [:p {:class "text-sm text-zinc-400 mt-0.5"}
@@ -217,9 +215,8 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
          [:p {:class "text-xs text-zinc-400 mt-1"} "Total personal RA contributions for the year"]]]]
 
       [:div {:class "flex justify-end pt-2 border-t border-zinc-50"}
-       [:button {:class "px-6 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"
-                 :type "submit"}
-        "Save changes"]])]))
+       (shared/btn :variant :dark :type "submit"
+        "Save changes")]))))
 
 (defn income-tax-form []
   [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card-md p-6 w-full max-w-sm"}

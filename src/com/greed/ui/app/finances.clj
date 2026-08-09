@@ -7,7 +7,7 @@
             [com.greed.ui.components.headers :as headers]))
 
 (defn budget-lists [& {:keys [budget-items]}]
-  [:div {:class "grid grid-cols-1 md:grid-cols-3 gap-4"}
+  [:div {:class "grid grid-cols-1 gap-4 md:grid-cols-3"}
    (tables/budget-table
     {:title "income"
      :items (filterv #(= (:budget-item/type %) :income) budget-items)

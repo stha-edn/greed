@@ -2,11 +2,12 @@
   (:require [com.biffweb :as biff]
             [com.greed.ui :as ui]
             [com.greed.data.core :as data]
+            [com.greed.ui.components.shared :as shared]
             [com.greed.ui.components.alerts :as alerts]
             [com.greed.ui.components.headers :as headers]))
 
 (defn- badge [text tone]
-  [:span {:class (str "text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full " tone)}
+  [:span {:class (str "px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide rounded-full " tone)}
    text])
 
 (defn- status-badge [active?]
@@ -23,7 +24,7 @@
 
 (defn- field [& {:keys [id name label type value required?]}]
   [:div
-   [:label {:for id :class "block text-sm font-medium text-zinc-700 mb-1"} label]
+   (shared/form-label id label)
    [:input (cond-> {:id id :name name :type type
                     :class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                     :required (boolean required?)}
@@ -31,16 +32,16 @@
 
 (defn- role-field [& {:keys [current-role self?]}]
   [:div
-   [:label {:class "block text-sm font-medium text-zinc-700 mb-1"} "Role"]
+   [:label {:class "block mb-1 text-sm font-medium text-zinc-700"} "Role"]
    (if self?
      [:<>
       [:select {:disabled true
                 :class "block w-full px-3 py-2 text-sm text-zinc-400 bg-zinc-50 border border-zinc-200 rounded-lg"}
        [:option "Admin"]]
       [:input {:type "hidden" :name "role" :value "admin"}]
-      [:p {:class "text-xs text-zinc-400 mt-1"} "You can't change your own role here."]]
+      [:p {:class "mt-1 text-xs text-zinc-400"} "You can't change your own role here."]]
      [:select {:name "role"
-               :class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"}
+               :class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg hover:border-zinc-300 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 active:border-zinc-400"}
       [:option (cond-> {:value "user"} (= current-role :user) (assoc :selected true)) "User"]
       [:option (cond-> {:value "admin"} (= current-role :admin) (assoc :selected true)) "Admin"]])])
 
@@ -54,10 +55,10 @@
            :x-transition:enter-start "opacity-0 scale-95"
            :x-transition:enter-end "opacity-100 scale-100"}
      [:div {:class "absolute inset-0 bg-black/50" "@click" "editingUserId = null"}]
-     [:div {:class "relative z-10 w-full max-w-md bg-white rounded-xl shadow-card-md p-6"}
+     [:div {:class "relative z-10 w-full max-w-md p-6 bg-white rounded-xl shadow-card-md"}
       [:div {:class "flex items-center justify-between mb-4"}
        [:h3 {:class "text-base font-semibold text-zinc-900"} "Edit user"]
-       [:button {:type "button" :class "text-zinc-400 hover:text-zinc-600"
+       [:button {:type "button" :class "text-zinc-400 hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-700"
                  "@click" "editingUserId = null"}
         "✕"]]
       (biff/form
@@ -73,14 +74,13 @@
         (field :id (str "age-" id) :name "age" :label "Age" :type "number"
                :value age :required? true)
         (role-field :current-role current-role :self? self?)]
-       [:div {:class "mt-6 flex justify-end gap-3"}
+       [:div {:class "flex justify-end gap-3 mt-6"}
         [:button {:type "button"
-                  :class "px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900"
+                  :class "px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-800"
                   "@click" "editingUserId = null"}
          "Cancel"]
-        [:button {:type "submit"
-                  :class "px-5 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"}
-         "Save changes"]])]]))
+        (shared/btn :variant :primary :size :md :type "submit" :class "px-5"
+                    "Save changes")])]]))
 
 (defn- password-cell [user]
   (if (data/hashed-password? (:user/password user))
@@ -90,13 +90,13 @@
      (biff/form {:action "/app/admin/users/hash-password" :class "flex"}
        [:input {:type "hidden" :name "user-id" :value (str (:xt/id user))}]
        [:button {:type "submit"
-                 :class "text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-100 text-amber-800"}
+                 :class "px-2 py-0.5 text-[10px] font-medium text-amber-800 uppercase tracking-wide bg-amber-100 rounded-full hover:bg-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 active:bg-amber-300"}
         "Hash now"])]))
 
 (defn- insecure-password-banner [unhashed-count]
   (when (pos? unhashed-count)
-    [:div {:class "flex items-center gap-3 px-4 py-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800"}
-     [:svg {:class "w-5 h-5 flex-shrink-0" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
+    [:div {:class "flex items-center gap-3 px-4 py-3 text-amber-800 bg-amber-50 border border-amber-200 rounded-xl"}
+     [:svg {:class "flex-shrink-0 w-5 h-5" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
       [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2"
               :d "M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"}]]
      [:p {:class "text-sm font-medium"}
@@ -109,7 +109,7 @@
   (let [id (str (:xt/id user))]
     [:div {:class "flex items-center justify-end gap-1"}
      [:button {:type "button" :title "Edit"
-               :class "p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
+               :class "p-1.5 text-zinc-400 rounded-md transition-colors hover:text-zinc-700 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-700 active:bg-zinc-200"
                "@click" (str "editingUserId = '" id "'")}
       [:svg {:class "w-4 h-4" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
        [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2"
@@ -124,15 +124,15 @@
          [:input {:type "hidden" :name "user-id" :value id}]
          [:button {:type "submit" :title "Delete"
                    :onclick (str "return confirm('Delete " (:user/email user) " and all of their data? This cannot be undone.')")
-                   :class "p-1.5 text-zinc-400 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors"}
+                   :class "p-1.5 text-zinc-400 rounded-md transition-colors hover:text-rose-500 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 active:text-rose-600 active:bg-rose-100"}
           [:svg {:class "w-4 h-4" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
            [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2"
                    :d "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"}]]]))]))
 
 (defn- users-table [users current-user-id]
-  [:div {:class "flex flex-col bg-white rounded-xl border border-zinc-200/70 shadow-card overflow-hidden"}
+  [:div {:class "flex flex-col overflow-hidden bg-white border border-zinc-200/70 rounded-xl shadow-card"}
    [:div {:class "flex items-center justify-between px-4 py-3 border-b border-zinc-100"}
-    [:span {:class "text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full text-zinc-600 bg-zinc-100"}
+    [:span {:class "px-2.5 py-1 text-xs font-semibold text-zinc-600 uppercase tracking-wide bg-zinc-100 rounded-full"}
      "All users"]
     [:span {:class "text-xs font-medium text-zinc-400 tabular-nums"}
      (str (count users) (if (= 1 (count users)) " user" " users"))]]
@@ -140,17 +140,17 @@
     [:table {:class "w-full min-w-[720px]"}
      [:thead
       [:tr {:class "border-b border-zinc-100"}
-       [:th {:class "sticky left-0 z-20 bg-white px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Name"]
-       [:th {:class "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Email"]
-       [:th {:class "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Age"]
-       [:th {:class "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Status"]
-       [:th {:class "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Roles"]
-       [:th {:class "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Password"]
-       [:th {:class "px-4 py-2.5 w-20"}]]]
+       [:th {:class "sticky left-0 z-20 text-left px-4 py-2.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider bg-white"} "Name"]
+       [:th {:class "text-left px-4 py-2.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Email"]
+       [:th {:class "text-left px-4 py-2.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Age"]
+       [:th {:class "text-left px-4 py-2.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Status"]
+       [:th {:class "text-left px-4 py-2.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Roles"]
+       [:th {:class "text-left px-4 py-2.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Password"]
+       [:th {:class "w-20 px-4 py-2.5"}]]]
      [:tbody {:class "divide-y divide-zinc-100"}
       (for [{:user/keys [firstname lastname email age active roles] :as user} (sort-by :user/email users)]
-        [:tr {:class "group hover:bg-zinc-50 transition-colors"}
-         [:td {:class "sticky left-0 z-10 bg-white group-hover:bg-zinc-50 transition-colors px-4 py-3 text-sm text-zinc-700 whitespace-nowrap"} (str firstname " " lastname)]
+        [:tr {:class "group transition-colors hover:bg-zinc-50"}
+         [:td {:class "sticky left-0 z-10 px-4 py-3 text-sm text-zinc-700 whitespace-nowrap bg-white transition-colors group-hover:bg-zinc-50"} (str firstname " " lastname)]
          [:td {:class "px-4 py-3 text-sm text-zinc-500 whitespace-nowrap"} email]
          [:td {:class "px-4 py-3 text-sm text-zinc-500 tabular-nums"} age]
          [:td {:class "px-4 py-3"} (status-badge active)]

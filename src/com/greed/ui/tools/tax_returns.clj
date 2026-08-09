@@ -3,6 +3,8 @@
             [com.core :as c]
             [com.greed.ui :as ui]
             [com.greed.ui.components.headers :as headers]
+            [com.greed.ui.components.shared :as shared]
+            [com.greed.ui.tools.core :as tools]
             [com.greed.utilities.core :as utilities]
             [com.greed.utilities.tax :as tax]
             [com.greed.data.core :as data]))
@@ -30,16 +32,6 @@
       (* 0.333 total-medical)
       (max 0 (* 0.333 (- total-medical (* 4 mtc)))))))
 
-(defn- row [label value]
-  [:div {:class "flex justify-between py-2 border-b border-zinc-100 text-sm"}
-   [:span {:class "text-zinc-500"} label]
-   [:span {:class "text-zinc-800"} value]])
-
-(defn- bold-row [label value]
-  [:div {:class "flex justify-between py-2 border-b border-zinc-200 text-sm font-semibold"}
-   [:span {:class "text-zinc-700"} label]
-   [:span {:class "text-zinc-900"} value]])
-
 (defn- info-item [source-code label description]
   [:div {:class "flex gap-4 py-3 border-b border-zinc-100 last:border-0"}
    [:div {:class "shrink-0 w-24 text-xs font-mono bg-zinc-100 text-zinc-600 rounded px-2 py-1 self-start text-center"}
@@ -50,16 +42,16 @@
 
 (defn- guide []
   [:div {:class "space-y-6"}
-   [:div {:class "bg-white rounded-lg shadow p-6"}
+   (shared/card {:class "p-6"}
     [:h3 {:class "text-base font-semibold text-zinc-800 mb-1"} "How this tool works"]
     [:p {:class "text-sm text-zinc-500"}
      "Enter figures from your IRP5 (employee tax certificate) and other documents. The simulator applies SARS 2026 year of assessment tax brackets, rebates, and credits to estimate whether you are owed a refund or have tax to pay."]
     [:p {:class "text-sm text-zinc-500 mt-2"}
      "Filing opens annually in July on "
      [:a {:href "https://www.sars.gov.za" :class "text-emerald-600 hover:underline" :target "_blank"} "eFiling"]
-     ". Non-provisional taxpayers (salaried employees) must submit by late October."]]
+     ". Non-provisional taxpayers (salaried employees) must submit by late October."])
 
-   [:div {:class "bg-white rounded-lg shadow p-6"}
+   (shared/card {:class "p-6"}
     [:h3 {:class "text-base font-semibold text-zinc-800 mb-3"} "Where to find each value"]
     [:p {:class "text-xs text-zinc-400 mb-3"} "Your employer must issue an IRP5 by 31 May each year. Log in to eFiling — it is usually pre-populated there."]
     (info-item "3699 / 3601" "Gross Annual Income"
@@ -75,9 +67,9 @@
     (info-item "3701" "Travel Allowance"
                "Source code 3701 on your IRP5. Enter the full allowance — the simulator applies the correct taxable portion (80% without a logbook, 20% with one).")
     (info-item "Med Receipts" "Out-of-pocket Medical Expenses"
-               "Medical costs you paid directly that were not covered or reimbursed by your medical aid. Keep all receipts. Applies the Section 6B additional medical credit.")]
+               "Medical costs you paid directly that were not covered or reimbursed by your medical aid. Keep all receipts. Applies the Section 6B additional medical credit."))
 
-   [:div {:class "bg-white rounded-lg shadow p-6"}
+   (shared/card {:class "p-6"}
     [:h3 {:class "text-base font-semibold text-zinc-800 mb-3"} "Medical aid & tax credits"]
     [:p {:class "text-sm text-zinc-500 mb-4"}
      "Medical aid gives you two potential tax benefits — leave both fields at 0 if you are not on medical aid."]
@@ -99,7 +91,7 @@
       [:p {:class "text-xs text-zinc-500 mt-1"}
        "If you paid medical costs that your scheme did not cover (co-payments, dentist, spectacles, medicines etc.), you may claim an additional credit. SARS applies "
        [:span {:class "font-medium text-zinc-700"} "33.3%"]
-       " of qualifying expenses exceeding 4x your annual MTC (under 65), or 33.3% of all such expenses (65 and older). Only enter amounts you have receipts for."]]]]
+       " of qualifying expenses exceeding 4x your annual MTC (under 65), or 33.3% of all such expenses (65 and older). Only enter amounts you have receipts for."]]])
 
    [:div {:class "bg-amber-50 border border-amber-200 rounded-lg p-4"}
     [:p {:class "text-xs text-amber-800"}
@@ -134,7 +126,7 @@
             monthly-tax    (utilities/annual-income->monthly-income final-tax)
             monthly-net    (utilities/annual-income->monthly-income (- annual-income final-tax))
             credits-applied? (or (pos? mtc) (pos? ra-ded))]
-        [:div {:class "bg-white rounded-lg shadow p-6"}
+        (shared/card {:class "p-6"}
          [:div {:class "flex flex-wrap items-center justify-between gap-2 mb-1"}
           [:h2 {:class "text-lg font-semibold text-zinc-800"} "Auto Assessment"]
           [:span {:class "text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium"} "2026 Year of Assessment"]]
@@ -172,7 +164,7 @@
            [:p {:class "text-xs text-zinc-400 mt-1"}
             "Effective tax rate: " (utilities/->percentage effective-rate) "."
             (when-not has-profile?
-              " Add your medical aid and RA details in Settings for a more accurate estimate.")]]]])
+               " Add your medical aid and RA details in Settings for a more accurate estimate.")]]]))
       [:div {:class "mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4"}
        [:p {:class "text-sm text-amber-800"}
         "No salary data found. Add your salary in "
@@ -186,7 +178,7 @@
    [:label {:for id :class "block text-sm font-medium text-zinc-700 mb-1"} label]
    (when hint [:p {:class "text-xs text-zinc-400 mb-1"} hint])
    [:input {:id id :name id :type type :min "0" :step "any"
-            :class "block w-full px-4 py-2 text-zinc-700 bg-white border border-zinc-200 rounded-md focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40"
+            :class (shared/base-input-class)
             :required (boolean required?)
             :placeholder "0"}]])
 
@@ -194,12 +186,12 @@
   [:div
    [:label {:for "logbook" :class "block text-sm font-medium text-zinc-700 mb-1"} "Travel logbook kept?"]
    [:select {:id "logbook" :name "logbook"
-             :class "block w-full px-4 py-2 text-zinc-700 bg-white border border-zinc-200 rounded-md focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40"}
+             :class (shared/base-input-class)}
     [:option {:value "no"} "No (80% taxable)"]
     [:option {:value "yes"} "Yes (20% taxable)"]]])
 
 (defn- form-card []
-  [:div {:class "bg-white rounded-lg shadow p-6"}
+  (shared/card {:class "p-6"}
    [:h2 {:class "text-lg font-semibold text-zinc-800"} "ITR12 Tax Return Simulator"]
    [:p {:class "mt-1 text-sm text-zinc-500 mb-6"}
     "Estimate your SARS tax refund or amount owed for the 2026 year of assessment."]
@@ -216,9 +208,8 @@
      (logbook-select)
      (field "out-of-pocket-medical" "Out-of-pocket Medical Expenses p/a (R)" "number" "Not covered by medical aid")]
     [:div {:class "mt-6 flex justify-end"}
-     [:button {:type "submit"
-               :class "px-8 py-2.5 text-white bg-zinc-900 rounded-md hover:bg-zinc-700 focus:outline-none"}
-      "Simulate Return"]])])
+     (shared/btn :variant :dark :class "px-8 py-2.5" :type "submit"
+                 "Simulate Return")])))
 
 (defn page [ctx]
   (ui/app
@@ -260,29 +251,29 @@
       (headers/pages-heading ["Tax" "Tax Returns"])
       [:div {:class "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
        (guide)
-       [:div {:class "bg-white rounded-lg shadow p-6"}
+       (shared/card {:class "p-6"}
         [:h2 {:class "text-lg font-semibold text-zinc-800 mb-4"} "2026 Tax Summary"]
 
         [:p {:class "text-xs font-semibold uppercase tracking-wide text-zinc-400 mb-1"} "Income"]
-        (row "Gross Annual Income" (utilities/amount->rands annual-income))
+        (tools/row "Gross Annual Income" (utilities/amount->rands annual-income))
         (when (pos? travel)
-          (row (str "Taxable Travel (" (if logbook? "20%" "80%") ")")
-               (utilities/amount->rands taxable-travel)))
-        (row "Retirement Annuity Deduction" (str "(" (utilities/amount->rands ra-ded) ")"))
-        (bold-row "Taxable Income" (utilities/amount->rands taxable-income))
+          (tools/row (str "Taxable Travel (" (if logbook? "20%" "80%") ")")
+                     (utilities/amount->rands taxable-travel)))
+        (tools/row "Retirement Annuity Deduction" (str "(" (utilities/amount->rands ra-ded) ")"))
+        (tools/bold-row "Taxable Income" (utilities/amount->rands taxable-income))
 
         [:p {:class "text-xs font-semibold uppercase tracking-wide text-zinc-400 mt-4 mb-1"} "Tax Calculation"]
-        (row "Gross Tax" (utilities/amount->rands gross-tax))
-        (row "Primary / Age Rebates" (str "(" (utilities/amount->rands rebates) ")"))
+        (tools/row "Gross Tax" (utilities/amount->rands gross-tax))
+        (tools/row "Primary / Age Rebates" (str "(" (utilities/amount->rands rebates) ")"))
         (when (pos? mtc)
-          (row "Medical Aid Tax Credit" (str "(" (utilities/amount->rands mtc) ")")))
+          (tools/row "Medical Aid Tax Credit" (str "(" (utilities/amount->rands mtc) ")")))
         (when (pos? add-med-credit)
-          (row "Additional Medical Credit (s6B)" (str "(" (utilities/amount->rands add-med-credit) ")")))
-        (bold-row "Net Tax Payable" (utilities/amount->rands final-tax))
+          (tools/row "Additional Medical Credit (s6B)" (str "(" (utilities/amount->rands add-med-credit) ")")))
+        (tools/bold-row "Net Tax Payable" (utilities/amount->rands final-tax))
 
         [:p {:class "text-xs font-semibold uppercase tracking-wide text-zinc-400 mt-4 mb-1"} "PAYE Reconciliation"]
-        (row "PAYE Paid" (utilities/amount->rands paye-paid))
-        (row "Net Tax Payable" (utilities/amount->rands final-tax))
+        (tools/row "PAYE Paid" (utilities/amount->rands paye-paid))
+        (tools/row "Net Tax Payable" (utilities/amount->rands final-tax))
 
         [:div {:class (str "flex justify-between items-center py-3 mt-4 px-4 rounded-lg "
                            (if refund? "bg-green-50" "bg-red-50"))}
@@ -295,6 +286,4 @@
          "This is an estimate only. Consult a tax practitioner for advice."]
 
         [:div {:class "mt-5"}
-         [:a {:href "/app/tax/tax-returns"
-              :class "text-sm text-emerald-600 hover:underline"}
-          "<- Run another simulation"]]]]])))
+         (tools/back-link "/app/tax/tax-returns" "<- Run another simulation")])]])))

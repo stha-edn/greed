@@ -3,8 +3,8 @@
 (def last-updated "2 August 2026")
 
 (defn- badge [label]
-  [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full mb-4 border border-emerald-100"}
-   [:span {:class "w-1.5 h-1.5 rounded-full bg-emerald-500"}]
+  [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-4 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full"}
+   [:span {:class "w-1.5 h-1.5 bg-emerald-500 rounded-full"}]
    label])
 
 (defn- page-header [label title intro]
@@ -72,7 +72,7 @@
    (section
     "Contact"
     [:p "Questions about your data or this policy? Get in touch at "
-     [:a {:href "mailto:support@mygreed.co.za" :class "text-emerald-600 font-medium hover:underline"} "support@mygreed.co.za"]
+     [:a {:href "mailto:support@mygreed.co.za" :class "text-emerald-600 font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 active:text-emerald-700"} "support@mygreed.co.za"]
      "."])))
 
 (defn terms-page [_]
@@ -114,5 +114,5 @@
    (section
     "Contact"
     [:p "Questions about these terms? Get in touch at "
-     [:a {:href "mailto:support@mygreed.co.za" :class "text-emerald-600 font-medium hover:underline"} "support@mygreed.co.za"]
+     [:a {:href "mailto:support@mygreed.co.za" :class "text-emerald-600 font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 active:text-emerald-700"} "support@mygreed.co.za"]
      "."])))

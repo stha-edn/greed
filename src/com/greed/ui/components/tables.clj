@@ -3,8 +3,8 @@
    [com.greed.ui.components.forms :as forms]
    [com.greed.utilities.core :as utilities]))
 
-(defn add-modal []
-  [:div {:x-show "isAddButtonOpen" :x-cloak "true"
+(defn- modal-shell [{:keys [show close]} & body]
+  [:div {:x-show show :x-cloak "true"
          :class "fixed inset-0 z-50 flex items-center justify-center p-4"
          :x-transition:enter "transition ease-out duration-200"
          :x-transition:enter-start "opacity-0 scale-95"
@@ -13,31 +13,28 @@
          :x-transition:leave-start "opacity-100 scale-100"
          :x-transition:leave-end "opacity-0 scale-95"}
    [:div {:class "absolute inset-0 bg-black/50"
-          "@click" "isAddButtonOpen = false"}]
-   [:div {:class "relative z-10"}
-    (forms/budget-item-form)]])
+          "@click" close}]
+   (into [:div {:class "relative z-10"}] body)])
+
+(defn- th [label & {:keys [class]}]
+  [:th {:class (str "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"
+                    (when class (str " " class)))}
+   label])
+
+(defn add-modal []
+  (modal-shell {:show "isAddButtonOpen" :close "isAddButtonOpen = false"}
+    (forms/budget-item-form)))
 
 (defn action-modal [item]
-  [:div {:x-show "isActionModalOpen" :x-cloak "true"
-         :class "fixed inset-0 z-50 flex items-center justify-center p-4"
-         :x-transition:enter "transition ease-out duration-200"
-         :x-transition:enter-start "opacity-0 scale-95"
-         :x-transition:enter-end "opacity-100 scale-100"
-         :x-transition:leave "transition ease-in duration-150"
-         :x-transition:leave-start "opacity-100 scale-100"
-         :x-transition:leave-end "opacity-0 scale-95"}
-   [:div {:class "absolute inset-0 bg-black/50"
-          "@click" "isActionModalOpen = false"}]
-   [:div {:class "relative z-10"}
-    (forms/budget-action-form item)]])
+  (modal-shell {:show "isActionModalOpen" :close "isActionModalOpen = false"}
+    (forms/budget-action-form item)))
 
 (defn add-button []
   [:div {:class "flex justify-end mb-4"}
    [:button {:class "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
              :type "button"
              "@click" "isAddButtonOpen = true"}
-    [:svg {:class "w-4 h-4" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
-     [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2" :d "M12 4v16m8-8H4"}]]
+    (svgs/plus {:class "w-4 h-4"})
     "Add item"]
    (add-modal)])
 
@@ -77,15 +74,14 @@
         [:table {:class "w-full"}
          [:thead
           [:tr {:class "border-b border-zinc-100"}
-           [:th {:class "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Name"]
-           [:th {:class "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"} "Amount"]
+           (th "Name")
+           (th "Amount")
            [:th {:class "px-4 py-2.5 w-12"}]]]
          [:tbody {:class "divide-y divide-zinc-100"}
           (for [item items]
             (table-row :item item :protected-titles protected-titles))]]
         [:div {:class "flex flex-col items-center justify-center px-4 py-12 text-center"}
          [:div {:class "w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center mb-3"}
-          [:svg {:class "w-5 h-5 text-zinc-300" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
-           [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2" :d "M12 4v16m8-8H4"}]]]
+          (svgs/plus {:class "w-5 h-5 text-zinc-300"})]
          [:p {:class "text-sm font-medium text-zinc-500"} "Nothing here yet"]
          [:p {:class "mt-0.5 text-xs text-zinc-400"} (str "Add your first " title " item")]])]]))

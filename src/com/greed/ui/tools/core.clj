@@ -1,6 +1,19 @@
 (ns com.greed.ui.tools.core
   (:require [com.greed.ui.components.svgs :as svgs]))
 
+(defn row [label value]
+  [:div {:class "flex justify-between py-2 border-b border-zinc-100 text-sm"}
+   [:span {:class "text-zinc-500"} label]
+   [:span {:class "text-zinc-800"} value]])
+
+(defn bold-row [label value]
+  [:div {:class "flex justify-between py-2 border-b border-zinc-200 text-sm font-semibold"}
+   [:span {:class "text-zinc-700"} label]
+   [:span {:class "text-zinc-900"} value]])
+
+(defn back-link [href label]
+  [:a {:href href :class "text-sm text-emerald-600 hover:underline"} label])
+
 (defn- tool-card [& {:keys [title description link badge]}]
   [:a {:href link
        :class "group block bg-white rounded-xl border border-zinc-200/70 shadow-card p-6 hover:border-zinc-300/70 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"}

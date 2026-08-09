@@ -2,29 +2,21 @@
   (:require [com.biffweb :as biff]
             [com.greed.ui :as ui]
             [com.greed.ui.components.headers :as headers]
+            [com.greed.ui.components.shared :as shared]
+            [com.greed.ui.tools.core :as tools]
             [com.greed.utilities.core :as utilities]
             [com.greed.utilities.tax :as tax]))
 
-(defn- row [label value]
-  [:div {:class "flex justify-between py-2 border-b border-zinc-100 text-sm"}
-   [:span {:class "text-zinc-500"} label]
-   [:span {:class "text-zinc-800"} value]])
-
-(defn- bold-row [label value]
-  [:div {:class "flex justify-between py-2 border-b border-zinc-200 text-sm font-semibold"}
-   [:span {:class "text-zinc-700"} label]
-   [:span {:class "text-zinc-900"} value]])
-
 (defn- guide []
   [:div {:class "space-y-6"}
-   [:div {:class "bg-white rounded-lg shadow p-6"}
+   (shared/card {:class "p-6"}
     [:h3 {:class "text-base font-semibold text-zinc-800 mb-1"} "How this tool works"]
     [:p {:class "text-sm text-zinc-500"}
      "Enter your gross monthly salary and age. The calculator applies the SARS 2026/27 tax brackets and rebates to show your effective tax rate and take-home pay."]
     [:p {:class "text-sm text-zinc-500 mt-2"}
-     "Use this to quickly understand how much of your salary you actually keep, or to compare offers at different salary levels."]]
+     "Use this to quickly understand how much of your salary you actually keep, or to compare offers at different salary levels."])
 
-   [:div {:class "bg-white rounded-lg shadow p-6"}
+   (shared/card {:class "p-6"}
     [:h3 {:class "text-base font-semibold text-zinc-800 mb-3"} "Understanding your results"]
     [:div {:class "space-y-4"}
      [:div
@@ -42,7 +34,7 @@
      [:div
       [:p {:class "text-sm font-medium text-zinc-800"} "Net income"]
       [:p {:class "text-xs text-zinc-500 mt-1"}
-       "Your take-home pay after income tax. Note: UIF and medical aid contributions are not deducted here — this is purely the income tax effect."]]]]
+       "Your take-home pay after income tax. Note: UIF and medical aid contributions are not deducted here — this is purely the income tax effect."]]])
 
    [:div {:class "bg-blue-50 border border-blue-200 rounded-lg p-4"}
     [:p {:class "text-xs text-blue-800"}
@@ -55,7 +47,7 @@
    [:label {:for id :class "block text-sm font-medium text-zinc-700 mb-1"} label]
    [:p {:class "text-xs text-zinc-400 mb-1"} hint]
    [:input {:id id :name id :type type :min "0" :step "any"
-            :class "block w-full px-4 py-2 text-zinc-700 bg-white border border-zinc-200 rounded-md focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40"
+            :class (shared/base-input-class)
             :required true}]])
 
 (defn page-get [ctx]
@@ -65,7 +57,7 @@
     (headers/pages-heading ["Tax" "Income Tax Calculator"])
     [:div {:class "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
      (guide)
-     [:div {:class "bg-white rounded-lg shadow p-6"}
+     (shared/card {:class "p-6"}
       [:h2 {:class "text-lg font-semibold text-zinc-800"} "Calculate your income tax"]
       [:p {:class "mt-1 text-sm text-zinc-500 mb-6"}
        "Based on SARS 2026/27 brackets and rebates."]
@@ -75,9 +67,13 @@
         (field "income" "Monthly Gross Income (R)" "number" "Your salary before any deductions")
         (field "age" "Age" "number" "Determines which rebate tier applies")]
        [:div {:class "mt-6 flex justify-end"}
-        [:button {:type "submit"
-                  :class "px-8 py-2.5 text-white bg-zinc-900 rounded-md hover:bg-zinc-700 focus:outline-none"}
-         "Calculate"]])]]]))
+        (shared/btn :variant :dark :class "px-8 py-2.5" :type "submit"
+                    "Calculate")])
+     )
+    ]
+   ]
+  )
+ )
 
 (defn page [{:keys [params] :as ctx}]
   (let [->n           #(try (double (BigDecimal. (or % "0")))
@@ -94,27 +90,25 @@
       (headers/pages-heading ["Tax" "Income Tax Calculator"])
       [:div {:class "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"}
        (guide)
-       [:div {:class "bg-white rounded-lg shadow p-6"}
+       (shared/card {:class "p-6"}
         [:h2 {:class "text-lg font-semibold text-zinc-800 mb-4"} "Tax Breakdown"]
 
         [:p {:class "text-xs font-semibold uppercase tracking-wide text-zinc-400 mb-1"} "Income"]
-        (row "Monthly Gross Income" (utilities/amount->rands income))
-        (bold-row "Annual Gross Income" (utilities/amount->rands annual-income))
+        (tools/row "Monthly Gross Income" (utilities/amount->rands income))
+        (tools/bold-row "Annual Gross Income" (utilities/amount->rands annual-income))
 
         [:p {:class "text-xs font-semibold uppercase tracking-wide text-zinc-400 mt-4 mb-1"} "Tax"]
-        (row "Gross Tax" (utilities/amount->rands gross-tax))
-        (row "Rebates" (str "(" (utilities/amount->rands rebates) ")"))
-        (bold-row "Net Annual Tax" (utilities/amount->rands net-tax))
+        (tools/row "Gross Tax" (utilities/amount->rands gross-tax))
+        (tools/row "Rebates" (str "(" (utilities/amount->rands rebates) ")"))
+        (tools/bold-row "Net Annual Tax" (utilities/amount->rands net-tax))
 
         [:div {:class "flex justify-between items-center py-3 mt-4 px-4 bg-zinc-50 rounded-lg"}
          [:span {:class "text-sm text-zinc-600"} "Effective Tax Rate"]
          [:span {:class "text-lg font-bold text-zinc-900"} (utilities/->percentage effective-rate)]]
 
         [:p {:class "text-xs font-semibold uppercase tracking-wide text-zinc-400 mt-4 mb-1"} "Take-home Pay"]
-        (row "Annual Net Income" (utilities/amount->rands (- annual-income net-tax)))
-        (bold-row "Monthly Net Income" (utilities/amount->rands net-monthly))
+        (tools/row "Annual Net Income" (utilities/amount->rands (- annual-income net-tax)))
+        (tools/bold-row "Monthly Net Income" (utilities/amount->rands net-monthly))
 
         [:div {:class "mt-6"}
-         [:a {:href "/app/tax/income-tax-calculator"
-              :class "text-sm text-emerald-600 hover:underline"}
-          "<- Calculate again"]]]]])))
+         (tools/back-link "/app/tax/income-tax-calculator" "<- Calculate again")])]])))

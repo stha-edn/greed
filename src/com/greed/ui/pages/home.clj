@@ -1,30 +1,34 @@
 (ns com.greed.ui.pages.home
-  (:require [com.greed.ui.components.cards :as cards]))
+  (:require [com.greed.ui.components.cards :as cards]
+            [com.greed.ui.components.shared :as shared]))
+
+(defn- emerald-dot []
+  [:span {:class "w-1.5 h-1.5 bg-emerald-500 rounded-full"}])
 
 (defn- tool-card [& {:keys [badge title description detail cta-label cta-href]}]
-  [:div {:class "bg-white rounded-2xl border border-zinc-100 shadow-card p-8 flex flex-col"}
+  [:div {:class "flex flex-col p-8 bg-white border border-zinc-100 rounded-2xl shadow-card"}
    (when badge
-     [:span {:class "self-start text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full mb-5"}
+     [:span {:class "self-start px-2.5 py-1 mb-5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full"}
       badge])
    [:h3 {:class "text-xl font-bold text-zinc-900"} title]
-   [:p {:class "mt-2 text-sm text-zinc-500 leading-relaxed flex-1"} description]
+   [:p {:class "flex-1 mt-2 text-sm text-zinc-500 leading-relaxed"} description]
    (when detail
-     [:ul {:class "mt-4 space-y-1.5"}
+     [:ul {:class "space-y-1.5 mt-4"}
       (for [item detail]
         [:li {:class "flex items-start gap-2 text-sm text-zinc-600"}
-         [:span {:class "mt-0.5 flex-shrink-0 w-4 h-4 rounded-full bg-emerald-50 flex items-center justify-center"}
-          [:span {:class "w-1.5 h-1.5 rounded-full bg-emerald-500"}]]
+         [:span {:class "flex flex-shrink-0 items-center justify-center w-4 h-4 mt-0.5 bg-emerald-50 rounded-full"}
+          (emerald-dot)]
          item])])
    [:a {:href cta-href
-        :class "mt-6 inline-flex items-center gap-2 text-sm font-semibold text-zinc-900 hover:text-emerald-600 transition-colors group"}
+        :class "inline-flex items-center gap-2 group mt-6 text-sm font-semibold text-zinc-900 transition-colors hover:text-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 active:text-emerald-700"}
     cta-label
     [:svg {:class "w-4 h-4 transition-transform group-hover:translate-x-0.5" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
      [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2" :d "M9 5l7 7-7 7"}]]]])
 
 (defn- feature-item [title description]
-  [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card p-5"}
-   [:div {:class "w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center mb-3"}
-    [:span {:class "w-2 h-2 rounded-full bg-emerald-500"}]]
+  [:div {:class "p-5 bg-white border border-zinc-100 rounded-xl shadow-card"}
+   [:div {:class "flex items-center justify-center w-8 h-8 mb-3 bg-emerald-50 rounded-lg"}
+    [:span {:class "w-2 h-2 bg-emerald-500 rounded-full"}]]
    [:h4 {:class "text-sm font-semibold text-zinc-900"} title]
    [:p {:class "mt-1 text-sm text-zinc-500 leading-relaxed"} description]])
 
@@ -35,51 +39,45 @@
    ;; Hero
    [:div {:class "flex flex-col items-center gap-12 py-16 lg:flex-row lg:py-24"}
     [:div {:class "flex-1 max-w-lg"}
-     [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full mb-6 border border-emerald-100"}
-      [:span {:class "w-1.5 h-1.5 rounded-full bg-emerald-500"}]
+     [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-6 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full"}
+      (emerald-dot)
       "Personal finance, simplified"]
-     [:h1 {:class "text-4xl font-bold text-zinc-900 lg:text-5xl leading-tight"}
+     [:h1 {:class "text-4xl font-bold text-zinc-900 leading-tight lg:text-5xl"}
       "Take control of your "
       [:span {:class "text-emerald-600"} "finances."]]
      [:p {:class "mt-4 text-lg text-zinc-500 leading-relaxed"}
       "Greed gives you the tools to track your spending, understand your tax obligations, and make smarter financial decisions — all in one place."]
      [:div {:class "flex flex-wrap gap-3 mt-8"}
       (if signed-in?
-         [:a {:href "/app"
-              :class "px-6 py-3 text-sm font-semibold text-white bg-zinc-900 rounded-xl hover:bg-zinc-800 transition-colors"}
-          "Go to dashboard"]
+         (shared/btn :variant :dark :size :lg :href "/app" "Go to dashboard")
         [:div {:class "flex flex-wrap gap-3"}
-         [:a {:href "/signup"
-              :class "px-6 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors"}
-          "Get started for free"]
-         [:a {:href "/signin"
-              :class "px-6 py-3 text-sm font-semibold text-zinc-700 border border-zinc-300 rounded-xl hover:border-zinc-500 hover:bg-zinc-50 transition-colors"}
-          "Sign in"]])]
+         (shared/btn :variant :primary :size :lg :href "/signup" "Get started for free")
+         (shared/btn :variant :outline :size :lg :href "/signin" :class "hover:border-zinc-500" "Sign in")])]
      [:div {:class "flex items-center gap-6 mt-10"}
       [:div
        [:p {:class "text-xl font-bold text-zinc-900"} "SARS"]
-       [:p {:class "text-xs text-zinc-400 mt-0.5"} "Tax calculator"]]
+       [:p {:class "mt-0.5 text-xs text-zinc-400"} "Tax calculator"]]
       [:div {:class "w-px h-8 bg-zinc-200"}]
       [:div
        [:p {:class "text-xl font-bold text-zinc-900"} "100%"]
-       [:p {:class "text-xs text-zinc-400 mt-0.5"} "Free to use"]]
+       [:p {:class "mt-0.5 text-xs text-zinc-400"} "Free to use"]]
       [:div {:class "w-px h-8 bg-zinc-200"}]
       [:div
        [:p {:class "text-xl font-bold text-zinc-900"} "ZAR"]
-       [:p {:class "text-xs text-zinc-400 mt-0.5"} "South African Rand"]]]]
+       [:p {:class "mt-0.5 text-xs text-zinc-400"} "South African Rand"]]]]
     [:div {:class "flex-1 flex justify-center lg:justify-end"}
      (cards/note-from-greed)]]
 
    ;; Tools section
    [:div {:class "pb-20 lg:pb-28"}
     [:div {:class "mb-10"}
-     [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-900 text-white text-xs font-semibold rounded-full mb-4"}
-      [:span {:class "w-1.5 h-1.5 rounded-full bg-emerald-500"}]
+     [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-4 text-xs font-semibold text-white bg-zinc-900 rounded-full"}
+      (emerald-dot)
       "Free tools"]
      [:h2 {:class "text-3xl font-bold text-zinc-900 lg:text-4xl"}
       "Built for South African "
       [:span {:class "text-emerald-600"} "taxpayers."]]
-     [:p {:class "mt-3 text-zinc-500 max-w-xl"}
+     [:p {:class "max-w-xl mt-3 text-zinc-500"}
       "No accountant needed. Our calculators use the latest SARS brackets and rebates so you always know where you stand."]]
     [:div {:class "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"}
      (tool-card
@@ -117,13 +115,13 @@
     ;; In-app features
     [:div {:class "mt-20"}
      [:div {:class "mb-8"}
-      [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-900 text-white text-xs font-semibold rounded-full mb-4"}
-       [:span {:class "w-1.5 h-1.5 rounded-full bg-emerald-500"}]
+      [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-4 text-xs font-semibold text-white bg-zinc-900 rounded-full"}
+       (emerald-dot)
        "Inside your account"]
       [:h2 {:class "text-3xl font-bold text-zinc-900 lg:text-4xl"}
        "More than a "
        [:span {:class "text-emerald-600"} "calculator."]]
-      [:p {:class "mt-3 text-zinc-500 max-w-xl"}
+      [:p {:class "max-w-xl mt-3 text-zinc-500"}
        "Create a free account to track your whole financial picture — your salary and medical aid flow in automatically."]]
      [:div {:class "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"}
       (feature-item "Budget Tracker"
