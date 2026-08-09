@@ -219,6 +219,11 @@
    :headers {"location" "/"}
    :session (dissoc session :uid)})
 
+(defn dismiss-finance-tax-prompt [{:keys [session]}]
+  {:status 303
+   :headers {"location" "/app"}
+   :session (assoc session :finance-tax-prompt-dismissed-at (System/currentTimeMillis))})
+
 (defn wrap-site-defaults [handler]
   (-> handler
       biff/wrap-render-rum

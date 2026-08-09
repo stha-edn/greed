@@ -9,6 +9,19 @@
             [com.greed.utilities.core :as utilities]))
 
 
+(def finance-tax-prompt-interval-ms
+  "How often the finance & tax prompt may appear, in milliseconds."
+  (* 24 60 60 1000))
+
+(defn finance-tax-prompt-due?
+  "True when the prompt should be shown for this session — i.e. it hasn't
+   been dismissed within the last 24 hours."
+  [{:keys [session]}]
+  (let [dismissed-at (:finance-tax-prompt-dismissed-at session)]
+    (or (nil? dismissed-at)
+        (>= (- (System/currentTimeMillis) (long dismissed-at))
+            finance-tax-prompt-interval-ms))))
+
 (defn- section-label [title]
   [:h2 {:class "text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3"} title])
 
@@ -55,7 +68,8 @@
         income-tax-data    (c.greed/get-income-tax-data user finances)
         budget-items       (data/get-budget-items ctx user-id)
         show-finance-tax-prompt (and (not (data/admin? user))
-                                     (not (salary-set? finances)))]
+                                     (not (salary-set? finances))
+                                     (finance-tax-prompt-due? ctx))]
     (ui/app
      ctx
      [:div {:class "space-y-7"

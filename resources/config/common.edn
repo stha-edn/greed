@@ -21,6 +21,11 @@
  :alert/password-hashed "That user's plaintext password has been securely hashed."
  :alert/password-already-hashed "That user's password was already securely hashed."
 
+ :alert/errors #{:alert/email-taken
+                 :alert/user-not-found
+                 :alert/cannot-delete-self
+                 :alert/cannot-remove-own-admin-role}
+
  :user/fields #{"firstname" "lastname" "age" "email" "password"}
 
  :finances/fields #{"bank" "account-type" "salary" "payday"}

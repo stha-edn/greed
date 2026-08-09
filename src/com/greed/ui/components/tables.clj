@@ -1,7 +1,7 @@
 (ns com.greed.ui.components.tables
   (:require [com.greed.ui.components.svgs :as svgs]
-            [com.greed.ui.components.forms :as forms]
-            [com.greed.utilities.core :as utilities]))
+   [com.greed.ui.components.forms :as forms]
+   [com.greed.utilities.core :as utilities]))
 
 (defn add-modal []
   [:div {:x-show "isAddButtonOpen" :x-cloak "true"
@@ -64,8 +64,8 @@
                      :or {protected-titles #{}}}]
   (let [badge-class (case title
                       "income"   "text-emerald-700 bg-emerald-50"
-                      "expenses" "text-zinc-600 bg-zinc-100"
-                      "savings"  "text-zinc-600 bg-zinc-100"
+                      "expenses" "text-rose-700 bg-rose-50"
+                      "savings"  "text-indigo-700 bg-indigo-50"
                       "text-zinc-600 bg-zinc-100")]
     [:div {:class "flex flex-col bg-white rounded-xl border border-zinc-200/70 shadow-card overflow-hidden transition-shadow duration-200 hover:shadow-card-md"}
      [:div {:class "flex items-center justify-between px-4 py-3 border-b border-zinc-100"}

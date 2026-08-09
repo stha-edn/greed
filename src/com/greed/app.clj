@@ -58,4 +58,5 @@
              ["/profile" {:get account/page}]
              ["/save-user" {:post mid/save-user}]
              ["/save-finances" {:post mid/save-finances}]
-             ["/save-tax-profile" {:post mid/save-tax-profile}]]]})
+             ["/save-tax-profile" {:post mid/save-tax-profile}]
+             ["/dismiss-finance-tax-prompt" {:post mid/dismiss-finance-tax-prompt}]]]})

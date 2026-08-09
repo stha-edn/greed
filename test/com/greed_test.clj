@@ -9,6 +9,7 @@
             [com.greed.data.core :as data]
             [com.greed.home :as home]
             [com.greed.middleware :as mid]
+            [com.greed.ui.app.dashboard :as dashboard]
             [malli.generator :as mg]
             [rum.core :as rum]
             [xtdb.api :as xt]))
@@ -210,6 +211,23 @@
     (is (not (data/user-active? {:user/active nil})))
     (is (data/user-active? {:user/active true}))
     (is (not (data/user-active? {:user/active false})))))
+
+(deftest finance-tax-prompt-due-test
+  (testing "due when never dismissed"
+    (is (dashboard/finance-tax-prompt-due? {:session {}})))
+  (testing "not due when dismissed within the 24 hour window"
+    (is (not (dashboard/finance-tax-prompt-due?
+              {:session {:finance-tax-prompt-dismissed-at
+                         (- (System/currentTimeMillis) (* 1 60 60 1000))}}))))
+  (testing "due again after 24 hours"
+    (is (dashboard/finance-tax-prompt-due?
+         {:session {:finance-tax-prompt-dismissed-at
+                    (- (System/currentTimeMillis) (* 25 60 60 1000))}})))
+  (testing "the dismiss handler records the dismissal timestamp in the session"
+    (let [response (mid/dismiss-finance-tax-prompt {:session {:uid #uuid "ffffffff-ffff-ffff-ffff-ffffffffffff"}})]
+      (is (= 303 (:status response)))
+      (is (= "/app" (get-in response [:headers "location"])))
+      (is (some? (get-in response [:session :finance-tax-prompt-dismissed-at]))))))
 
 (deftest signin-active-status-test
   (testing "deactivated users can't sign in and get a contact-support message"
