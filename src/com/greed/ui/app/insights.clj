@@ -13,7 +13,7 @@
 (defn- metric [label value sub value-cls]
   [:div {:class "p-5 bg-white border border-zinc-200/70 rounded-xl shadow-card"}
    [:p {:class "text-xs font-medium text-zinc-400 uppercase tracking-wider"} label]
-   [:p {:class (str "mt-2 text-2xl font-semibold tabular-nums " (or value-cls "text-zinc-900"))} value]
+   [:p {:class (str "mt-2 text-2xl font-semibold tracking-tight tabular-nums " (or value-cls "text-zinc-900"))} value]
    (when sub [:p {:class "mt-1 text-xs text-zinc-400"} sub])])
 
 (defn- bar-row [& {:keys [label amount pct colour]}]

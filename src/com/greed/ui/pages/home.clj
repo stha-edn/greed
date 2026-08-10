@@ -6,7 +6,7 @@
   [:span {:class "w-1.5 h-1.5 bg-emerald-500 rounded-full"}])
 
 (defn- tool-card [& {:keys [badge title description detail cta-label cta-href]}]
-  [:div {:class "flex flex-col p-8 bg-white border border-zinc-100 rounded-2xl shadow-card"}
+  [:div {:class "flex flex-col p-8 bg-white border border-zinc-200/70 rounded-2xl shadow-card"}
    (when badge
      [:span {:class "self-start px-2.5 py-1 mb-5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full"}
       badge])
@@ -26,7 +26,7 @@
      [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2" :d "M9 5l7 7-7 7"}]]]])
 
 (defn- feature-item [title description]
-  [:div {:class "p-5 bg-white border border-zinc-100 rounded-xl shadow-card"}
+  [:div {:class "p-5 bg-white border border-zinc-200/70 rounded-xl shadow-card"}
    [:div {:class "flex items-center justify-center w-8 h-8 mb-3 bg-emerald-50 rounded-lg"}
     [:span {:class "w-2 h-2 bg-emerald-500 rounded-full"}]]
    [:h4 {:class "text-sm font-semibold text-zinc-900"} title]
@@ -42,7 +42,7 @@
      [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-6 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full"}
       (emerald-dot)
       "Personal finance, simplified"]
-     [:h1 {:class "text-4xl font-bold text-zinc-900 leading-tight lg:text-5xl"}
+     [:h1 {:class "text-4xl font-bold text-zinc-900 leading-tight tracking-tight lg:text-5xl"}
       "Take control of your "
       [:span {:class "text-emerald-600"} "finances."]]
      [:p {:class "mt-4 text-lg text-zinc-500 leading-relaxed"}
@@ -74,7 +74,7 @@
      [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-4 text-xs font-semibold text-white bg-zinc-900 rounded-full"}
       (emerald-dot)
       "Free tools"]
-     [:h2 {:class "text-3xl font-bold text-zinc-900 lg:text-4xl"}
+     [:h2 {:class "text-3xl font-bold text-zinc-900 tracking-tight lg:text-4xl"}
       "Built for South African "
       [:span {:class "text-emerald-600"} "taxpayers."]]
      [:p {:class "max-w-xl mt-3 text-zinc-500"}
@@ -118,7 +118,7 @@
       [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-4 text-xs font-semibold text-white bg-zinc-900 rounded-full"}
        (emerald-dot)
        "Inside your account"]
-      [:h2 {:class "text-3xl font-bold text-zinc-900 lg:text-4xl"}
+      [:h2 {:class "text-3xl font-bold text-zinc-900 tracking-tight lg:text-4xl"}
        "More than a "
        [:span {:class "text-emerald-600"} "calculator."]]
       [:p {:class "max-w-xl mt-3 text-zinc-500"}

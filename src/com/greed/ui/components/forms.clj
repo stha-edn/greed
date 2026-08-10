@@ -24,7 +24,7 @@
 
 (defn sign-in [{:keys [site-key] :as ctx}]
   [:div {:class "w-full max-w-sm mx-auto"}
-   [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-100 overflow-hidden"}
+   [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
     [:div {:class "px-8 py-8"}
      [:div {:class "mb-6 text-center"}
       [:a {:href "/"}
@@ -41,12 +41,12 @@
       [:div {:class "mt-5"}
        [:button
         (if site-key
-          {:class "g-recaptcha w-full px-4 py-2.5 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"
-           :data-sitekey site-key
-           :data-callback "submitSignin"
-           :type "submit"}
-          {:class "w-full px-4 py-2.5 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"
-           :type "submit"})
+           {:class "g-recaptcha w-full px-4 py-2.5 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2"
+            :data-sitekey site-key
+            :data-callback "submitSignin"
+            :type "submit"}
+           {:class "w-full px-4 py-2.5 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2"
+            :type "submit"})
         "Sign in"]]
       (on-error ctx))]
     [:div {:class "px-8 py-4 bg-zinc-50 border-t border-zinc-100 text-center"}
@@ -56,7 +56,7 @@
 
 (defn sign-up [{:keys [site-key] :as ctx}]
   [:div {:class "w-full max-w-sm mx-auto"}
-   [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-100 overflow-hidden"}
+   [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
     [:div {:class "px-8 py-8"}
      [:div {:class "mb-6 text-center"}
       [:a {:href "/"}
@@ -77,11 +77,11 @@
        [:div {:class "mt-5"}
         [:button
          (if site-key
-           {:class "g-recaptcha w-full px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+           {:class "g-recaptcha w-full px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
             :data-sitekey site-key
             :data-callback "submitSignup"
             :type "submit"}
-           {:class "w-full px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+           {:class "w-full px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
             :type "submit"})
          "Create account"]]
       (on-error ctx))]
@@ -219,7 +219,7 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
         "Save changes")]))))
 
 (defn income-tax-form []
-  [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card-md p-6 w-full max-w-sm"}
+  [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card-md p-6 w-full max-w-sm"}
    [:h3 {:class "text-base font-semibold text-zinc-900"} "Income Tax Calculator"]
    [:p {:class "mt-1 text-sm text-zinc-500 mb-4"} "Calculate your income tax in seconds"]
    (biff/form
@@ -228,15 +228,15 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
     (shared/modal-input :id "age" :type "number" :label "Age" :required? true)
     [:div {:class "flex gap-2 mt-5"}
      [:button {:type "button" "@click" "isOpen = false"
-               :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors"}
+               :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"}
       "Cancel"]
      [:button {:type "submit"
-               :class "flex-1 px-4 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"}
+               :class "flex-1 px-4 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2"}
       "Calculate"]])])
 
 (defn budget-item-form []
   (let [budget-item-options (:budget-item/types c/common-config)]
-    [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card-md p-6 w-full max-w-sm"}
+    [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card-md p-6 w-full max-w-sm"}
      [:h3 {:class "text-base font-semibold text-zinc-900"} "Add Budget Item"]
      [:p {:class "mt-1 text-sm text-zinc-500 mb-4"} "Add a new item to your budget"]
      (biff/form
@@ -246,14 +246,14 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
       (shared/modal-input :id "amount" :type "number" :label "Amount (R)" :required? true)
       [:div {:class "flex gap-2 mt-5"}
        [:button {:type "button" "@click" "isAddButtonOpen = false"
-                 :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors"}
+                 :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"}
         "Cancel"]
        [:button {:type "submit"
-                 :class "flex-1 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"}
+                 :class "flex-1 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"}
         "Add item"]])]))
 
 (defn budget-action-form [item]
-  [:div {:class "bg-white rounded-xl border border-zinc-100 shadow-card-md p-6 w-full max-w-sm"}
+  [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card-md p-6 w-full max-w-sm"}
    [:h3 {:class "text-base font-semibold text-zinc-900"} "Edit Budget Item"]
    [:div {:class "mt-3 p-3 bg-zinc-50 rounded-lg text-sm text-zinc-600 mb-4"}
     [:div {:class "flex justify-between"} [:span {:class "text-zinc-400"} "Title"] (:budget-item/title item)]
@@ -264,15 +264,15 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
     (shared/modal-input :id "amount" :type "number" :label "New Amount (R)" :required? true)
     [:div {:class "flex gap-2 mt-5"}
      [:button {:type "submit"
-               :class "flex-1 px-4 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"}
+               :class "flex-1 px-4 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2"}
       "Update"]
      [:button {:type "button" "@click" "isActionModalOpen = false"
-               :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"}
+                               :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"}
       "Cancel"]])
    (biff/form
     {:class "mt-2" :action "/app/finances/delete-budget-item"}
     [:input {:type "hidden" :name "budget-item-id" :value (str (:xt/id item))}]
     [:button {:type "submit"
-              :onclick "return confirm('Delete this budget item?')"
-              :class "w-full px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"}
+              :data-confirm "Delete this budget item?"
+              :class "w-full px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"}
      "Delete"])])

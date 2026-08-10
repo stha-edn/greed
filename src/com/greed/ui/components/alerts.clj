@@ -1,7 +1,33 @@
 (ns com.greed.ui.components.alerts
   (:require [com.biffweb :as biff]
             [com.core :as c]
+            [com.greed.ui.components.shared :as shared]
             [com.greed.ui.components.svgs :as svgs]))
+
+(defn confirm-dialog
+  "Styled replacement for window.confirm(). Driven by the vanilla-JS
+   GreedConfirm module in main.js — no Alpine dependency. The markup is
+   static; JS toggles the `data-open` attribute (display) and the
+   `confirm-visible` class (opacity/scale transition). Any `data-confirm`
+   submit button is intercepted by a delegated listener and, on accept, its
+   form is submitted (native or htmx). Render once per app page."
+  []
+  [:div {:id "confirm-dialog"
+         :role "dialog"
+         :aria-modal "true"
+         :aria-labelledby "confirm-dialog-title"
+         :aria-describedby "confirm-dialog-message"
+         :class "fixed inset-0 z-50 flex items-center justify-center p-4"}
+   [:div {:data-cf-overlay "true"
+          :class "absolute inset-0 bg-black/50 confirm-overlay"}]
+   [:div {:data-cf-card "true"
+          :class "relative z-10 w-full max-w-sm rounded-2xl bg-white p-6 shadow-card-md confirm-card"}
+    [:h3 {:data-cf-title "true" :class "text-base font-semibold text-zinc-900"}
+     "Are you sure?"]
+    [:p {:data-cf-message "true" :class "mt-2 text-sm text-zinc-500"}]
+    [:div {:class "mt-6 flex justify-end gap-3"}
+     (shared/btn :variant :outline :size :md :attrs {:data-cf-cancel "true"} "Cancel")
+     (shared/btn :variant :danger :size :md :attrs {:data-cf-accept "true"} "Delete")]]])
 
 (defn- alert-error?
   "True when the alert key represents an error/blocking notice rather than a success."
@@ -146,7 +172,7 @@
          (biff/form {:action "/app/dismiss-finance-tax-prompt"}
            [:button
             {:type "submit"
-             :class "px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-md hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"}
+             :class "px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-md hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"}
             "Later"])
          [:a
          {:href "/app/settings"

@@ -3,16 +3,6 @@
    [com.greed.ui.components.svgs :as svgs]
    [com.greed.utilities.core :as utilities]))
 
-(defn testiminial [& {:keys [img title body author]}]
-  [:div {:class "max-w-md p-8 bg-white border border-zinc-200 rounded-2xl shadow-card"}
-   [:div {:class "flex items-center gap-4 mb-4"}
-    [:img {:class "flex-shrink-0 object-cover w-12 h-12 bg-zinc-50 border-2 border-zinc-100 rounded-full"
-           :alt author :src img}]
-    [:div
-     [:h3 {:class "font-semibold text-zinc-900"} title]
-     [:p {:class "text-sm text-zinc-400"} author]]]
-   [:p {:class "text-sm text-zinc-600 leading-relaxed"} body]])
-
 (defn note-from-greed []
   [:div {:class "relative overflow-hidden max-w-md p-8 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-card-md"}
    [:div {:class "absolute top-0 inset-x-0 h-1 bg-emerald-500"}]

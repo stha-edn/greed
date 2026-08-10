@@ -144,9 +144,9 @@
      :stroke-linejoin "round",
      :d "M12 8.25h.008v.008H12V8.25Z"}]])
 
-(defn close []
+(defn close [& [{:keys [class]}]]
   [:svg
-   {:class "w-5 h-5",
+   {:class (or class "w-5 h-5"),
     :viewBox "0 0 24 24",
     :fill "none",
     :xmlns "http://www.w3.org/2000/svg"}
@@ -236,28 +236,28 @@
      :stroke-linejoin "round",
      :d "M5 12h14"}]])
 
-(defn home []
+(defn home [{:keys [class]}]
   [:svg
    {:xmlns "http://www.w3.org/2000/svg",
     :fill "none",
     :viewBox "0 0 24 24",
     :stroke-width "1.8",
     :stroke "currentColor",
-    :class "size-5"}
+    :class (or class "size-5")}
    [:path
     {:stroke-linecap "round",
      :stroke-linejoin "round",
      :d
      "m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"}]])
 
-(defn ->next []
+(defn ->next [{:keys [class]}]
   [:svg
    {:xmlns "http://www.w3.org/2000/svg",
     :fill "none",
     :viewBox "0 0 24 24",
     :stroke-width "1.8",
     :stroke "currentColor",
-    :class "size-5"}
+    :class (or class "size-5")}
    [:path
     {:stroke-linecap "round",
      :stroke-linejoin "round",

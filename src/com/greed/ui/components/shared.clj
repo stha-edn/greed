@@ -59,10 +59,10 @@
          :or {variant :light}} opts]
     (into [:div
            {:class (str/join " "
-                             [(case variant
-                                :light "bg-white border border-zinc-100 rounded-xl shadow-card"
-                                :soft "bg-gradient-to-br from-white via-white to-emerald-50/80 ring-1 ring-zinc-200 rounded-xl shadow-card"
-                                :dark "bg-zinc-900 border border-zinc-800 rounded-2xl shadow-card-md")
+              [(case variant
+                 :light "bg-white border border-zinc-200/70 rounded-xl shadow-card"
+                 :soft "bg-gradient-to-br from-white via-white to-emerald-50/80 border border-zinc-200/70 rounded-xl shadow-card"
+                 :dark "bg-zinc-900 border border-zinc-800 rounded-2xl shadow-card-md")
                               class])}]
           body)))
 
@@ -90,11 +90,11 @@
 (defn input [& {:keys [id type label required?]
                 :or {required? false}}]
   [:div {:class "mt-4"}
+   (form-label id label)
    [:input
     {:class (base-input-class)
      :id id :name id :type type
      :autocomplete type
-     :placeholder label
      :required required?}]])
 
 (defn app-input [ctx & {:keys [id type label required? prefix hint]

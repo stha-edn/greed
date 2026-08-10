@@ -11,7 +11,7 @@
   [:div {:class "py-16 lg:py-20"}
    [:div {:class "max-w-3xl mx-auto"}
     (badge label)
-    [:h1 {:class "text-4xl font-bold text-zinc-900 lg:text-5xl"} title]
+    [:h1 {:class "text-4xl font-bold text-zinc-900 leading-tight tracking-tight lg:text-5xl"} title]
     [:p {:class "mt-4 text-zinc-500 leading-relaxed"} intro]
     [:p {:class "mt-3 text-sm text-zinc-400"} "Last updated " [:span {:class "font-medium text-zinc-500"} last-updated]]]])
 

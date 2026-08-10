@@ -1,110 +1,3 @@
-// When plain htmx isn't quite enough, you can stick some custom JS here.
-
-Number.prototype.comma_formatter = function() {
-    return this.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
-}
-
-let chartData = function(){
-    return {
-        date: 'today',
-        options: [
-            {
-                label: 'Today',
-                value: 'today',
-            },
-            {
-                label: 'Last 7 Days',
-                value: '7days',
-            },
-            {
-                label: 'Last 30 Days',
-                value: '30days',
-            },
-            {
-                label: 'Last 6 Months',
-                value: '6months',
-            },
-            {
-                label: 'This Year',
-                value: 'year',
-            },
-        ],
-        showDropdown: false,
-        selectedOption: 0,
-        selectOption: function(index){
-            this.selectedOption = index;
-            this.date = this.options[index].value;
-            this.renderChart();
-        },
-        data: null,
-        fetch: function(){
-            fetch('https://cdn.jsdelivr.net/gh/swindon/fake-api@master/tailwindAlpineJsChartJsEx1.json')
-                .then(res => res.json())
-                .then(res => {
-                    this.data = res.dates;
-                    this.renderChart();
-                })
-        },
-        renderChart: function(){
-            let c = false;
-
-            Chart.helpers.each(Chart.instances, function(instance) {
-                if (instance.chart.canvas.id == 'chart') {
-                    c = instance;
-                }
-            });
-
-            if(c) {
-                c.destroy();
-            }
-
-            let ctx = document.getElementById('chart').getContext('2d');
-
-            let chart = new Chart(ctx, {
-                type: "line",
-                data: {
-                    labels: this.data[this.date].data.labels,
-                    datasets: [
-                        {
-                            label: "Income",
-                            backgroundColor: "rgba(102, 126, 234, 0.25)",
-                            borderColor: "rgba(102, 126, 234, 1)",
-                            pointBackgroundColor: "rgba(102, 126, 234, 1)",
-                            data: this.data[this.date].data.income,
-                        },
-                        {
-                            label: "Expenses",
-                            backgroundColor: "rgba(237, 100, 166, 0.25)",
-                            borderColor: "rgba(237, 100, 166, 1)",
-                            pointBackgroundColor: "rgba(237, 100, 166, 1)",
-                            data: this.data[this.date].data.expenses,
-                        },
-                    ],
-                },
-                layout: {
-                    padding: {
-                        right: 10
-                    }
-                },
-                options: {
-                    scales: {
-                        yAxes: [{
-                            gridLines: {
-                                display: false
-                            },
-                            ticks: {
-                                callback: function(value,index,array) {
-                                    return value > 1000 ? ((value < 1000000) ? value/1000 + 'K' : value/1000000 + 'M') : value;
-                                }
-                            }
-                        }]
-                    }
-                }
-            });
-        }
-    }
-}
-
 // ---------------------------------------------------------------------------
 // Tax Overview charts (dashboard). Reads values from canvas data-* attributes
 // so there is no inline JS in the server-rendered HTML. Chart.js is loaded
@@ -183,3 +76,96 @@ function initTaxCharts() {
 
 document.addEventListener('DOMContentLoaded', initTaxCharts);
 document.addEventListener('htmx:afterSwap', initTaxCharts);
+
+// ---------------------------------------------------------------------------
+// Styled confirm dialog. Replaces window.confirm() across the app without
+// depending on Alpine. The dialog markup is the static confirm-dialog
+// component (rendered once per app page); this module toggles the
+// `data-open` attribute (display) and the `confirm-visible` class
+// (opacity/scale transition). Usage:
+//   GreedConfirm.ask('Delete this item?').then(ok => { if (ok) ... })
+// Any submit button carrying a data-confirm attribute is intercepted by the
+// delegated click listener below and its form is submitted only on accept.
+// ---------------------------------------------------------------------------
+(function () {
+    'use strict';
+
+    var dialog = null;
+    var resolveFn = null;
+    var lastFocused = null;
+    var prevOverflow = null;
+    var hideTimer = null;
+
+    function id(name) {
+        return dialog ? dialog.querySelector('[data-cf-' + name + ']') : null;
+    }
+
+    function hide() {
+        if (!dialog) { return; }
+        dialog.classList.remove('confirm-visible');
+        hideTimer = setTimeout(function () { dialog.removeAttribute('data-open'); }, 180);
+        if (prevOverflow !== null) { document.body.style.overflow = prevOverflow; prevOverflow = null; }
+        if (lastFocused && lastFocused.focus) { lastFocused.focus(); }
+        lastFocused = null;
+    }
+
+    function finish(ok) {
+        if (resolveFn) { var r = resolveFn; resolveFn = null; r(ok); }
+        hide();
+    }
+
+    function init() {
+        if (dialog) { return; }
+        dialog = document.getElementById('confirm-dialog');
+        if (!dialog) { return; }
+        var cancel = id('cancel');
+        var accept = id('accept');
+        var overlay = id('overlay');
+        if (cancel) { cancel.addEventListener('click', function () { finish(false); }); }
+        if (accept) { accept.addEventListener('click', function () { finish(true); }); }
+        if (overlay) { overlay.addEventListener('click', function () { finish(false); }); }
+        document.addEventListener('keydown', function (e) {
+            if (dialog.hasAttribute('data-open') && e.key === 'Escape') { finish(false); }
+        });
+    }
+
+    function show(message) {
+        init();
+        if (!dialog) { return Promise.resolve(false); }
+        if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+        if (resolveFn) { var r = resolveFn; resolveFn = null; r(false); }
+        var msg = id('message');
+        if (msg) { msg.textContent = message; }
+        lastFocused = document.activeElement;
+        prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        dialog.setAttribute('data-open', '');
+        void dialog.offsetWidth;
+        dialog.classList.add('confirm-visible');
+        var cancel = id('cancel');
+        if (cancel) { cancel.focus(); }
+        return new Promise(function (resolve) { resolveFn = resolve; });
+    }
+
+    window.GreedConfirm = {
+        ask: function (message) { return show(message); }
+    };
+
+    document.addEventListener('click', function (e) {
+        var el = e.target && e.target.closest ? e.target.closest('[data-confirm]') : null;
+        if (!el) { return; }
+        e.preventDefault();
+        var form = el.closest('form');
+        var hx = window.htmx && form && (form.hasAttribute('hx-post') ||
+                                        form.hasAttribute('hx-put') ||
+                                        form.hasAttribute('hx-delete') ||
+                                        form.hasAttribute('hx-get') ||
+                                        form.hasAttribute('hx-patch'));
+        show(el.getAttribute('data-confirm') || 'Are you sure?').then(function (ok) {
+            if (ok && form) {
+                if (hx) { htmx.trigger(form, 'submit'); }
+                else { form.submit(); }
+            }
+        });
+    });
+})();

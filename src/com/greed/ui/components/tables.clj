@@ -6,6 +6,7 @@
 (defn- modal-shell [{:keys [show close]} & body]
   [:div {:x-show show :x-cloak "true"
          :class "fixed inset-0 z-50 flex items-center justify-center p-4"
+         "@keydown.escape.window" close
          :x-transition:enter "transition ease-out duration-200"
          :x-transition:enter-start "opacity-0 scale-95"
          :x-transition:enter-end "opacity-100 scale-100"
@@ -31,7 +32,7 @@
 
 (defn add-button []
   [:div {:class "flex justify-end mb-4"}
-   [:button {:class "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+    [:button {:class "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
              :type "button"
              "@click" "isAddButtonOpen = true"}
     (svgs/plus {:class "w-4 h-4"})
@@ -51,7 +52,7 @@
          [:span {:class "inline-flex items-center text-[10px] font-medium text-zinc-400 uppercase tracking-wide"
                  :title "Managed automatically — edit in Settings"}
           "Auto"]
-         [:button {:class "inline-flex items-center justify-center w-7 h-7 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+         [:button {:class "inline-flex items-center justify-center w-7 h-7 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors md:opacity-0 md:group-hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:opacity-100"
                    :type "button"
                    "@click" "isActionModalOpen = true"}
           (svgs/action)])]]
@@ -64,7 +65,7 @@
                       "expenses" "text-rose-700 bg-rose-50"
                       "savings"  "text-indigo-700 bg-indigo-50"
                       "text-zinc-600 bg-zinc-100")]
-    [:div {:class "flex flex-col bg-white rounded-xl border border-zinc-200/70 shadow-card overflow-hidden transition-shadow duration-200 hover:shadow-card-md"}
+     [:div {:class "flex flex-col bg-white rounded-xl border border-zinc-200/70 shadow-card overflow-hidden transition-shadow duration-200 hover:shadow-card-hover"}
      [:div {:class "flex items-center justify-between px-4 py-3 border-b border-zinc-100"}
       [:span {:class (str "text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full " badge-class)}
        title]

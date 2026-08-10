@@ -51,7 +51,10 @@
     (testing "policy allows the third-party scripts the app uses"
       (let [csp (get-in resp [:headers "Content-Security-Policy"])]
         (is (str/includes? csp "https://unpkg.com"))
-        (is (str/includes? csp "https://cdn.jsdelivr.net"))))))
+        (is (str/includes? csp "https://cdn.jsdelivr.net"))))
+    (testing "connect-src allows the CDNs scripts fetch source maps from"
+      (let [connect-src (second (re-find #"connect-src ([^;]+);" (get-in resp [:headers "Content-Security-Policy"])))]
+        (is (str/includes? connect-src "https://unpkg.com"))))))
 
 (deftest client-ip-test
   (testing "reads the nginx-provided real IP header"

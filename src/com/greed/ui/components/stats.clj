@@ -10,7 +10,7 @@
   [{:keys [padding class]} & children]
   (into [:div
          {:class (str/join " "
-                           ["bg-gradient-to-br from-white via-white to-emerald-50/80 ring-1 ring-zinc-200 rounded-xl shadow-card transition-all duration-200 hover:ring-emerald-200 hover:shadow-card-md"
+                           ["bg-gradient-to-br from-white via-white to-emerald-50/80 border border-zinc-200/70 rounded-xl shadow-card transition-all duration-200 hover:border-emerald-200 hover:shadow-card-hover"
                             (or padding "p-5")
                             class])}]
         children))
@@ -119,7 +119,7 @@
          [:p {:class "mt-0.5 text-xs text-zinc-400 leading-relaxed"}
           "Income is taxed in slices — your marginal rate applies only to the portion above the bracket threshold."]]
         [:div {:class "flex-shrink-0 text-right"}
-         [:p {:class "text-2xl font-bold text-zinc-900 leading-none tabular-nums"} (str (int (or marginal-rate 0)) "%")]
+         [:p {:class "text-2xl font-bold text-zinc-900 leading-none tracking-tight tabular-nums"} (str (int (or marginal-rate 0)) "%")]
          [:p {:class "mt-1 text-[11px] text-zinc-400 uppercase tracking-wider"} "Marginal rate"]]]
        (when (and next-threshold progress)
          [:div {:class "mb-4"}

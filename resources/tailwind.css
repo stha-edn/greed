@@ -14,42 +14,6 @@
   }
 }
 
-@layer components {
-  .btn {
-    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
-  }
-  .btn-primary {
-    @apply btn bg-zinc-900 text-white hover:bg-zinc-700 focus:ring-zinc-700;
-  }
-  .btn-green {
-    @apply btn bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500;
-  }
-  .btn-secondary {
-    @apply btn bg-zinc-100 text-zinc-700 hover:bg-zinc-200 focus:ring-zinc-400;
-  }
-  .btn-danger {
-    @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
-  }
-  .card {
-    @apply bg-white rounded-xl shadow-card border border-zinc-200/70;
-  }
-  /* Interactive surface: subtle lift + accent border on hover. */
-  .card-interactive {
-    @apply card transition-all duration-200 hover:shadow-card-hover hover:border-zinc-300/80 hover:-translate-y-0.5;
-  }
-  .form-input-base {
-    @apply block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg
-           focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500
-           placeholder-zinc-400 transition-colors duration-150;
-  }
-}
-
-@layer utilities {
-  .link {
-    @apply text-emerald-600 hover:text-emerald-700 hover:underline transition-colors;
-  }
-}
-
 .grecaptcha-badge { visibility: hidden; }
 
 @font-face {
@@ -68,3 +32,20 @@
 }
 
 [x-cloak] { display: none; }
+
+/* Vanilla-JS confirm dialog (no Alpine). Hidden until JS adds the
+   `data-open` attribute (display) and `confirm-visible` class (transition). */
+#confirm-dialog { display: none; }
+#confirm-dialog[data-open] { display: flex; }
+#confirm-dialog .confirm-overlay,
+#confirm-dialog .confirm-card {
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+#confirm-dialog .confirm-card {
+  transform: scale(0.96);
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
+}
+#confirm-dialog.confirm-visible .confirm-overlay,
+#confirm-dialog.confirm-visible .confirm-card { opacity: 1; }
+#confirm-dialog.confirm-visible .confirm-card { transform: scale(1); }

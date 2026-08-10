@@ -3,6 +3,7 @@
             [com.greed.ui :as ui]
             [com.greed.data.core :as data]
             [com.greed.ui.components.shared :as shared]
+            [com.greed.ui.components.svgs :as svgs]
             [com.greed.ui.components.alerts :as alerts]
             [com.greed.ui.components.headers :as headers]))
 
@@ -51,16 +52,21 @@
         current-role (if (contains? roles :admin) :admin :user)]
     [:div {:x-show (str "editingUserId === '" id "'") :x-cloak "true"
            :class "fixed inset-0 z-50 flex items-center justify-center p-4"
+           "@keydown.escape.window" "editingUserId = null"
            :x-transition:enter "transition ease-out duration-200"
            :x-transition:enter-start "opacity-0 scale-95"
-           :x-transition:enter-end "opacity-100 scale-100"}
+           :x-transition:enter-end "opacity-100 scale-100"
+           :x-transition:leave "transition ease-in duration-150"
+           :x-transition:leave-start "opacity-100 scale-100"
+           :x-transition:leave-end "opacity-0 scale-95"}
      [:div {:class "absolute inset-0 bg-black/50" "@click" "editingUserId = null"}]
      [:div {:class "relative z-10 w-full max-w-md p-6 bg-white rounded-xl shadow-card-md"}
       [:div {:class "flex items-center justify-between mb-4"}
        [:h3 {:class "text-base font-semibold text-zinc-900"} "Edit user"]
-       [:button {:type "button" :class "text-zinc-400 hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-700"
-                 "@click" "editingUserId = null"}
-        "✕"]]
+        [:button {:type "button" :title "Close" :aria-label "Close"
+                  :class "flex items-center justify-center w-7 h-7 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-700 active:bg-zinc-200"
+                  "@click" "editingUserId = null"}
+         (svgs/close {:class "w-4 h-4"})]]
       (biff/form
        {:action "/app/admin/users/update"}
        [:input {:type "hidden" :name "user-id" :value id}]
@@ -122,9 +128,10 @@
                  :d "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"}]]]
        (biff/form {:action "/app/admin/users/delete" :class "flex"}
          [:input {:type "hidden" :name "user-id" :value id}]
-         [:button {:type "submit" :title "Delete"
-                   :onclick (str "return confirm('Delete " (:user/email user) " and all of their data? This cannot be undone.')")
-                   :class "p-1.5 text-zinc-400 rounded-md transition-colors hover:text-rose-500 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 active:text-rose-600 active:bg-rose-100"}
+          [:button {:type "submit" :title "Delete"
+                    :data-confirm (str "Delete " (:user/email user)
+                                       " and all of their data? This cannot be undone.")
+                    :class "p-1.5 text-zinc-400 rounded-md transition-colors hover:text-rose-500 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 active:text-rose-600 active:bg-rose-100"}
           [:svg {:class "w-4 h-4" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
            [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2"
                    :d "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"}]]]))]))

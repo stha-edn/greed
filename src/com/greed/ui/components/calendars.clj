@@ -1,5 +1,6 @@
 (ns com.greed.ui.components.calendars
-  (:require [com.biffweb :as biff])
+  (:require [com.biffweb :as biff]
+            [com.greed.ui.components.svgs :as svgs])
   (:import [java.time LocalDate YearMonth]))
 
 (def ^:private month-names
@@ -48,10 +49,12 @@
                  :hx-include "#cal-month, #cal-year"
                  :class      "flex flex-shrink-0"}
        [:input {:type "hidden" :name "event-id" :value (str id)}]
-       [:button {:type    "submit"
-                 :onclick "return confirm('Remove this event?')"
-                 :class   "text-xs text-zinc-300 hover:text-red-500 transition-colors px-1 py-1"}
-        "✕"])]))
+        [:button {:type    "submit"
+                  :title   "Remove event"
+                  :aria-label "Remove event"
+                  :data-confirm "Remove this event?"
+                  :class   "flex items-center justify-center w-6 h-6 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 active:text-red-600 active:bg-red-100"}
+         (svgs/close {:class "w-4 h-4"})])]))
 
 (defn events-panel [_ctx events]
   [:div#calendar-events {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card overflow-hidden"}
@@ -61,7 +64,7 @@
       [:p {:class "text-xs font-bold uppercase tracking-widest text-zinc-400"} "Events"]
       [:p {:class "text-xs text-zinc-400 mt-0.5"}
        (if (seq events) (str (count events) " this month") "Nothing scheduled")]]
-     [:button {:class      "text-xs font-medium text-zinc-600 border border-zinc-200 rounded-lg px-3 py-1.5 hover:bg-zinc-50 hover:border-zinc-300 transition-all"
+     [:button {:class      "text-xs font-medium text-zinc-600 border border-zinc-200 rounded-lg px-3 py-1.5 hover:bg-zinc-50 hover:border-zinc-300 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
                :x-on:click "showForm = !showForm"}
       [:span {:x-show "!showForm"} "＋ Add"]
       [:span {:x-show "showForm" :x-cloak ""} "✕ Close"]]]
@@ -88,7 +91,7 @@
                  :required true
                  :class    "px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white text-zinc-700"}]]
        [:button {:type  "submit"
-                 :class "w-full py-2 text-sm font-semibold text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"}
+                 :class "w-full py-2 text-sm font-semibold text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2"}
         "Save event"])]
     (if (seq events)
       [:div (map event-row events)]
@@ -131,13 +134,13 @@
             [:span {:class "text-[10px] font-semibold uppercase tracking-wider text-zinc-400"} label]])]
         ;; Navigation
         [:div {:class "flex items-center gap-1"}
-         [:button {:class     "w-7 h-7 flex items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
+         [:button {:class     "w-7 h-7 flex items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
                    :hx-get    (str "/app/calendar/grid?month=" pm "&year=" py)
                    :hx-target "#calendar-grid"
                    :hx-swap   "outerHTML"}
           [:svg {:class "w-3.5 h-3.5" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
            [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2.5" :d "M15 19l-7-7 7-7"}]]]
-         [:button {:class     "w-7 h-7 flex items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
+         [:button {:class     "w-7 h-7 flex items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
                    :hx-get    (str "/app/calendar/grid?month=" nm "&year=" ny)
                    :hx-target "#calendar-grid"
                    :hx-swap   "outerHTML"}

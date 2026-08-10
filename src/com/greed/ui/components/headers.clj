@@ -1,5 +1,6 @@
 (ns com.greed.ui.components.headers
-  (:require [com.greed.ui.components.navs :as navs]))
+  (:require [com.greed.ui.components.breadcrumbs :as breadcrumbs]
+            [com.greed.ui.components.navs :as navs]))
 
 (defn pages [ctx & content]
   [:header {:class "bg-white border-b border-zinc-200"}
@@ -10,17 +11,13 @@
 (defn app [ctx]
   [:<>
    (navs/sidebar ctx)
-   (navs/mobile-sidebar ctx)])
+   (navs/mobile-sidebar ctx)
+   (navs/mobile-bottom-nav)])
 
 (defn pages-heading [breadcrumbs]
   [:div {:class "mb-6"}
-   [:div {:class "flex items-center gap-1.5 text-sm text-zinc-400 mb-1"}
-    [:a {:href "/app" :class "hover:text-zinc-600 transition-colors"} "Home"]
-    (for [crumb breadcrumbs]
-      [:<>
-       [:span "/"]
-       [:span {:class "text-zinc-600"} crumb]])]
-   [:h1 {:class "text-xl font-semibold text-zinc-900"}
+   (breadcrumbs/breadcrumbs breadcrumbs)
+   [:h1 {:class "mt-1 text-xl font-semibold text-zinc-900"}
     (last breadcrumbs)]])
 
 (defn home-heading [& {:keys [user date]}]

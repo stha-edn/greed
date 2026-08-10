@@ -4,6 +4,7 @@
             [clojure.java.io :as io]
             [ring.util.response :as ring-response]
             [com.greed.settings :as settings]
+            [com.greed.ui.components.alerts :as alerts]
             [com.greed.ui.components.footer :as footer]
             [com.greed.ui.components.headers :as headers]))
 
@@ -58,9 +59,10 @@
    [:div {:class "flex min-h-screen bg-zinc-50"}
     (headers/app ctx)
     [:main {:class "flex-1 min-w-0 pt-14 md:pt-0 md:ml-64 min-h-screen flex flex-col"}
-     [:div {:class "p-6 flex-1 min-w-0"}
+     [:div {:class "p-6 pb-20 md:pb-6 flex-1 min-w-0"}
       body]
-     (footer/footer)]]))
+     (footer/footer)]
+    (alerts/confirm-dialog)]))
 
 (defn on-error [{:keys [status] :as ctx}]
   {:status status
@@ -72,5 +74,5 @@
                        (if (= status 404) "Page not found" "Something went wrong")]
                       [:p {:class "text-zinc-500 mb-4"}
                        (if (= status 404) "The page you are looking for does not exist." "An unexpected error occurred.")]
-                      [:a {:href "/" :class "text-blue-600 hover:underline"} "Go home"]]]))})
+                      [:a {:href "/" :class "text-emerald-600 hover:underline"} "Go home"]]]))})
 
