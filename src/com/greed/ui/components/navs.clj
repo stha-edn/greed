@@ -28,14 +28,14 @@
 
 (defn- nav-link [href label icon path-expr]
   [:a {:href href
-       :class "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150"
+       :class "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 active:opacity-70 active:scale-[0.98]"
        :x-bind:class (str path-expr
                           " ? 'bg-zinc-800/80 text-emerald-400'"
                           " : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white'")}
    ;; Active indicator bar
    [:span {:class "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-emerald-400 transition-opacity duration-150"
            :x-bind:class (str path-expr " ? 'opacity-100' : 'opacity-0'")}]
-   [:span {:class "w-5 flex-shrink-0"} icon]
+   [:span {:class "w-5 h-5 flex-shrink-0 [&_svg]:w-full [&_svg]:h-full"} icon]
    label])
 
 (def ^:private primary-links
@@ -72,8 +72,8 @@
       [:div {:class "mt-auto pt-4 border-t border-zinc-800"}
        [:nav {:class "space-y-0.5 mb-4"}
         [:a {:href "/app/settings"
-             :class "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all"}
-         [:span {:class "w-5 flex-shrink-0"} (svgs/cog)]
+             :class "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all active:opacity-70 active:scale-[0.98]"}
+         [:span {:class "w-5 h-5 flex-shrink-0 [&_svg]:w-full [&_svg]:h-full"} (svgs/cog)]
          "Settings"]]
        [:div {:class "flex items-center justify-between px-2 py-2"}
         [:a {:href "/app/profile" :class "flex items-center gap-2.5 min-w-0 group"}
@@ -96,15 +96,15 @@
 
 (defn- bottom-tab [href label icon path-expr]
   [:a {:href href
-       :class "flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400"
+       :class "flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors active:opacity-60 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400"
        :x-bind:class (str path-expr
                           " ? 'text-emerald-400'"
                           " : 'text-zinc-400 hover:text-white'")}
-   [:span {:class "w-5 flex items-center justify-center"} icon]
+   [:span {:class "w-6 h-6 flex items-center justify-center [&_svg]:w-full [&_svg]:h-full"} icon]
    label])
 
 (defn mobile-bottom-nav []
-  [:nav {:class "md:hidden fixed bottom-0 left-0 right-0 z-20 bg-black border-t border-zinc-800 flex"
+  [:nav {:class "md:hidden fixed bottom-0 left-0 right-0 z-20 bg-black border-t border-zinc-800 flex pb-[env(safe-area-inset-bottom)]"
          :x-data "{ currentPath: window.location.pathname }"}
    (for [{:keys [href label icon path]} (filter :bottom? primary-links)]
      (bottom-tab href label icon path))])
@@ -115,8 +115,8 @@
         {:user/keys [firstname lastname]} user
         admin? (data/admin? user)
         initials (str (or (first firstname) \?) (or (first lastname) \?))]
-    [:div {:x-data "{ open: false }"}
-     [:div {:class "md:hidden fixed top-0 left-0 right-0 h-14 bg-black z-20 flex items-center justify-between px-4"}
+    [:div {:x-data "{ open: false }" "@keydown.escape.window" "open = false"}
+     [:div {:class "md:hidden fixed top-0 left-0 right-0 min-h-14 bg-black z-20 flex items-center justify-between px-4 pt-[env(safe-area-inset-top)]"}
       [:a {:href "/"}
        [:span {:class "text-xl font-giza font-bold text-white"} "greed."]
        [:span {:class "ml-1.5 text-xs font-medium text-emerald-500 align-top mt-1 inline-block"} "beta"]]
@@ -137,7 +137,7 @@
               :x-transition:leave "transition-transform duration-150 ease-in"
               :x-transition:leave-start "translate-x-0"
               :x-transition:leave-end "-translate-x-full"}
-      [:div {:class "flex items-center justify-between h-14 px-4 border-b border-zinc-800 flex-shrink-0"}
+       [:div {:class "flex items-center justify-between min-h-14 px-4 border-b border-zinc-800 flex-shrink-0 pt-[env(safe-area-inset-top)]"}
        [:a {:href "/"}
         [:span {:class "text-xl font-giza font-bold text-white"} "greed."]
         [:span {:class "ml-1.5 text-xs font-medium text-emerald-500 align-top mt-1 inline-block"} "beta"]]
@@ -147,9 +147,10 @@
         [:svg {:class "w-5 h-5" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
          [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2"
                  :d "M6 18L18 6M6 6l12 12"}]]]]
-      [:div {:class "flex flex-col flex-1 px-3 py-5 overflow-y-auto"}
-       [:nav {:class "space-y-0.5"
-              :x-data "{ currentPath: window.location.pathname }"}
+       [:div {:class "flex flex-col flex-1 px-3 py-5 overflow-y-auto"}
+        [:p {:class "px-3 mb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider"} "More"]
+        [:nav {:class "space-y-0.5"
+               :x-data "{ currentPath: window.location.pathname }"}
         (for [{:keys [href label icon path]} (remove :bottom? primary-links)]
           (nav-link href label icon path))
         (when admin?
@@ -157,8 +158,8 @@
        [:div {:class "mt-auto pt-4 border-t border-zinc-800"}
         [:nav {:class "space-y-0.5 mb-4"}
          [:a {:href "/app/settings"
-              :class "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all"}
-          [:span {:class "w-5"} (svgs/cog)] "Settings"]]
+              :class "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all active:opacity-70 active:scale-[0.98]"}
+          [:span {:class "w-5 h-5 flex-shrink-0 [&_svg]:w-full [&_svg]:h-full"} (svgs/cog)] "Settings"]]
         [:div {:class "flex items-center justify-between px-2 py-2"}
          [:a {:href "/app/profile" :class "flex items-center gap-2.5"}
           [:div {:class "w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-xs font-semibold text-white"}

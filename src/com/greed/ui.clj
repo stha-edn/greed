@@ -58,8 +58,8 @@
    ctx
    [:div {:class "flex min-h-screen bg-zinc-50"}
     (headers/app ctx)
-    [:main {:class "flex-1 min-w-0 pt-14 md:pt-0 md:ml-64 min-h-screen flex flex-col"}
-     [:div {:class "p-6 pb-20 md:pb-6 flex-1 min-w-0"}
+    [:main {:class "flex-1 min-w-0 pt-[calc(3.5rem+env(safe-area-inset-top))] md:pt-0 md:ml-64 min-h-screen flex flex-col"}
+     [:div {:class "p-6 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-6 flex-1 min-w-0"}
       body]
      (footer/footer)]
     (alerts/confirm-dialog)]))
