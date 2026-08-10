@@ -40,21 +40,21 @@
                        (or total-income 0))
         balance      (- income total-expenses)
         bank         (or bank :bank)]
-    [:div {:class "group relative overflow-hidden h-48 w-full max-w-sm p-6 text-white bg-gradient-to-br from-zinc-800 via-zinc-900 to-black ring-1 ring-white/10 rounded-2xl shadow-card-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover"}
-     [:div {:class "absolute top-0 right-0 -translate-y-1/2 translate-x-1/3 w-44 h-44 bg-emerald-500/20 rounded-full blur-2xl transition-transform duration-500 group-hover:scale-125"}]
-     [:div {:class "absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-28 h-28 bg-white/5 rounded-full blur-xl"}]
-     [:div {:class "relative flex items-start justify-between"}
-      [:div
-       [:p {:class "text-xs font-semibold text-zinc-300 uppercase tracking-widest"} (utilities/->string bank)]
-       [:p {:class "mt-0.5 text-xs text-zinc-500"} (or account-type "Debit Card")]]
-      [:div {:class "flex items-center gap-2 text-zinc-300 opacity-90"}
-       (svgs/contactless)
-       (svgs/card-chip)]]
-     [:div {:class "absolute bottom-6 left-6 right-6"}
-      [:div {:class "flex items-center gap-2 mb-4"}
+    [:div {:class "relative flex h-48 w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-800 via-zinc-900 to-black p-6 text-white shadow-card-md ring-1 ring-white/10 lg:h-full"}
+     [:div {:class "absolute -top-24 -right-20 h-64 w-64 rounded-full bg-emerald-500/20 blur-3xl"}]
+     [:div {:class "relative"}
+      [:div {:class "flex items-start justify-between"}
+       [:span {:class "text-zinc-300"} (svgs/card-chip)]
+       [:span {:class "text-zinc-300"} (svgs/contactless)]]
+      [:div {:class "mt-4"}
+       [:p {:class "text-xs font-semibold uppercase tracking-widest text-zinc-300"} (utilities/->string bank)]
+       [:p {:class "mt-0.5 text-xs text-zinc-500"} (or account-type "Debit Card")]]]
+     [:div {:class "relative mt-auto"}
+      [:div {:class "flex items-center gap-2"}
        (for [_ (range 3)]
-         [:span {:class "text-sm text-zinc-500 tracking-widest"} "...."])
-       [:span {:class "text-sm font-mono text-zinc-300"} last-four]]
-      [:div
-       [:p {:class "text-xs text-zinc-500 uppercase tracking-wider"} "Balance"]
-       [:p {:class "mt-0.5 text-2xl font-bold text-white tracking-tight tabular-nums"} (utilities/amount->rands balance)]]]]))
+         [:span {:class "text-sm tracking-[0.2em] text-zinc-500"} "••••"])
+       [:span {:class "text-sm font-mono tracking-[0.2em] text-zinc-300"} last-four]]
+      [:div {:class "mt-4 flex items-baseline justify-between gap-4"}
+       [:p {:class "text-xs uppercase tracking-wider text-zinc-500"} "Balance"]
+       [:p {:class "text-2xl font-bold tracking-tight tabular-nums text-white lg:text-3xl"}
+        (utilities/amount->rands balance)]]]]))

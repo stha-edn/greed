@@ -22,33 +22,36 @@
         (>= (- (System/currentTimeMillis) (long dismissed-at))
             finance-tax-prompt-interval-ms))))
 
-(defn- section-label [title]
-  [:h2 {:class "mb-3 text-xs font-semibold text-zinc-400 uppercase tracking-wider"} title])
-
 (defn- hero-substat [label value]
   [:div {:class "min-w-0"}
-   [:p {:class "text-[11px] font-medium text-emerald-700/70 uppercase tracking-wider whitespace-nowrap"} label]
+   [:p {:class "text-[11px] font-medium text-zinc-400 uppercase tracking-wider whitespace-nowrap"} label]
    [:p {:class "mt-1 text-sm font-semibold text-zinc-900 whitespace-nowrap tabular-nums sm:text-lg"} value]])
 
 (defn- hero
-  "Bold feature card leading with monthly net take-home."
+  "Feature card leading with monthly net take-home."
   [finances income-tax-data]
   (let [{:finances/keys [salary payday]} finances
         {:keys [net-tax net-income effective-rate]} income-tax-data
         monthly-net (when net-income (/ net-income 12))
         monthly-tax (when net-tax (/ net-tax 12))]
-    [:div {:class "relative overflow-hidden h-full p-6 bg-gradient-to-br from-white via-emerald-50 to-emerald-100 ring-1 ring-emerald-200/70 rounded-2xl shadow-card-md sm:p-8"}
-     [:div {:class "absolute -top-16 -right-12 w-64 h-64 bg-emerald-300/30 rounded-full blur-3xl"}]
-     [:div {:class "absolute bottom-0 left-1/3 w-44 h-44 bg-emerald-200/40 rounded-full blur-2xl"}]
-     [:div {:class "relative flex flex-col h-full"}
+    [:div {:class "relative overflow-hidden h-full rounded-2xl bg-white ring-1 ring-zinc-200/70 shadow-card-md"}
+     [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"}]
+     [:div {:class "absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl"}]
+     [:div {:class "relative flex flex-col h-full px-6 py-6 sm:px-8 sm:py-7"}
       [:div {:class "flex items-start justify-between gap-3"}
-       [:p {:class "text-xs font-medium text-emerald-700 uppercase tracking-widest"} "Monthly net take-home"]
+       [:div {:class "flex items-center gap-2.5"}
+        [:span {:class "h-1.5 w-1.5 rounded-full bg-emerald-500"}]
+        [:p {:class "text-[11px] sm:text-xs font-semibold text-emerald-600 uppercase tracking-[0.18em]"}
+         "Monthly net take-home"]]
        (when payday
-         [:span {:class "flex-shrink-0 px-3 py-1 text-xs font-medium text-emerald-700 bg-emerald-500/10 ring-1 ring-emerald-600/20 rounded-full"}
+         [:span {:class "flex-shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-600/15"}
           (str "Payday · " (utilities/ordinal payday))])]
-      [:p {:class "mt-3 text-4xl font-bold text-zinc-900 tracking-tight tabular-nums sm:text-5xl"}
-       (if monthly-net (utilities/amount->rands monthly-net) "—")]
-      [:div {:class "grid grid-cols-3 gap-2 pt-5 mt-auto border-t border-emerald-200/60 sm:gap-4"}
+      [:div {:class "mt-5 flex items-baseline gap-2.5 sm:mt-6"}
+       [:p {:class "text-5xl sm:text-6xl font-bold text-zinc-900 leading-none tracking-[-0.05em] tabular-nums"}
+        (if monthly-net (utilities/amount->rands monthly-net) "—")]
+       [:span {:class "text-sm font-medium text-zinc-400"} "per month"]]
+      [:div {:class "flex-1"}]
+      [:div {:class "grid grid-cols-3 gap-4 pt-5 border-t border-zinc-100"}
        (hero-substat "Gross salary"   (utilities/amount->rands (or salary 0)))
        (hero-substat "Est. tax / mo"  (if monthly-tax (utilities/amount->rands monthly-tax) "—"))
        (hero-substat "Effective rate" (utilities/->percentage (or effective-rate 0)))]]]))
@@ -67,6 +70,9 @@
         finances           (data/get-finances ctx user-id)
         income-tax-data    (c.greed/get-income-tax-data user finances)
         budget-items       (data/get-budget-items ctx user-id)
+        payday             (:finances/payday finances)
+        events             (data/get-events ctx user-id)
+        goals              (data/get-goals ctx user-id)
         show-finance-tax-prompt (and (not (data/admin? user))
                                      (not (salary-set? finances))
                                      (finance-tax-prompt-due? ctx))]
@@ -88,10 +94,13 @@
          :net-monthly-income (when-let [net (:net-income income-tax-data)]
                                (/ net 12)))]]
 
-      ;; Budget snapshot
-      [:div
-       (section-label "Budget this month")
-       (stats/expense-tracker-stats budget-items)]
+      ;; Budget overview
+      (stats/budget-section budget-items)
 
-      ;; Full tax overview (heading + charts + metrics)
+      ;; What's next + goals
+      [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-2"}
+       (stats/upcoming-section payday events)
+       (stats/goals-section goals)]
+
+      ;; Tax
       (stats/tax-stats income-tax-data)])))

@@ -34,8 +34,7 @@
                                       [:script {:src (static-path "/js/main.js")}]
                                       [:script {:src "https://unpkg.com/htmx.org@2.0.10/dist/htmx.min.js"}]
                                       [:script {:src "https://unpkg.com/htmx-ext-ws@2.0.2/dist/ws.js"}]
-                                      [:script {:src "https://unpkg.com/hyperscript.org@0.9.91"}]
-                                      [:script {:src "https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"}]]
+                                      [:script {:src "https://unpkg.com/hyperscript.org@0.9.91"}]]
                                id (into [[:script {:async true :src (str "https://www.googletagmanager.com/gtag/js?id=" id)}]
                                          [:script (biff/unsafe
                                                    (str "window.dataLayer = window.dataLayer || [];"
