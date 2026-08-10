@@ -226,10 +226,10 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
     {:class "mt-4" :action "/app/tax/income-tax-calculator"}
     (shared/modal-input :id "income" :type "number" :label "Monthly Income (R)" :required? true)
     (shared/modal-input :id "age" :type "number" :label "Age" :required? true)
-    [:div {:class "flex gap-2 mt-5"}
-     [:button {:type "button" "@click" "isOpen = false"
-               :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"}
-      "Cancel"]
+[:div {:class "flex gap-2 mt-5"}
+      [:button {:type "button" :_ (shared/close-actions "income-tax-modal")
+                :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"}
+       "Cancel"]
      [:button {:type "submit"
                :class "flex-1 px-4 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2"}
       "Calculate"]])])
@@ -244,10 +244,10 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
       (shared/modal-select :id "type" :label "Category" :options budget-item-options :required? true)
       (shared/modal-input :id "title" :type "text" :label "Title" :required? true)
       (shared/modal-input :id "amount" :type "number" :label "Amount (R)" :required? true)
-      [:div {:class "flex gap-2 mt-5"}
-       [:button {:type "button" "@click" "isAddButtonOpen = false"
-                 :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"}
-        "Cancel"]
+[:div {:class "flex gap-2 mt-5"}
+        [:button {:type "button" :_ (shared/close-actions "budget-add-modal")
+                  :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"}
+         "Cancel"]
        [:button {:type "submit"
                  :class "flex-1 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"}
         "Add item"]])]))
@@ -266,7 +266,7 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
      [:button {:type "submit"
                :class "flex-1 px-4 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2"}
       "Update"]
-     [:button {:type "button" "@click" "isActionModalOpen = false"
+     [:button {:type "button" :_ (shared/close-actions (str "budget-action-" (:xt/id item)))
                                :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"}
       "Cancel"]])
    (biff/form

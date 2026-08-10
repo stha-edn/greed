@@ -58,17 +58,12 @@
         error?    (alert-error? alert-key)]
     (when message
       [:div
-       {:x-data (str "{ show: true, autoDismiss: " (not error?)
-                     ", init() { if (this.autoDismiss) setTimeout(() => { this.show = false }, 6000) } }")
-        :x-show "show"
-        :x-cloak ""
-        "x-transition:enter" "transition duration-300 ease-out"
-        "x-transition:enter-start" "-translate-y-3 opacity-0"
-        "x-transition:enter-end" "translate-y-0 opacity-100"
-        "x-transition:leave" "transition duration-200 ease-in"
-        "x-transition:leave-start" "translate-y-0 opacity-100"
-        "x-transition:leave-end" "-translate-y-2 opacity-0"
-        :class (str "flex items-start gap-3 w-full rounded-xl ring-1 shadow-card p-4 "
+       {:id "info-alert"
+        :_ (when-not error?
+             (str "init\n"
+                  "  wait 6s\n"
+                  "  hide #info-alert"))
+        :class (str "flex items-start gap-3 w-full rounded-xl ring-1 shadow-card p-4 greed-alert-in "
                     (if error? "bg-rose-50 ring-rose-200" "bg-emerald-50 ring-emerald-200"))}
        [:div
         {:class (str "flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center "
@@ -80,15 +75,16 @@
          message]]
        [:button
         {:type "button"
-         :x-on:click "show = false"
+         :_ "on click hide #info-alert"
          :class (str "flex-shrink-0 self-start p-1 -m-1 rounded-md transition-colors "
                      (if error? "text-rose-400 hover:text-rose-700 hover:bg-rose-100"
                         "text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100"))}
         (svgs/close)]])))
 
 (defn finance-tax-prompt-modal
-  "Modal prompting the user to complete their finance & tax profile.
-   Parent must have Alpine x-data with showFinanceTaxPrompt."
+  "Modal prompting the user to complete their finance & tax profile. Rendered
+   only when the prompt is due (see dashboard/finance-tax-prompt-due?), so it
+   is shown directly by the server — no client-side visibility state needed."
   []
   [:div
    {:class "relative flex justify-center"}
@@ -96,15 +92,7 @@
     {:role "dialog"
      :aria-labelledby "finance-tax-prompt-title"
      :aria-modal "true"
-     :class "fixed inset-0 z-10 overflow-y-auto"
-     :x-cloak ""
-     :x-show "showFinanceTaxPrompt"
-     "x-transition:enter" "transition duration-300 ease-out"
-     "x-transition:enter-start" "translate-y-4 opacity-0 sm:translate-y-0 sm:scale-95"
-     "x-transition:enter-end" "translate-y-0 opacity-100 sm:scale-100"
-     "x-transition:leave" "transition duration-150 ease-in"
-     "x-transition:leave-start" "translate-y-0 opacity-100 sm:scale-100"
-     "x-transition:leave-end" "translate-y-4 opacity-0 sm:translate-y-0 sm:scale-95"}
+     :class "fixed inset-0 z-10 overflow-y-auto"}
     [:div
      {:class "flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0"}
      [:span

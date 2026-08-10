@@ -155,6 +155,34 @@
    (when hint
      [:p {:class "mt-1 text-xs text-zinc-400"} hint])])
 
+(defn open-actions
+  "hyperscript for an element that opens `#id` by adding an `open` attribute."
+  [id]
+  (str "on click\n"
+       "  add @open='true' to #" id))
+
+(defn close-actions
+  "hyperscript for an element that closes `#id` by removing its `open` attr."
+  [id]
+  (str "on click\n"
+       "  remove @open from #" id))
+
+(defn modal
+  "Alpine-free modal shell. hyperscript toggles an `open` attribute; Tailwind
+   `[&[open]]:` variants animate the fade/scale. Overlay click and Escape
+   close the dialog. The `open` attribute keeps the dialog hidden (opacity,
+   visibility, pointer-events) until hyperscript adds it."
+  [id & body]
+  (let [close (close-actions id)]
+    [:div {:id id
+           :role "dialog"
+           :aria-modal "true"
+           :_ (str "on keydown[key == 'Escape'] from window\n"
+                   "  remove @open from #" id)
+           :class "fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 scale-95 invisible pointer-events-none transition-all duration-200 [&[open]]:opacity-100 [&[open]]:scale-100 [&[open]]:visible [&[open]]:pointer-events-auto"}
+     [:div {:class "absolute inset-0 bg-black/50" :_ close}]
+     (into [:div {:class "relative z-10"}] body)]))
+
 (defn modal-input [& {:keys [id type label required?]
                       :or {required? false}}]
   [:div {:class "mt-3"}

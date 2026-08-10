@@ -9,7 +9,6 @@
             [com.greed.ui.app.calendar :as calendar]
             [com.greed.ui.app.insights :as insights]
             [com.greed.ui.app.dashboard :as dashboard]
-            [com.greed.ui.components.tables :as tables]
             [com.greed.ui.components.forms :as forms]
             [com.greed.ui.tools.income-tax-calculator :as income-tax-calculator]
             [com.greed.ui.tools.bonus-tax-calculator :as bonus-tax-calculator]
@@ -23,10 +22,9 @@
 (def module
   {:routes [["/app" {:middleware [mid/wrap-signed-in]}
              ["" {:get dashboard/page}]
-             ["/finances"
-              ["/" {:get finances/page}]
-              ["/add-modal" {:get tables/add-modal}]
-              ["/account-type-options" {:get forms/account-type-field}]
+["/finances"
+               ["/" {:get finances/page}]
+               ["/account-type-options" {:get forms/account-type-field}]
               ["/create-budget-item" {:post mid/create-budget-item}]
               ["/update-budget-item" {:post mid/update-budget-item}]
               ["/delete-budget-item" {:post mid/delete-budget-item}]]

@@ -72,8 +72,7 @@
                                      (finance-tax-prompt-due? ctx))]
     (ui/app
      ctx
-     [:div {:class "space-y-7"
-            :x-data (str "{ showFinanceTaxPrompt: " (boolean show-finance-tax-prompt) " }")}
+     [:div {:class "space-y-7"}
       (when show-finance-tax-prompt (alerts/finance-tax-prompt-modal))
       (when (:alert params) (alerts/info params))
       (headers/home-heading :user user :date (today-str))

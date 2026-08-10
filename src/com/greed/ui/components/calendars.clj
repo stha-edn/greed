@@ -58,50 +58,49 @@
 
 (defn events-panel [_ctx events]
   [:div#calendar-events {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card overflow-hidden"}
-   [:div {:x-data "{ showForm: false }"}
-    [:div {:class "flex items-center justify-between px-5 py-4 border-b border-zinc-100"}
-     [:div
-      [:p {:class "text-xs font-bold uppercase tracking-widest text-zinc-400"} "Events"]
-      [:p {:class "text-xs text-zinc-400 mt-0.5"}
-       (if (seq events) (str (count events) " this month") "Nothing scheduled")]]
-     [:button {:class      "text-xs font-medium text-zinc-600 border border-zinc-200 rounded-lg px-3 py-1.5 hover:bg-zinc-50 hover:border-zinc-300 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
-               :x-on:click "showForm = !showForm"}
-      [:span {:x-show "!showForm"} "＋ Add"]
-      [:span {:x-show "showForm" :x-cloak ""} "✕ Close"]]]
-    [:div {:x-show "showForm" :x-cloak ""
-           :class "px-5 py-4 border-b border-zinc-100 bg-zinc-50"}
-     (biff/form {:hx-post    "/app/calendar/create-event"
-                 :hx-target  "#calendar-events"
-                 :hx-swap    "outerHTML"
-                 :hx-include "#cal-month, #cal-year"
-                 :class      "space-y-2.5"}
-       [:input {:type        "text"
-                :name        "title"
-                :required    true
-                :placeholder "Event title"
-                :class       "w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white placeholder:text-zinc-400"}]
-       [:div {:class "grid grid-cols-2 gap-2"}
-        [:select {:name  "type"
-                  :class "px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white text-zinc-700"}
-         [:option {:value "general"} "Event"]
-         [:option {:value "bill"} "Bill"]
-         [:option {:value "income"} "Payment in"]]
-        [:input {:type     "date"
-                 :name     "date"
-                 :required true
-                 :class    "px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white text-zinc-700"}]]
-       [:button {:type  "submit"
-                 :class "w-full py-2 text-sm font-semibold text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2"}
-        "Save event"])]
-    (if (seq events)
-      [:div (map event-row events)]
-      [:div {:class "flex flex-col items-center justify-center py-10 text-center px-5"}
-       [:div {:class "w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center mb-3"}
-        [:svg {:class "w-5 h-5 text-zinc-300" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
-         [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "1.5"
-                 :d "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"}]]]
-       [:p {:class "text-sm font-semibold text-zinc-500"} "No events this month"]
-       [:p {:class "mt-1 text-xs text-zinc-400"} "Add bills, income drops, and deadlines"]])]])
+   [:div {:class "flex items-center justify-between px-5 py-4 border-b border-zinc-100"}
+    [:div
+     [:p {:class "text-xs font-bold uppercase tracking-widest text-zinc-400"} "Events"]
+     [:p {:class "text-xs text-zinc-400 mt-0.5"}
+      (if (seq events) (str (count events) " this month") "Nothing scheduled")]]
+    [:button {:class "text-xs font-medium text-zinc-600 border border-zinc-200 rounded-lg px-3 py-1.5 hover:bg-zinc-50 hover:border-zinc-300 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
+              :type "button"
+              :_ "on click\n  toggle .hidden on #calendar-add-form\n  toggle .hidden on #cal-add-label\n  toggle .hidden on #cal-close-label"}
+     [:span {:id "cal-add-label"} "＋ Add"]
+     [:span {:id "cal-close-label" :class "hidden"} "✕ Close"]]]
+   [:div {:id "calendar-add-form" :class "hidden px-5 py-4 border-b border-zinc-100 bg-zinc-50"}
+    (biff/form {:hx-post    "/app/calendar/create-event"
+                :hx-target  "#calendar-events"
+                :hx-swap    "outerHTML"
+                :hx-include "#cal-month, #cal-year"
+                :class      "space-y-2.5"}
+      [:input {:type        "text"
+               :name        "title"
+               :required    true
+               :placeholder "Event title"
+               :class       "w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white placeholder:text-zinc-400"}]
+      [:div {:class "grid grid-cols-2 gap-2"}
+       [:select {:name  "type"
+                 :class "px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white text-zinc-700"}
+        [:option {:value "general"} "Event"]
+        [:option {:value "bill"} "Bill"]
+        [:option {:value "income"} "Payment in"]]
+       [:input {:type     "date"
+                :name     "date"
+                :required true
+                :class    "px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white text-zinc-700"}]]
+      [:button {:type  "submit"
+                :class "w-full py-2 text-sm font-semibold text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2"}
+       "Save event"])]
+   (if (seq events)
+     [:div (map event-row events)]
+     [:div {:class "flex flex-col items-center justify-center py-10 text-center px-5"}
+      [:div {:class "w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center mb-3"}
+       [:svg {:class "w-5 h-5 text-zinc-300" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
+        [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "1.5"
+                :d "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"}]]]
+      [:p {:class "text-sm font-semibold text-zinc-500"} "No events this month"]
+      [:p {:class "mt-1 text-xs text-zinc-400"} "Add bills, income drops, and deadlines"]])])
 
 (defn calendar [year month payday events]
   (let [today       (LocalDate/now)

@@ -25,7 +25,7 @@
 
 (defn- goal-form
   "Create form when goal is nil, edit form otherwise."
-  [& {:keys [goal toggle-var]}]
+  [& {:keys [goal modal-id]}]
   (let [{:goal/keys [title target saved target-date] :xt/keys [id]} goal
         editing? (some? goal)]
     [:div {:class "w-full max-w-md p-6 bg-white rounded-xl shadow-card-md"}
@@ -34,7 +34,7 @@
        (if editing? "Edit goal" "New savings goal")]
       [:button {:type "button" :title "Close" :aria-label "Close"
                 :class "flex items-center justify-center w-7 h-7 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-700 active:bg-zinc-200"
-                "@click" (str toggle-var " = false")}
+                :_ (shared/close-actions modal-id)}
        (svgs/close {:class "w-4 h-4"})]]
      (biff/form
       {:action (if editing? "/app/goals/update-goal" "/app/goals/create-goal")}
@@ -52,33 +52,20 @@
       [:div {:class "flex justify-end gap-3 mt-6"}
        [:button {:type "button"
                  :class "px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-800"
-                 "@click" (str toggle-var " = false")}
+                 :_ (shared/close-actions modal-id)}
         "Cancel"]
        (shared/btn :variant :primary :size :md :type "submit" :class "px-5"
                    (if editing? "Save changes" "Create goal"))])]))
 
-(defn- modal [& {:keys [toggle-var body]}]
-  [:div {:x-show toggle-var :x-cloak "true"
-         :class "fixed inset-0 z-50 flex items-center justify-center p-4"
-         "@keydown.escape.window" (str toggle-var " = false")
-         :x-transition:enter "transition ease-out duration-200"
-         :x-transition:enter-start "opacity-0 scale-95"
-         :x-transition:enter-end "opacity-100 scale-100"
-         :x-transition:leave "transition ease-in duration-150"
-         :x-transition:leave-start "opacity-100 scale-100"
-         :x-transition:leave-end "opacity-0 scale-95"}
-   [:div {:class "absolute inset-0 bg-black/50" "@click" (str toggle-var " = false")}]
-   [:div {:class "relative z-10"} body]])
-
 (defn- goal-card [goal]
   (let [{:goal/keys [title target saved target-date] :xt/keys [id]} goal
+        modal-id  (str "goal-edit-" id)
         saved     (or saved 0)
         target    (or target 0)
         p         (pct saved target)
         remaining (max 0 (- target saved))
         complete? (>= saved target)]
-    [:div {:x-data "{ editOpen: false }"
-           :class "p-5 bg-white border border-zinc-200/70 rounded-xl shadow-card transition-all duration-200 hover:shadow-card-hover"}
+    [:div {:class "p-5 bg-white border border-zinc-200/70 rounded-xl shadow-card transition-all duration-200 hover:shadow-card-hover"}
      [:div {:class "flex items-start justify-between gap-3"}
       [:div {:class "min-w-0"}
        [:h3 {:class "text-sm font-semibold text-zinc-900 truncate"} title]
@@ -87,7 +74,7 @@
       [:div {:class "flex flex-shrink-0 items-center gap-1"}
        [:button {:type "button" :title "Edit"
                  :class "p-1.5 text-zinc-400 rounded-md transition-colors hover:text-zinc-700 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-700 active:bg-zinc-200"
-                 "@click" "editOpen = true"}
+                 :_ (shared/open-actions modal-id)}
         [:svg {:class "w-4 h-4" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
          [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2"
                  :d "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"}]]]
@@ -110,7 +97,7 @@
        [:span {:class "text-xs font-medium text-emerald-600 tabular-nums"} (str p "% funded")]
        [:span {:class "text-xs text-zinc-400 tabular-nums"}
         (if complete? "Goal reached 🎉" (str (utilities/amount->rands remaining) " to go"))]]]
-     (modal :toggle-var "editOpen" :body (goal-form :goal goal :toggle-var "editOpen"))]))
+     (shared/modal modal-id (goal-form :goal goal :modal-id modal-id))]))
 
 (defn- summary [goals]
   (let [target-total (reduce + (map #(or (:goal/target %) 0) goals))
@@ -136,21 +123,21 @@
              :d "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-4.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0-3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"}]]]
    [:p {:class "text-sm font-medium text-zinc-600"} "No goals yet"]
    [:p {:class "mt-1 text-xs text-zinc-400"} "Set a savings target and track your progress towards it."]
-   (shared/btn :variant :primary :size :md :class "mt-4"
-               :attrs {"@click" "addOpen = true"}
-               "Create your first goal")])
+(shared/btn :variant :primary :size :md :class "mt-4"
+                :attrs {"_" (shared/open-actions "goal-add-modal")}
+                "Create your first goal")])
 
 (defn page [{:keys [session params] :as ctx}]
   (let [user-id (:uid session)
         goals   (data/get-goals ctx user-id)]
     (ui/app
      ctx
-     [:div {:class "space-y-4" :x-data "{ addOpen: false }"}
+     [:div {:class "space-y-4"}
       (when (:alert params) (alerts/info params))
       (headers/pages-heading ["Goals"])
       [:div {:class "flex justify-end"}
        (shared/btn :variant :primary :size :md
-                   :attrs {"@click" "addOpen = true"}
+                   :attrs {"_" (shared/open-actions "goal-add-modal")}
                    [:svg {:class "w-4 h-4" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
                     [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2" :d "M12 4v16m8-8H4"}]]
                    "Add goal")]
@@ -160,4 +147,4 @@
          [:div {:class "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"}
           (map goal-card goals)]]
         (empty-state))
-      (modal :toggle-var "addOpen" :body (goal-form :goal nil :toggle-var "addOpen"))])))
+      (shared/modal "goal-add-modal" (goal-form :goal nil :modal-id "goal-add-modal"))])))

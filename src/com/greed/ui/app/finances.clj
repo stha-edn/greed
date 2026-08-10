@@ -25,7 +25,7 @@
         budget-items (data/get-budget-items ctx user-id)]
     (ui/app
      ctx
-     [:div {:class "space-y-4" :x-data "{ isAddButtonOpen: false, isActionModalOpen: false }"}
+     [:div {:class "space-y-4"}
       (when (:alert params) (alerts/info params))
       (headers/pages-heading ["Budget Tracker"])
       (stats/expense-tracker-stats budget-items)

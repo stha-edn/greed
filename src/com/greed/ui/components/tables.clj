@@ -1,47 +1,27 @@
 (ns com.greed.ui.components.tables
-  (:require [com.greed.ui.components.svgs :as svgs]
-   [com.greed.ui.components.forms :as forms]
-   [com.greed.utilities.core :as utilities]))
-
-(defn- modal-shell [{:keys [show close]} & body]
-  [:div {:x-show show :x-cloak "true"
-         :class "fixed inset-0 z-50 flex items-center justify-center p-4"
-         "@keydown.escape.window" close
-         :x-transition:enter "transition ease-out duration-200"
-         :x-transition:enter-start "opacity-0 scale-95"
-         :x-transition:enter-end "opacity-100 scale-100"
-         :x-transition:leave "transition ease-in duration-150"
-         :x-transition:leave-start "opacity-100 scale-100"
-         :x-transition:leave-end "opacity-0 scale-95"}
-   [:div {:class "absolute inset-0 bg-black/50"
-          "@click" close}]
-   (into [:div {:class "relative z-10"}] body)])
+  (:require [com.greed.ui.components.shared :as shared]
+            [com.greed.ui.components.svgs :as svgs]
+            [com.greed.ui.components.forms :as forms]
+            [com.greed.utilities.core :as utilities]))
 
 (defn- th [label & {:keys [class]}]
   [:th {:class (str "px-4 py-2.5 text-left text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"
                     (when class (str " " class)))}
    label])
 
-(defn add-modal []
-  (modal-shell {:show "isAddButtonOpen" :close "isAddButtonOpen = false"}
-    (forms/budget-item-form)))
-
-(defn action-modal [item]
-  (modal-shell {:show "isActionModalOpen" :close "isActionModalOpen = false"}
-    (forms/budget-action-form item)))
-
 (defn add-button []
   [:div {:class "flex justify-end mb-4"}
-    [:button {:class "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
-             :type "button"
-             "@click" "isAddButtonOpen = true"}
+   [:button {:class "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+            :type "button"
+            :_ (shared/open-actions "budget-add-modal")}
     (svgs/plus {:class "w-4 h-4"})
     "Add item"]
-   (add-modal)])
+   (shared/modal "budget-add-modal" (forms/budget-item-form))])
 
 (defn table-row [& {:keys [item protected-titles]}]
-  (let [{:budget-item/keys [title amount]
+  (let [{:budget-item/keys [title amount] :xt/keys [id]
          :or {title "Title" amount 0}} item
+        action-modal-id (str "budget-action-" id)
         protected? (contains? (or protected-titles #{}) title)]
     [:<>
      [:tr {:class "group hover:bg-zinc-50 transition-colors"}
@@ -54,9 +34,10 @@
           "Auto"]
          [:button {:class "inline-flex items-center justify-center w-7 h-7 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors md:opacity-0 md:group-hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:opacity-100"
                    :type "button"
-                   "@click" "isActionModalOpen = true"}
+                   :_ (shared/open-actions action-modal-id)}
           (svgs/action)])]]
-     (when-not protected? (action-modal item))]))
+     (when-not protected?
+       (shared/modal action-modal-id (forms/budget-action-form item)))]))
 
 (defn budget-table [{:keys [title items protected-titles]
                      :or {protected-titles #{}}}]

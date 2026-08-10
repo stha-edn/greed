@@ -49,24 +49,16 @@
 (defn- edit-modal [user self?]
   (let [{:user/keys [firstname lastname email age roles]} user
         id (str (:xt/id user))
+        modal-id (str "user-edit-" id)
         current-role (if (contains? roles :admin) :admin :user)]
-    [:div {:x-show (str "editingUserId === '" id "'") :x-cloak "true"
-           :class "fixed inset-0 z-50 flex items-center justify-center p-4"
-           "@keydown.escape.window" "editingUserId = null"
-           :x-transition:enter "transition ease-out duration-200"
-           :x-transition:enter-start "opacity-0 scale-95"
-           :x-transition:enter-end "opacity-100 scale-100"
-           :x-transition:leave "transition ease-in duration-150"
-           :x-transition:leave-start "opacity-100 scale-100"
-           :x-transition:leave-end "opacity-0 scale-95"}
-     [:div {:class "absolute inset-0 bg-black/50" "@click" "editingUserId = null"}]
-     [:div {:class "relative z-10 w-full max-w-md p-6 bg-white rounded-xl shadow-card-md"}
+    (shared/modal modal-id
+     [:div {:class "w-full max-w-md p-6 bg-white rounded-xl shadow-card-md"}
       [:div {:class "flex items-center justify-between mb-4"}
        [:h3 {:class "text-base font-semibold text-zinc-900"} "Edit user"]
-        [:button {:type "button" :title "Close" :aria-label "Close"
-                  :class "flex items-center justify-center w-7 h-7 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-700 active:bg-zinc-200"
-                  "@click" "editingUserId = null"}
-         (svgs/close {:class "w-4 h-4"})]]
+[:button {:type "button" :title "Close" :aria-label "Close"
+                   :class "flex items-center justify-center w-7 h-7 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-700 active:bg-zinc-200"
+                   :_ (shared/close-actions modal-id)}
+          (svgs/close {:class "w-4 h-4"})]]
       (biff/form
        {:action "/app/admin/users/update"}
        [:input {:type "hidden" :name "user-id" :value id}]
@@ -81,12 +73,12 @@
                :value age :required? true)
         (role-field :current-role current-role :self? self?)]
        [:div {:class "flex justify-end gap-3 mt-6"}
-        [:button {:type "button"
-                  :class "px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-800"
-                  "@click" "editingUserId = null"}
-         "Cancel"]
-        (shared/btn :variant :primary :size :md :type "submit" :class "px-5"
-                    "Save changes")])]]))
+[:button {:type "button"
+                   :class "px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-800"
+                   :_ (shared/close-actions modal-id)}
+          "Cancel"]
+         (shared/btn :variant :primary :size :md :type "submit" :class "px-5"
+                     "Save changes")])])))
 
 (defn- password-cell [user]
   (if (data/hashed-password? (:user/password user))
@@ -114,9 +106,9 @@
 (defn- row-actions [user self?]
   (let [id (str (:xt/id user))]
     [:div {:class "flex items-center justify-end gap-1"}
-     [:button {:type "button" :title "Edit"
-               :class "p-1.5 text-zinc-400 rounded-md transition-colors hover:text-zinc-700 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-700 active:bg-zinc-200"
-               "@click" (str "editingUserId = '" id "'")}
+[:button {:type "button" :title "Edit"
+                  :class "p-1.5 text-zinc-400 rounded-md transition-colors hover:text-zinc-700 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-700 active:bg-zinc-200"
+                  :_ (shared/open-actions (str "user-edit-" id))}
       [:svg {:class "w-4 h-4" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
        [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2"
                :d "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"}]]]
@@ -171,8 +163,8 @@
         unhashed-count (count (remove #(data/hashed-password? (:user/password %)) users))]
     (ui/app
      ctx
-     [:div {:class "space-y-4" :x-data "{ editingUserId: null }"}
-      (when (:alert params) (alerts/info params))
+[:div {:class "space-y-4"}
+       (when (:alert params) (alerts/info params))
       (headers/pages-heading ["Admin" "Users"])
       (insecure-password-banner unhashed-count)
       (users-table users (:uid session))])))

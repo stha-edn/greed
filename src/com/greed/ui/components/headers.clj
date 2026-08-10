@@ -12,7 +12,7 @@
   [:<>
    (navs/sidebar ctx)
    (navs/mobile-sidebar ctx)
-   (navs/mobile-bottom-nav)])
+   (navs/mobile-bottom-nav ctx)])
 
 (defn pages-heading [breadcrumbs]
   [:div {:class "mb-6"}
