@@ -57,4 +57,5 @@
              ["/save-user" {:post mid/save-user}]
              ["/save-finances" {:post mid/save-finances}]
              ["/save-tax-profile" {:post mid/save-tax-profile}]
-             ["/dismiss-finance-tax-prompt" {:post mid/dismiss-finance-tax-prompt}]]]})
+             ["/dismiss-finance-tax-prompt" {:post mid/dismiss-finance-tax-prompt}]
+             ["/dismiss-app-update-banner" {:post mid/dismiss-app-update-banner}]]]})

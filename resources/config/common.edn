@@ -1,4 +1,10 @@
-{:error/recaptcha "You failed the recaptcha test. Try again, and make sure you aren't blocking scripts from Google."
+{;; Bump this to re-show the "app has been updated" dashboard banner to
+ ;; every user (see dashboard/app-update-banner-due?). Not tied to any
+ ;; build/deploy tooling — just an explicit marker you change by hand
+ ;; whenever there's something worth announcing.
+ :app/version "1"
+
+ :error/recaptcha "You failed the recaptcha test. Try again, and make sure you aren't blocking scripts from Google."
  :error/invalid-email "Invalid email. Try again with a different address."
  :error/invalid-credentials "Invalid credentials. Try again."
  :error/account-deactivated "This account has been deactivated. Please contact support to get reactivated."
@@ -20,6 +26,7 @@
  :alert/cannot-remove-own-admin-role "You can't remove your own admin role from here."
  :alert/password-hashed "That user's plaintext password has been securely hashed."
  :alert/password-already-hashed "That user's password was already securely hashed."
+ :alert/app-updated "The app has been updated."
 
  :alert/errors #{:alert/email-taken
                  :alert/user-not-found

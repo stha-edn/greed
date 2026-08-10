@@ -53,7 +53,7 @@
 (defn signin-success-page [{:keys [biff/db session params]}]
   (let [user-id (biff/lookup-id db :user/email (:email params))]
     {:status 303
-     :headers {"Location" "/app"}
+     :headers {"Location" "/app?success=signin"}
      :session (with-meta (assoc session :uid user-id) {:recreate true})}))
 
 (defn signup-page [{:keys [recaptcha/site-key] :as ctx}]
@@ -71,7 +71,7 @@
                            :firstname (:firstname params)
                            :app-url (str base-url "/app")})
     {:status 303
-     :headers {"Location" "/app"}
+     :headers {"Location" "/app?success=signup"}
      :session (with-meta (assoc session :uid user-id) {:recreate true})}))
 
 (def module

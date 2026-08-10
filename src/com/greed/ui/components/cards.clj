@@ -38,8 +38,7 @@
         income       (if net-monthly-income
                        (+ net-monthly-income (max 0 other-income))
                        (or total-income 0))
-        balance      (- income total-expenses)
-        bank         (or bank :bank)]
+        balance      (- income total-expenses)]
     [:div {:class "relative flex h-48 w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-800 via-zinc-900 to-black p-6 text-white shadow-card-md ring-1 ring-white/10 lg:h-full"}
      [:div {:class "absolute -top-24 -right-20 h-64 w-64 rounded-full bg-emerald-500/20 blur-3xl"}]
      [:div {:class "relative"}
@@ -47,8 +46,14 @@
        [:span {:class "text-zinc-300"} (svgs/card-chip)]
        [:span {:class "text-zinc-300"} (svgs/contactless)]]
       [:div {:class "mt-4"}
-       [:p {:class "text-xs font-semibold uppercase tracking-widest text-zinc-300"} (utilities/->string bank)]
-       [:p {:class "mt-0.5 text-xs text-zinc-500"} (or account-type "Debit Card")]]]
+       (if bank
+         [:<>
+          [:p {:class "text-xs font-semibold uppercase tracking-widest text-zinc-300"} (utilities/->string bank)]
+          [:p {:class "mt-0.5 text-xs text-zinc-500"} (or account-type "Debit Card")]]
+         [:a {:href "/app/settings"
+              :class "inline-flex items-center gap-1 text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-200 active:scale-[0.97]"}
+          "Add your bank"
+          (svgs/->next {:class "size-3"})])]]
      [:div {:class "relative mt-auto"}
       [:div {:class "flex items-center gap-2"}
        (for [_ (range 3)]

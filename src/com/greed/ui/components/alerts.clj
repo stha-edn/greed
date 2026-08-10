@@ -34,34 +34,68 @@
   [alert-key]
   (contains? (:alert/errors c/common-config) alert-key))
 
-(defn success [& {:keys [type]
-                  :or {type :signin}}]
+(defn success
+  "Celebratory confirmation card for a just-completed signin/signup — same
+   entrance/exit and dismiss treatment as `info` (greed-alert-in/-out),
+   shown once right after the redirect to /app via ?success=signin|signup."
+  [& {:keys [type]
+      :or {type :signin}}]
   [:div
-   {:class "flex w-full max-w-sm overflow-hidden rounded-xl bg-white ring-1 ring-emerald-200 shadow-card"}
+   {:id "success-alert"
+    :_ (str "init\n"
+            "  wait 6s\n"
+            "  add .greed-alert-out\n"
+            "  wait 200ms\n"
+            "  hide #success-alert")
+    :class "flex w-full max-w-sm overflow-hidden rounded-xl bg-white ring-1 ring-emerald-200 shadow-card greed-alert-in"}
    [:div
     {:class "flex items-center justify-center w-12 bg-emerald-600 text-white"}
     (svgs/success)]
    [:div
-    {:class "px-4 py-3"}
+    {:class "flex flex-1 items-start justify-between gap-2 px-4 py-3"}
     [:div
      {:class "mx-3"}
      [:p {:class "font-semibold text-lg text-zinc-900"} "Success"]
      [:p {:class "text-sm text-zinc-500"}
       (if (= type :signin)
         "You are signed in!"
-        "Your account was created!")]]]])
+        "Your account was created!")]]
+    [:button
+     {:type "button"
+      :_ (str "on click\n"
+              "  add .greed-alert-out to #success-alert\n"
+              "  wait 200ms\n"
+              "  hide #success-alert")
+      :class "flex-shrink-0 self-start p-1 -m-1 rounded-md text-zinc-400 transition-colors hover:text-zinc-600 hover:bg-zinc-100 active:scale-[0.9]"}
+     (svgs/close)]]])
 
-(defn info [params]
+(defn info
+  "Dismissible toast, driven by an `:alert` key in `params` (usually the
+   request's query params, e.g. `?alert=goal-saved`, but a synthetic
+   `{:alert \"key\"}` map works too). Non-error alerts auto-hide after 6s —
+   purely visual, the session is never touched by the timeout.
+
+   Pass `:dismiss-href` for an alert that shouldn't reappear once seen (e.g.
+   dashboard.clj's app-update-banner-due?): the close button then POSTs
+   there instead of just hiding client-side, so dismissal persists. The 6s
+   auto-hide still only hides — acknowledging is an explicit click, not an
+   idle timeout, so an unread banner still greets the user next visit."
+  [params & {:keys [dismiss-href]}]
   (let [alert     (:alert params)
         alert-key (when alert (keyword "alert" alert))
         message   (get c/alert-config alert-key)
-        error?    (alert-error? alert-key)]
+        error?    (alert-error? alert-key)
+        close-btn-class (str "flex-shrink-0 self-start p-1 -m-1 rounded-md transition-colors active:scale-[0.9] "
+                             (if error? "text-rose-400 hover:text-rose-700 hover:bg-rose-100"
+                                "text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100"))]
     (when message
       [:div
        {:id "info-alert"
         :_ (when-not error?
              (str "init\n"
                   "  wait 6s\n"
+                  "  add .greed-alert-out\n"
+                  "  wait 200ms\n"
                   "  hide #info-alert"))
         :class (str "flex items-start gap-3 w-full rounded-xl ring-1 shadow-card p-4 greed-alert-in "
                     (if error? "bg-rose-50 ring-rose-200" "bg-emerald-50 ring-emerald-200"))}
@@ -73,18 +107,26 @@
         [:p {:class (str "text-sm font-medium leading-snug "
                          (if error? "text-rose-900" "text-emerald-900"))}
          message]]
-       [:button
-        {:type "button"
-         :_ "on click hide #info-alert"
-         :class (str "flex-shrink-0 self-start p-1 -m-1 rounded-md transition-colors "
-                     (if error? "text-rose-400 hover:text-rose-700 hover:bg-rose-100"
-                        "text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100"))}
-        (svgs/close)]])))
+       (if dismiss-href
+         (biff/form {:action dismiss-href}
+           [:button {:type "submit" :class close-btn-class} (svgs/close)])
+         [:button
+          {:type "button"
+           :_ (str "on click\n"
+                   "  add .greed-alert-out to #info-alert\n"
+                   "  wait 200ms\n"
+                   "  hide #info-alert")
+           :class close-btn-class}
+          (svgs/close)])])))
 
 (defn finance-tax-prompt-modal
   "Modal prompting the user to complete their finance & tax profile. Rendered
    only when the prompt is due (see dashboard/finance-tax-prompt-due?), so it
-   is shown directly by the server — no client-side visibility state needed."
+   is shown directly by the server — no client-side visibility state needed.
+   Escape and a backdrop click both defer it (same effect as \"Later\") —
+   every other dialog in the app (shared/modal, confirm-dialog) offers that
+   same way out, and there's no lighter-weight \"just close it\" here since
+   it would only reappear on the next page load anyway."
   []
   [:div
    {:class "relative flex justify-center"}
@@ -92,17 +134,23 @@
     {:role "dialog"
      :aria-labelledby "finance-tax-prompt-title"
      :aria-modal "true"
+     :_ "on keydown[key=='Escape'] from window trigger click on #finance-tax-prompt-later-submit"
      :class "fixed inset-0 z-10 overflow-y-auto"}
+    [:div {:class "absolute inset-0 z-0 bg-zinc-950/60 backdrop-blur-sm greed-scrim-in"
+           :_ "on click trigger click on #finance-tax-prompt-later-submit"
+           :aria-hidden "true"}]
     [:div
-     {:class "flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0"}
+     {:class "relative z-10 flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0"}
      [:span
       {:class "hidden sm:inline-block sm:h-screen sm:align-middle"
        :aria-hidden "true"}
       "\u00A0"]
      [:div
-      {:class "relative inline-block overflow-hidden text-left align-bottom transition-all transform bg-gradient-to-br from-zinc-800 via-zinc-900 to-black rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"}
+      {:class "relative inline-block overflow-hidden text-left align-bottom bg-gradient-to-br from-zinc-800 via-zinc-900 to-black ring-1 ring-white/10 rounded-2xl shadow-card-md sm:my-8 sm:align-middle sm:max-w-lg sm:w-full greed-modal-in"}
+      [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"}]
+      [:div {:class "absolute -top-24 -right-24 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl"}]
       [:div
-       {:class "px-6 py-5 sm:p-6"}
+       {:class "relative px-6 py-5 sm:p-6"}
        [:div
         {:class "flex items-start"}
         [:div
@@ -159,10 +207,11 @@
          {:class "flex justify-end gap-3 mt-6"}
          (biff/form {:action "/app/dismiss-finance-tax-prompt"}
            [:button
-            {:type "submit"
-             :class "px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-md hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"}
+            {:id "finance-tax-prompt-later-submit"
+             :type "submit"
+             :class "px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-md transition hover:bg-zinc-50 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"}
             "Later"])
          [:a
          {:href "/app/settings"
-          :class "inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-emerald-500/20 border border-transparent rounded-md hover:bg-emerald-600/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"}
+          :class "inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-emerald-500/20 border border-transparent rounded-md transition hover:bg-emerald-600/20 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"}
          "Update"]]]]]]])

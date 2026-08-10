@@ -1,5 +1,6 @@
 (ns com.greed.ui.app.dashboard
-  (:require [com.greed.ui :as ui]
+  (:require [com.core :as c]
+            [com.greed.ui :as ui]
             [com.greed.data.core :as data]
             [com.greed.core :as c.greed]
             [com.greed.ui.components.stats :as stats]
@@ -21,6 +22,14 @@
     (or (nil? dismissed-at)
         (>= (- (System/currentTimeMillis) (long dismissed-at))
             finance-tax-prompt-interval-ms))))
+
+(defn app-update-banner-due?
+  "True when the signed-in user hasn't acknowledged the current :app/version
+   (common.edn) yet — see middleware/dismiss-app-update-banner. Bumping
+   :app/version re-shows the banner to everyone, including users who'd
+   already dismissed an earlier version."
+  [{:keys [session]}]
+  (not= (:app-update-seen-version session) (:app/version c/common-config)))
 
 (defn- hero-substat [label value]
   [:div {:class "min-w-0"}
@@ -75,12 +84,16 @@
         goals              (data/get-goals ctx user-id)
         show-finance-tax-prompt (and (not (data/admin? user))
                                      (not (salary-set? finances))
-                                     (finance-tax-prompt-due? ctx))]
+                                     (finance-tax-prompt-due? ctx))
+        show-app-update-banner (app-update-banner-due? ctx)]
     (ui/app
      ctx
      [:div {:class "space-y-7"}
       (when show-finance-tax-prompt (alerts/finance-tax-prompt-modal))
+      (when (:success params) (alerts/success :type (keyword (:success params))))
       (when (:alert params) (alerts/info params))
+      (when show-app-update-banner
+        (alerts/info {:alert "app-updated"} :dismiss-href "/app/dismiss-app-update-banner"))
       (headers/home-heading :user user :date (today-str))
 
       ;; Hero: net take-home feature card + bank card
@@ -94,13 +107,14 @@
          :net-monthly-income (when-let [net (:net-income income-tax-data)]
                                (/ net 12)))]]
 
-      ;; Budget overview
-      (stats/budget-section budget-items)
-
-      ;; What's next + goals
-      [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-2"}
+      ;; What's next + goals — time-sensitive, actionable info surfaces
+      ;; before the more reference-y budget breakdown below.
+      [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch"}
        (stats/upcoming-section payday events)
        (stats/goals-section goals)]
+
+      ;; Budget overview
+      (stats/budget-section budget-items)
 
       ;; Tax
       (stats/tax-stats income-tax-data)])))

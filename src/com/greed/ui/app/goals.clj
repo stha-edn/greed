@@ -91,8 +91,9 @@
        [:span {:class "text-lg font-semibold text-zinc-900 tabular-nums"} (utilities/amount->rands saved)]
        [:span {:class "text-xs text-zinc-400 tabular-nums"} (str "of " (utilities/amount->rands target))]]
       [:div {:class "overflow-hidden h-2 w-full bg-zinc-100 rounded-full"}
-       [:div {:class (str "h-full rounded-full transition-all " (if complete? "bg-emerald-500" "bg-emerald-400"))
-              :style {:width (str p "%")}}]]
+       [:div {:class "h-full overflow-hidden rounded-full" :style {:width (str p "%")}}
+        [:div {:class (str "h-full w-full rounded-full greed-bar-grow "
+                           (if complete? "bg-emerald-500" "bg-emerald-400"))}]]]
       [:div {:class "flex items-center justify-between mt-2"}
        [:span {:class "text-xs font-medium text-emerald-600 tabular-nums"} (str p "% funded")]
        [:span {:class "text-xs text-zinc-400 tabular-nums"}

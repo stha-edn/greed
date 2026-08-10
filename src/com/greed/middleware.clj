@@ -5,6 +5,7 @@
             [muuntaja.middleware :as muuntaja]
             [ring.middleware.anti-forgery :as csrf]
             [ring.middleware.defaults :as rd]
+            [com.core :as c]
             [com.greed.data.core :as data]
             [com.greed.utilities.core :as utilities]
             [com.greed.authentication :as auth]))
@@ -223,6 +224,11 @@
   {:status 303
    :headers {"location" "/app"}
    :session (assoc session :finance-tax-prompt-dismissed-at (System/currentTimeMillis))})
+
+(defn dismiss-app-update-banner [{:keys [session]}]
+  {:status 303
+   :headers {"location" "/app"}
+   :session (assoc session :app-update-seen-version (:app/version c/common-config))})
 
 (defn wrap-site-defaults [handler]
   (-> handler

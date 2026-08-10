@@ -19,8 +19,9 @@
      ctx
      [:div {:class "space-y-4"}
       (headers/pages-heading ["Calendar"])
-      (calendars/calendar year month payday events)
-      (calendars/events-panel ctx events)])))
+      [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-start"}
+       [:div {:class "lg:col-span-2"} (calendars/calendar year month payday events)]
+       [:div {:class "lg:col-span-1"} (calendars/events-panel ctx events)]]])))
 
 (defn calendar-grid [{:keys [params session] :as ctx}]
   (let [user-id  (:uid session)

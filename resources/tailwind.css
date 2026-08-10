@@ -37,6 +37,41 @@
 }
 .greed-alert-in { animation: greed-alert-in 300ms ease-out both; }
 
+/* Exit mirrors the entrance path (spatial consistency) instead of the
+   abrupt display:none cut hyperscript's bare `hide` would otherwise give
+   it — dismiss and the 6s auto-timeout both add this class first. */
+@keyframes greed-alert-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
+}
+.greed-alert-out { animation: greed-alert-out 200ms ease-in both; }
+
+/* Dashboard modal entrance: dim scrim + card, materializing rather than
+   just appearing (see materials-&-depth: "materialize, don't just fade"). */
+@keyframes greed-scrim-in { from { opacity: 0; } to { opacity: 1; } }
+.greed-scrim-in { animation: greed-scrim-in 200ms ease-out both; }
+
+@keyframes greed-modal-in {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.greed-modal-in { animation: greed-modal-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Progress-bar reveal: a static SSR width can't transition on its own (no
+   prior value to animate from), so the fill grows in via a compositor-only
+   transform instead of animating width/layout. */
+@keyframes greed-bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.greed-bar-grow {
+  transform-origin: left;
+  animation: greed-bar-grow 700ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .greed-alert-in, .greed-alert-out, .greed-scrim-in, .greed-modal-in, .greed-bar-grow {
+    animation: none;
+  }
+}
+
 /* Vanilla-JS confirm dialog (no Alpine). Hidden until JS adds the
    `data-open` attribute (display) and `confirm-visible` class (transition). */
 #confirm-dialog { display: none; }
@@ -53,3 +88,23 @@
 #confirm-dialog.confirm-visible .confirm-overlay,
 #confirm-dialog.confirm-visible .confirm-card { opacity: 1; }
 #confirm-dialog.confirm-visible .confirm-card { transform: scale(1); }
+
+/* Hyperscript-driven modal shell (shared/modal — goal/budget-item/admin
+   dialogs). Same overlay/card split as #confirm-dialog above: the scrim
+   fades on its own so it never visibly shrinks along with the scaling
+   card mid-transition. */
+.greed-modal-overlay, .greed-modal-card {
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+.greed-modal-card {
+  transform: scale(0.95);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+.greed-modal[open] .greed-modal-overlay,
+.greed-modal[open] .greed-modal-card { opacity: 1; }
+.greed-modal[open] .greed-modal-card { transform: scale(1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .greed-modal-card { transition: opacity 200ms ease-out; transform: none !important; }
+}
