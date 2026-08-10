@@ -29,7 +29,7 @@
   (let [[body kw-args] (split-kw-args args)
         {:keys [variant size class href type onclick attrs]
          :or {variant :dark size :md}} (apply hash-map kw-args)
-        base   "inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-colors"
+        base   "inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-colors active:scale-[0.97]"
         size-c (case size
                  :sm "px-3 py-1.5 text-xs"
                  :md "px-4 py-2 text-sm"

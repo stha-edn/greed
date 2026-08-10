@@ -169,3 +169,38 @@ document.addEventListener('htmx:afterSwap', initTaxCharts);
         });
     });
 })();
+
+// ---------------------------------------------------------------------------
+// Marketing-page scroll reveal (home/about/team). A one-shot fade-up: each
+// `.reveal` element is observed until it first crosses the viewport, then
+// unobserved — nothing repeats or loops on re-scroll. Below-the-fold content
+// only; hero content renders visible immediately (no latency on the first
+// thing a visitor sees). Degrades to "just show it" with no IntersectionObserver,
+// or when the user has asked for reduced motion.
+// ---------------------------------------------------------------------------
+(function () {
+    'use strict';
+
+    function revealAllNow() {
+        document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('is-visible'); });
+    }
+
+    var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reducedMotion || !('IntersectionObserver' in window)) {
+        document.addEventListener('DOMContentLoaded', revealAllNow);
+        return;
+    }
+
+    var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.reveal').forEach(function (el) { observer.observe(el); });
+    });
+})();

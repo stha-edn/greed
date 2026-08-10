@@ -3,7 +3,7 @@
 (defn- social-link [aria-label href icon-path]
   [:a {:href href :aria-label aria-label
        :target "_blank" :rel "noopener noreferrer"
-       :class "text-zinc-400 transition-colors hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-600"}
+       :class "text-zinc-400 transition-colors hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-600 active:scale-90 inline-flex"}
    [:svg {:xmlns "http://www.w3.org/2000/svg" :class "w-4 h-4" :viewBox "0 0 512 512"}
     [:path {:fill "currentColor" :d icon-path}]]])
 
@@ -14,8 +14,8 @@
    (social-link "Instagram" (or instagram "#")
      "M349.33,69.33a93.62,93.62,0,0,1,93.34,93.34V349.33a93.62,93.62,0,0,1-93.34,93.34H162.67a93.62,93.62,0,0,1-93.34-93.34V162.67a93.62,93.62,0,0,1,93.34-93.34H349.33m0-37.33H162.67C90.8,32,32,90.8,32,162.67V349.33C32,421.2,90.8,480,162.67,480H349.33C421.2,480,480,421.2,480,349.33V162.67C480,90.8,421.2,32,349.33,32Z M377.33,162.67a28,28,0,1,1,28-28A27.94,27.94,0,0,1,377.33,162.67Z M256,181.33A74.67,74.67,0,1,1,181.33,256,74.75,74.75,0,0,1,256,181.33M256,144A112,112,0,1,0,368,256,112,112,0,0,0,256,144Z")])
 
-(defn- team-member [{:keys [img name role linkedin instagram]}]
-  [:div {:class "overflow-hidden bg-white border border-zinc-200/70 rounded-2xl shadow-card"}
+(defn- team-member [{:keys [img name role linkedin instagram class]}]
+  [:div {:class (str "reveal overflow-hidden bg-white border border-zinc-200/70 rounded-2xl shadow-card transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 " class)}
    [:div {:class "px-8 pt-8 pb-2"}
     [:img {:src img
            :alt name
@@ -32,7 +32,7 @@
      [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-6 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full"}
       [:span {:class "w-1.5 h-1.5 bg-emerald-500 rounded-full"}]
       "The people behind greed"]
-     [:h1 {:class "text-4xl font-bold text-zinc-900 leading-tight tracking-tight lg:text-5xl"}
+     [:h1 {:class "text-4xl font-bold text-zinc-900 leading-[1.08] tracking-tight text-balance lg:text-5xl"}
       "Meet our "
       [:span {:class "text-emerald-600"} "team."]]
      [:p {:class "max-w-xl mx-auto mt-4 text-lg text-zinc-500"}
@@ -43,9 +43,11 @@
                     :name "Sithabiso Makhathini"
                     :role "Founder & CEO"
                     :instagram "https://www.instagram.com/stha.edn/"
-                    :linkedin "https://www.linkedin.com/in/makhathinisithabiso/"})
+                    :linkedin "https://www.linkedin.com/in/makhathinisithabiso/"
+                    :class "reveal-1"})
       (team-member {:img "/img/nkululeko-mnyandu.jpg"
                     :name "Nkululeko Mnyandu"
                     :role "Co-founder"
                     :instagram "https://www.instagram.com/nsizwenhle_mpangazitha"
-                    :linkedin "https://www.linkedin.com/in/nkululeko-mnyandu-208654181/"})]]]])
+                    :linkedin "https://www.linkedin.com/in/nkululeko-mnyandu-208654181/"
+                    :class "reveal-2"})]]]])

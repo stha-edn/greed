@@ -4,7 +4,7 @@
    [clojure.string :as string]))
 
 (defn pages [ctx & content]
-  [:header {:class "bg-white border-b border-zinc-200"}
+  [:header {:class "site-header sticky top-0 z-40 border-b border-zinc-200/60"}
    [:div {:class "container px-6 mx-auto"}
     (navs/nav ctx)
     content]])

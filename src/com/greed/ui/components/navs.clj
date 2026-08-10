@@ -4,26 +4,26 @@
 
 (defn nav [{:keys [session]}]
   (let [signed-in? (some? (:uid session))]
-    [:nav {:class "flex items-center justify-between gap-3 py-5"}
-     [:a {:href "/"}
+    [:nav {:class "flex items-center justify-between gap-3 py-4"}
+     [:a {:href "/" :class "active:scale-[0.97] transition-transform"}
       [:span {:class "text-2xl sm:text-3xl font-giza font-bold text-zinc-900"} "greed."]]
      [:div {:class "flex items-center gap-1.5 sm:gap-2"}
       [:a {:href "/about"
-           :class "whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors"}
+           :class "whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
        "About"]
       [:a {:href "/team"
-           :class "whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors"}
+           :class "whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
        "Team"]
       (if signed-in?
         [:a {:href "/app"
-             :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors"}
+             :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors active:scale-[0.97]"}
          "Dashboard"]
         [:<>
          [:a {:href "/signin"
-              :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-zinc-700 border border-zinc-300 rounded-lg hover:border-zinc-500 hover:bg-zinc-50 transition-colors"}
+              :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-zinc-700 border border-zinc-300 rounded-lg hover:border-zinc-500 hover:bg-zinc-50 transition-colors active:scale-[0.97]"}
           "Sign In"]
          [:a {:href "/signup"
-              :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"}
+              :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors active:scale-[0.97]"}
           "Sign Up"]])]]))
 
 (defn- link-active? [uri href]

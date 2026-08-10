@@ -5,8 +5,8 @@
 (defn- emerald-dot []
   [:span {:class "w-1.5 h-1.5 bg-emerald-500 rounded-full"}])
 
-(defn- tool-card [& {:keys [badge title description detail cta-label cta-href]}]
-  [:div {:class "flex flex-col p-8 bg-white border border-zinc-200/70 rounded-2xl shadow-card"}
+(defn- tool-card [& {:keys [badge title description detail cta-label cta-href class]}]
+  [:div {:class (str "reveal flex flex-col p-8 bg-white border border-zinc-200/70 rounded-2xl shadow-card transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 " class)}
    (when badge
      [:span {:class "self-start px-2.5 py-1 mb-5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full"}
       badge])
@@ -25,8 +25,8 @@
     [:svg {:class "w-4 h-4 transition-transform group-hover:translate-x-0.5" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
      [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2" :d "M9 5l7 7-7 7"}]]]])
 
-(defn- feature-item [title description]
-  [:div {:class "p-5 bg-white border border-zinc-200/70 rounded-xl shadow-card"}
+(defn- feature-item [title description class]
+  [:div {:class (str "reveal p-5 bg-white border border-zinc-200/70 rounded-xl shadow-card transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 " class)}
    [:div {:class "flex items-center justify-center w-8 h-8 mb-3 bg-emerald-50 rounded-lg"}
     [:span {:class "w-2 h-2 bg-emerald-500 rounded-full"}]]
    [:h4 {:class "text-sm font-semibold text-zinc-900"} title]
@@ -42,7 +42,7 @@
      [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-6 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full"}
       (emerald-dot)
       "Personal finance, simplified"]
-     [:h1 {:class "text-4xl font-bold text-zinc-900 leading-tight tracking-tight lg:text-5xl"}
+     [:h1 {:class "text-4xl font-bold text-zinc-900 leading-[1.08] tracking-tight text-balance lg:text-5xl"}
       "Take control of your "
       [:span {:class "text-emerald-600"} "finances."]]
      [:p {:class "mt-4 text-lg text-zinc-500 leading-relaxed"}
@@ -70,11 +70,11 @@
 
    ;; Tools section
    [:div {:class "pb-20 lg:pb-28"}
-    [:div {:class "mb-10"}
+    [:div {:class "reveal mb-10"}
      [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-4 text-xs font-semibold text-white bg-zinc-900 rounded-full"}
       (emerald-dot)
       "Free tools"]
-     [:h2 {:class "text-3xl font-bold text-zinc-900 tracking-tight lg:text-4xl"}
+     [:h2 {:class "text-3xl font-bold text-zinc-900 tracking-tight text-balance lg:text-4xl"}
       "Built for South African "
       [:span {:class "text-emerald-600"} "taxpayers."]]
      [:p {:class "max-w-xl mt-3 text-zinc-500"}
@@ -89,7 +89,8 @@
                "Effective vs. marginal rate breakdown"
                "Monthly net income"]
       :cta-label "Calculate your tax"
-      :cta-href (if signed-in? "/app/tax/income-tax-calculator" "/signin"))
+      :cta-href (if signed-in? "/app/tax/income-tax-calculator" "/signin")
+      :class "reveal-1")
      (tool-card
       :badge "2026 Year of Assessment"
       :title "Tax Returns Simulator (ITR12)"
@@ -100,7 +101,8 @@
                "Out-of-pocket medical expenses (s6B)"
                "Auto assessment from your salary"]
       :cta-label "Simulate your return"
-      :cta-href (if signed-in? "/app/tax/tax-returns" "/signin"))
+      :cta-href (if signed-in? "/app/tax/tax-returns" "/signin")
+      :class "reveal-2")
      (tool-card
       :badge "2026/27 Year"
       :title "Bonus Tax Calculator"
@@ -110,25 +112,30 @@
                "Net take-home on your bonus"
                "Effective bonus tax rate"]
       :cta-label "Work out your bonus"
-      :cta-href (if signed-in? "/app/tax/bonus-tax-calculator" "/signin"))]
+      :cta-href (if signed-in? "/app/tax/bonus-tax-calculator" "/signin")
+      :class "reveal-3")]
 
     ;; In-app features
     [:div {:class "mt-20"}
-     [:div {:class "mb-8"}
+     [:div {:class "reveal mb-8"}
       [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-4 text-xs font-semibold text-white bg-zinc-900 rounded-full"}
        (emerald-dot)
        "Inside your account"]
-      [:h2 {:class "text-3xl font-bold text-zinc-900 tracking-tight lg:text-4xl"}
+      [:h2 {:class "text-3xl font-bold text-zinc-900 tracking-tight text-balance lg:text-4xl"}
        "More than a "
        [:span {:class "text-emerald-600"} "calculator."]]
       [:p {:class "max-w-xl mt-3 text-zinc-500"}
        "Create a free account to track your whole financial picture — your salary and medical aid flow in automatically."]]
      [:div {:class "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"}
       (feature-item "Budget Tracker"
-                    "Track income, expenses and savings in one place. Your salary and medical aid sync in automatically.")
+                    "Track income, expenses and savings in one place. Your salary and medical aid sync in automatically."
+                    "reveal-1")
       (feature-item "Savings Goals"
-                    "Set targets like an emergency fund and watch each one fill up with clear progress bars.")
+                    "Set targets like an emergency fund and watch each one fill up with clear progress bars."
+                    "reveal-2")
       (feature-item "Insights"
-                    "See your savings rate, expense rate, and exactly where every rand goes each month.")
+                    "See your savings rate, expense rate, and exactly where every rand goes each month."
+                    "reveal-3")
       (feature-item "Financial Calendar"
-                    "Mark paydays, bills and incoming payments so nothing slips through the cracks.")]]]]))
+                    "Mark paydays, bills and incoming payments so nothing slips through the cracks."
+                    "reveal-4")]]]]))
