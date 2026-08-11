@@ -1,6 +1,5 @@
 (ns com.greed.ui.components.stats
-  (:require [clojure.string :as str]
-            [com.greed.ui.core :as c.ui]
+  (:require [com.greed.ui.core :as c.ui]
             [com.greed.utilities.core :as utilities]
             [com.greed.ui.components.svgs :as svgs]
             [com.greed.ui.components.shared :as shared]
@@ -8,45 +7,93 @@
   (:import [java.time LocalDate YearMonth]
            [java.time.temporal ChronoUnit]))
 
-(defn- panel
-  "Shared soft-gradient panel used across dashboard stats. Extends the
-   base card pattern in shared/card with hover feedback."
-  [{:keys [padding class]} & children]
-  (into [:div
-         {:class (str/join " "
-                           ["bg-gradient-to-br from-white via-white to-emerald-50/80 border border-zinc-200/70 rounded-xl shadow-card transition-all duration-200 hover:border-emerald-200 hover:shadow-card-hover"
-                            (or padding "p-5")
-                            class])}]
-        children))
+(defn- pct-share
+  "Share of `amount` as a percentage of `total`, or nil when `total` isn't
+   positive (nothing to divide against)."
+  [amount total]
+  (when (pos? (double (or total 0)))
+    (double (* 100.0 (/ (double (or amount 0)) (double total))))))
 
-(defn- metric-card [& {:keys [label value icon-bg icon]}]
-  (panel {:class "group"}
-   [:div {:class "flex items-start justify-between"}
-    [:div
-     [:p {:class "text-xs font-medium text-zinc-400 uppercase tracking-wider"} label]
-     [:p {:class "mt-2 text-2xl font-semibold text-zinc-900 tracking-tight tabular-nums"} value]]
-    [:div {:class (str "flex flex-shrink-0 items-center justify-center w-10 h-10 "
-                       icon-bg " rounded-xl transition-transform duration-200 group-hover:scale-110")}
-     icon]]))
+(defn- legend-row [dot-cls label amount share value-cls]
+  [:div {:class "flex items-center gap-3 min-w-0"}
+   [:span {:class (str "flex-shrink-0 w-2 h-2 rounded-full " dot-cls)}]
+   [:p {:class "truncate text-sm font-medium text-zinc-600"} label]
+   [:div {:class "flex-1"}]
+   (when share
+     [:span {:class "flex-shrink-0 text-xs font-medium text-zinc-400 tabular-nums"}
+      (format "%.0f%%" share)])
+   [:p {:class (str "flex-shrink-0 text-sm font-semibold tabular-nums "
+                    (or value-cls "text-zinc-900"))}
+    (utilities/amount->rands (or amount 0))]])
 
-(defn expense-tracker-stats [budget-items]
-  (let [{:keys [total-income total-expenses total-savings]} (c.ui/get-budget-data budget-items)]
-    [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-3"}
-     (metric-card
-      :label "Monthly Income"
-      :value (utilities/amount->rands total-income)
-      :icon-bg "bg-emerald-50"
-      :icon [:span {:class "text-emerald-600"} (svgs/trending-up)])
-     (metric-card
-      :label "Monthly Expenses"
-      :value (utilities/amount->rands total-expenses)
-      :icon-bg "bg-rose-50"
-      :icon [:span {:class "text-rose-600"} (svgs/trending-down)])
-     (metric-card
-      :label "Net Savings"
-      :value (utilities/amount->rands total-savings)
-      :icon-bg "bg-indigo-50"
-      :icon [:span {:class "text-indigo-600"} (svgs/wallet)])]))
+(defn budget-summary
+  "Finances-page hero: the month's plan read at a glance. One headline number
+   — what's left after expenses and savings — with a stacked, proportional bar
+   showing where the income goes (the storage-usage pattern: a budget that
+   reads visually rather than as three competing cards). Overspend flips the
+   headline and its tone instead of hiding the problem."
+  [budget-items]
+  (let [{:keys [total-income total-expenses total-savings]} (c.ui/get-budget-data budget-items)
+        income     (or total-income 0)
+        leftover   (- income (or total-expenses 0) (or total-savings 0))
+        overspend? (neg? leftover)
+        month      (.format (java.time.LocalDate/now)
+                            (java.time.format.DateTimeFormatter/ofPattern "MMMM"))
+        segments   (cond-> [{:cls "bg-rose-400"   :amount (or total-expenses 0)}
+                            {:cls "bg-indigo-400" :amount (or total-savings 0)}]
+                     (not overspend?) (conj {:cls "bg-emerald-400" :amount leftover}))]
+    (if (zero? income)
+      ;; Nothing to plan yet — keep the surface, explain, and point at the one
+      ;; way in (the header's Add item). Same pattern as the dashboard's
+      ;; budget-snapshot empty state.
+      [:div {:class "reveal relative overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200/70 shadow-card-md"}
+       [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"}]
+       [:div {:class "relative flex flex-col items-center px-6 py-12 text-center"}
+        [:div {:class "mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50"}
+         [:span {:class "text-emerald-500"} (svgs/wallet)]]
+        [:p {:class "text-sm font-medium text-zinc-500"} "No budget yet"]
+        [:p {:class "mt-1 text-xs text-zinc-400"} "Add your income, expenses and savings to plan this month."]
+        (shared/btn :variant :primary :size :md :class "mt-5"
+                    :attrs {"_" (shared/open-actions "budget-add-modal")}
+                    (svgs/plus {:class "w-4 h-4"})
+                    "Add your first item")]]
+      [:div {:class "reveal relative overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200/70 shadow-card-md"}
+       [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"}]
+       [:div {:class "absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl"}]
+       [:div {:class "relative grid grid-cols-1 gap-8 p-6 sm:p-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-center"}
+        [:div
+         [:div {:class "flex items-center justify-between gap-3"}
+          [:div {:class "flex items-center gap-2.5"}
+           [:span {:class (str "h-1.5 w-1.5 rounded-full "
+                               (if overspend? "bg-rose-500" "bg-emerald-500"))}]
+           [:p {:class (str "text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] "
+                            (if overspend? "text-rose-600" "text-emerald-600"))}
+            (if overspend? "Over budget by" "Left to plan this month")]]
+          [:span {:class "flex-shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-600"}
+           month]]
+         [:p {:class (str "mt-5 text-4xl font-bold leading-none tracking-[-0.04em] tabular-nums sm:text-5xl "
+                          (if overspend? "text-rose-600" "text-zinc-900"))}
+          (utilities/amount->rands (Math/abs (double leftover)))]
+         [:p {:class "mt-3 text-sm text-zinc-400"}
+          (if overspend?
+            (str "That's " (utilities/amount->rands (Math/abs (double leftover)))
+                 " more going out than coming in this month.")
+            (str "Out of " (utilities/amount->rands income) " monthly income."))]]
+        [:div
+         [:p {:class "text-xs font-semibold text-zinc-400 uppercase tracking-wider"}
+          "Where your income goes"]
+         [:div {:class "mt-4 flex h-2 w-full overflow-hidden rounded-full bg-zinc-100"}
+          (for [{:keys [cls amount]} segments]
+            (when-let [share (pct-share amount income)]
+              (when (>= share 0.5)
+                [:div {:class (str "h-full flex-shrink-0 " cls)
+                       :style {:width (str (format "%.1f" (min 100.0 share)) "%")}}])))]
+         [:div {:class "mt-5 space-y-3"}
+          (legend-row "bg-rose-400" "Expenses" total-expenses (pct-share total-expenses income) "text-zinc-900")
+          (legend-row "bg-indigo-400" "Savings" total-savings (pct-share total-savings income) "text-zinc-900")
+          (if overspend?
+            (legend-row "bg-rose-300" "Overspend" (Math/abs (double leftover)) nil "text-rose-600")
+            (legend-row "bg-emerald-400" "Unallocated" leftover (pct-share leftover income) "text-zinc-900"))]]]])))
 
 (defn section-header
   "Consistent dashboard section title with an optional trailing link.
@@ -78,8 +125,8 @@
 
 (defn budget-snapshot
   "Dashboard budget brief: a single grouped panel with hairline cells for
-   income, expenses, savings and unallocated. The finances page keeps the
-   standalone metric-card grid (expense-tracker-stats)."
+   income, expenses, savings and unallocated. The finances page leads with the
+   larger budget-summary hero instead."
   [budget-items]
   (if (empty? budget-items)
     (tax-panel
