@@ -155,6 +155,18 @@
    (when hint
      [:p {:class "mt-1 text-xs text-zinc-400"} hint])])
 
+(defn- modal-exit-sequence
+  "Shared exit choreography: stage the CSS `.greed-modal-out` state, wait for
+   its 200ms transition, then remove `open` (which flips the element to
+   `invisible`). Without the pause the exit would never be seen — `open` and
+   visibility flip together. Mirrors the pattern success/info alerts use for
+   their `greed-alert-out` dismissals."
+  [id]
+  (str "  add .greed-modal-out to #" id "\n"
+       "  wait 200ms\n"
+       "  remove @open from #" id "\n"
+       "  remove .greed-modal-out from #" id))
+
 (defn open-actions
   "hyperscript for an element that opens `#id` by adding an `open` attribute."
   [id]
@@ -162,10 +174,12 @@
        "  add @open='true' to #" id))
 
 (defn close-actions
-  "hyperscript for an element that closes `#id` by removing its `open` attr."
+  "hyperscript for an element that closes `#id`. Runs the exit sequence rather
+   than cutting straight to hidden, so dismissal reads as the reverse of the
+   entrance — spatial consistency."
   [id]
   (str "on click\n"
-       "  remove @open from #" id))
+       (modal-exit-sequence id)))
 
 (defn modal
   "Alpine-free modal shell. hyperscript toggles an `open` attribute; CSS
@@ -179,10 +193,11 @@
     [:div {:id id
            :role "dialog"
            :aria-modal "true"
-           :_ (str "on keydown[key == 'Escape'] from window\n"
-                   "  remove @open from #" id)
+            :_ (str "on keydown[key == 'Escape'] from window\n"
+                    "  if the @open of #" id " is 'true'\n"
+                    (modal-exit-sequence id))
            :class "greed-modal fixed inset-0 z-50 flex items-center justify-center p-4 invisible pointer-events-none [&[open]]:visible [&[open]]:pointer-events-auto"}
-     [:div {:class "greed-modal-overlay absolute inset-0 bg-black/50" :_ close}]
+     [:div {:class "greed-modal-overlay absolute inset-0 bg-black/50 backdrop-blur-sm" :_ close}]
      (into [:div {:class "greed-modal-card relative z-10"}] body)]))
 
 (defn modal-input [& {:keys [id type label required?]

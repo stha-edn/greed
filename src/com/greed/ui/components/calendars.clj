@@ -1,7 +1,9 @@
 (ns com.greed.ui.components.calendars
   (:require [com.biffweb :as biff]
+            [com.greed.ui.components.shared :as shared]
             [com.greed.ui.components.svgs :as svgs])
-  (:import [java.time LocalDate YearMonth]))
+  (:import [java.time LocalDate YearMonth]
+           [java.time.format DateTimeFormatter]))
 
 (def ^:private month-names
   ["January" "February" "March" "April" "May" "June"
@@ -34,6 +36,11 @@
                  (update m day (fnil conj #{}) type))
                {})))
 
+(defn- format-event-date [date]
+  (try
+    (.format (LocalDate/parse date) (DateTimeFormatter/ofPattern "d MMM"))
+    (catch Exception _ date)))
+
 (defn- event-row [{:event/keys [title date type] :xt/keys [id]}]
   (let [type    (or type :general)
         dot-cls (get type-dot type "bg-violet-400")]
@@ -42,7 +49,7 @@
      [:div {:class "min-w-0 flex-1"}
       [:p {:class "text-sm font-medium text-zinc-800 truncate"} title]
       [:p {:class "text-xs text-zinc-400 mt-0.5"}
-       (str (get type-label type "Event") " · " date)]]
+       (str (get type-label type "Event") " · " (format-event-date date))]]
      (biff/form {:hx-post    "/app/calendar/delete-event"
                  :hx-target  "#calendar-events"
                  :hx-swap    "outerHTML"
@@ -53,21 +60,25 @@
                   :title   "Remove event"
                   :aria-label "Remove event"
                   :data-confirm "Remove this event?"
-                  :class   "flex items-center justify-center w-6 h-6 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 active:text-red-600 active:bg-red-100"}
+                  :class   "flex items-center justify-center w-6 h-6 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-all active:scale-95 active:text-red-600 active:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"}
          (svgs/close {:class "w-4 h-4"})])]))
 
 (defn events-panel [_ctx events]
-  [:div#calendar-events {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card overflow-hidden"}
+  [:div#calendar-events {:class "bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card overflow-hidden"}
    [:div {:class "flex items-center justify-between px-5 py-4 border-b border-zinc-100"}
     [:div
-     [:p {:class "text-xs font-bold uppercase tracking-widest text-zinc-400"} "Events"]
+     [:p {:class "text-xs font-semibold text-zinc-400 uppercase tracking-wider"} "Events"]
      [:p {:class "text-xs text-zinc-400 mt-0.5"}
       (if (seq events) (str (count events) " this month") "Nothing scheduled")]]
-    [:button {:class "text-xs font-medium text-zinc-600 border border-zinc-200 rounded-lg px-3 py-1.5 hover:bg-zinc-50 hover:border-zinc-300 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
+    [:button {:class "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-600 border border-zinc-300 rounded-lg hover:bg-zinc-50 hover:border-zinc-400 transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
               :type "button"
               :_ "on click\n  toggle .hidden on #calendar-add-form\n  toggle .hidden on #cal-add-label\n  toggle .hidden on #cal-close-label"}
-     [:span {:id "cal-add-label"} "＋ Add"]
-     [:span {:id "cal-close-label" :class "hidden"} "✕ Close"]]]
+     [:span {:id "cal-add-label" :class "flex items-center gap-1.5"}
+      (svgs/plus {:class "w-3.5 h-3.5"})
+      "Add"]
+     [:span {:id "cal-close-label" :class "hidden flex items-center gap-1.5"}
+      (svgs/close {:class "w-3.5 h-3.5"})
+      "Close"]]]
    [:div {:id "calendar-add-form" :class "hidden px-5 py-4 border-b border-zinc-100 bg-zinc-50"}
     (biff/form {:hx-post    "/app/calendar/create-event"
                 :hx-target  "#calendar-events"
@@ -78,27 +89,25 @@
                :name        "title"
                :required    true
                :placeholder "Event title"
-               :class       "w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white placeholder:text-zinc-400"}]
+               :class       (shared/base-input-class)}]
       [:div {:class "grid grid-cols-2 gap-2"}
        [:select {:name  "type"
-                 :class "px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white text-zinc-700"}
+                 :class (shared/base-input-class)}
         [:option {:value "general"} "Event"]
         [:option {:value "bill"} "Bill"]
         [:option {:value "income"} "Payment in"]]
        [:input {:type     "date"
                 :name     "date"
                 :required true
-                :class    "px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white text-zinc-700"}]]
-      [:button {:type  "submit"
-                :class "w-full py-2 text-sm font-semibold text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2"}
-       "Save event"])]
+                :class    (shared/base-input-class)}]]
+      (shared/btn :variant :primary :size :md :type "submit" :class "w-full"
+                  "Save event"))]
    (if (seq events)
-     [:div (map event-row events)]
+     [:div {:class "divide-y divide-zinc-100"}
+      (map event-row events)]
      [:div {:class "flex flex-col items-center justify-center py-10 text-center px-5"}
-      [:div {:class "w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center mb-3"}
-       [:svg {:class "w-5 h-5 text-zinc-300" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
-        [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "1.5"
-                :d "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"}]]]
+      [:div {:class "w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center mb-3"}
+       [:span {:class "text-zinc-400"} (svgs/calendar)]]
       [:p {:class "text-sm font-semibold text-zinc-500"} "No events this month"]
       [:p {:class "mt-1 text-xs text-zinc-400"} "Add bills, income drops, and deadlines"]])])
 
@@ -111,38 +120,51 @@
         blank-count (first-day-of-week year month)
         event-days  (event-day-types events year month)
         [pm py]     (prev-month month year)
-        [nm ny]     (next-month month year)]
-    [:div#calendar-grid
+        [nm ny]     (next-month month year)
+        current?    (and (= month today-month) (= year today-year))]
+    [:div#calendar-grid {:aria-label (str (nth month-names (dec month)) " " year)}
      [:input {:type "hidden" :id "cal-month" :name "cal-month" :value (str month)}]
      [:input {:type "hidden" :id "cal-year"  :name "cal-year"  :value (str year)}]
-     [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card overflow-hidden"}
+     [:div {:class "bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card overflow-hidden"}
       ;; ── Header ──────────────────────────────────────────────────────────────
-      [:div {:class "flex items-center justify-between px-5 pt-5 pb-4 border-b border-zinc-100"}
-       [:div {:class "flex items-baseline gap-2"}
-        [:span {:class "text-2xl sm:text-3xl font-giza font-bold text-zinc-900"}
+      [:div {:class "flex items-center justify-between px-5 pt-5 pb-4 border-b border-zinc-100 gap-3"}
+       [:div {:class "flex items-baseline gap-2 min-w-0"}
+        [:span {:class "text-2xl sm:text-3xl font-bold text-zinc-900 tracking-tight truncate"}
          (nth month-names (dec month))]
-        [:span {:class "text-lg sm:text-xl font-giza text-zinc-400"} (str year)]]
+        [:span {:class "text-lg sm:text-xl font-medium text-zinc-400"} (str year)]]
        [:div {:class "flex items-center gap-3"}
         ;; Legend (hidden on mobile)
         [:div {:class "hidden sm:flex items-center gap-4 mr-1"}
          (for [[dot-color label] [["bg-emerald-400" "Payday"]
-                                   ["bg-rose-400"    "Bill"]
-                                   ["bg-violet-400"  "Event"]]]
+                                  ["bg-rose-400"    "Bill"]
+                                  ["bg-violet-400"  "Event"]]]
            [:div {:class "flex items-center gap-1.5"}
             [:div {:class (str "w-2 h-2 rounded-full " dot-color)}]
             [:span {:class "text-[10px] font-semibold uppercase tracking-wider text-zinc-400"} label]])]
+        ;; Jump back to the current month when browsing another one
+        (when-not current?
+          [:button {:type     "button"
+                    :hx-get   (str "/app/calendar/grid?month=" today-month "&year=" today-year)
+                    :hx-target "#calendar-grid"
+                    :hx-swap  "outerHTML"
+                    :class    "px-2.5 h-7 text-xs font-medium text-emerald-600 border border-emerald-200 rounded-lg hover:bg-emerald-50 transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"}
+           "Today"])
         ;; Navigation
         [:div {:class "flex items-center gap-1"}
-         [:button {:class     "w-7 h-7 flex items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
-                   :hx-get    (str "/app/calendar/grid?month=" pm "&year=" py)
+         [:button {:type     "button"
+                   :aria-label "Previous month"
+                   :class    "w-8 h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
+                   :hx-get   (str "/app/calendar/grid?month=" pm "&year=" py)
                    :hx-target "#calendar-grid"
-                   :hx-swap   "outerHTML"}
+                   :hx-swap  "outerHTML"}
           [:svg {:class "w-3.5 h-3.5" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
            [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2.5" :d "M15 19l-7-7 7-7"}]]]
-         [:button {:class     "w-7 h-7 flex items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
-                   :hx-get    (str "/app/calendar/grid?month=" nm "&year=" ny)
+         [:button {:type     "button"
+                   :aria-label "Next month"
+                   :class    "w-8 h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
+                   :hx-get   (str "/app/calendar/grid?month=" nm "&year=" ny)
                    :hx-target "#calendar-grid"
-                   :hx-swap   "outerHTML"}
+                   :hx-swap  "outerHTML"}
           [:svg {:class "w-3.5 h-3.5" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
            [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2.5" :d "M9 5l7 7-7 7"}]]]]]]
       ;; ── Day-of-week headers ─────────────────────────────────────────────────
@@ -170,7 +192,15 @@
             [:div {:class (str "w-7 h-7 flex items-center justify-center rounded-full "
                                "text-sm font-medium transition-colors " num-cls)}
              d]
-            (when (seq dots)
-              [:div {:class "flex items-center gap-0.5 mt-1"}
-               (for [dot dots]
-                 [:div {:class (str "w-1.5 h-1.5 rounded-full " dot)}])])]))]]]))
+              (when (seq dots)
+                [:div {:class "flex items-center gap-0.5 mt-1"}
+                 (for [dot dots]
+                   [:div {:class (str "w-1.5 h-1.5 rounded-full " dot)}])])
+              ]
+             )
+            )
+           ]
+          ]
+         ]
+         )
+         )

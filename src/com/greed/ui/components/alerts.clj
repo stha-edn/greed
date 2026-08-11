@@ -18,8 +18,8 @@
          :aria-labelledby "confirm-dialog-title"
          :aria-describedby "confirm-dialog-message"
          :class "fixed inset-0 z-50 flex items-center justify-center p-4"}
-   [:div {:data-cf-overlay "true"
-          :class "absolute inset-0 bg-black/50 confirm-overlay"}]
+    [:div {:data-cf-overlay "true"
+           :class "absolute inset-0 bg-black/50 backdrop-blur-sm confirm-overlay"}]
    [:div {:data-cf-card "true"
           :class "relative z-10 w-full max-w-sm rounded-2xl bg-white p-6 shadow-card-md confirm-card"}
     [:h3 {:data-cf-title "true" :class "text-base font-semibold text-zinc-900"}

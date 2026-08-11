@@ -17,7 +17,7 @@
         [month year] (current-month-year)]
     (ui/app
      ctx
-     [:div {:class "space-y-4"}
+     [:div {:class "space-y-7"}
       (headers/pages-heading ["Calendar"])
       [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-start"}
        [:div {:class "lg:col-span-2"} (calendars/calendar year month payday events)]

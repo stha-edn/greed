@@ -4,7 +4,7 @@
    [clojure.string :as string]))
 
 (defn pages [ctx & content]
-  [:header {:class "site-header sticky top-0 z-40 border-b border-zinc-200/60"}
+  [:header {:class "site-header sticky top-0 z-40 shadow-sm shadow-zinc-900/5"}
    [:div {:class "container px-6 mx-auto"}
     (navs/nav ctx)
     content]])
@@ -31,7 +31,7 @@
 (defn home-heading [& {:keys [user date]}]
   [:div {:class "flex items-end justify-between gap-4"}
    [:div
-    [:p {:class "text-sm font-medium text-emerald-600 mb-1 tracking-tight"}
+    [:p {:class "text-sm font-medium text-emerald-600 mb-1"}
      (str (greeting) ", " (string/capitalize (:user/firstname user)))]]
    (when date
      [:p {:class "hidden sm:block text-sm font-medium text-zinc-400 tabular-nums whitespace-nowrap"} date])])

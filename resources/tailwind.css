@@ -5,6 +5,11 @@
 @layer base {
   html {
     @apply antialiased;
+    /* Type-scale fidelity: Inter is drawn with size-aware optical
+       glyphs; hand the browser the cue to use them at any size
+       instead of leaving small text at display-drawn shapes. */
+    font-optical-sizing: auto;
+    text-rendering: optimizeLegibility;
   }
   body {
     @apply text-zinc-600 bg-zinc-50;
@@ -136,6 +141,19 @@
 .greed-modal[open] .greed-modal-card { opacity: 1; }
 .greed-modal[open] .greed-modal-card { transform: scale(1); }
 
+/* Exit mirror. shared/close-actions and the modal's Escape handler add
+   `.greed-modal-out`, wait the 200ms transition, then remove `open` (which
+   flips the element back to `invisible`). Specificity ties with the `[open]`
+   rules above, so source order — later — decides. */
+.greed-modal.greed-modal-out .greed-modal-overlay,
+.greed-modal.greed-modal-out .greed-modal-card { opacity: 0; }
+.greed-modal.greed-modal-out .greed-modal-card { transform: scale(0.95); }
+
 @media (prefers-reduced-motion: reduce) {
   .greed-modal-card { transition: opacity 200ms ease-out; transform: none !important; }
+  /* Same treatment for the JS-driven confirm dialog and the mobile drawer:
+     drop the scale/slide (vestibular-triggering transforms), keep the calm
+     opacity fades. The drawer is still hidden by `invisible` when closed. */
+  #confirm-dialog .confirm-card { transition: opacity 180ms ease-out; transform: none !important; }
+  #mobile-drawer { transform: none !important; }
 }
