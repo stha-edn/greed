@@ -68,7 +68,7 @@
        [:div {:class "lg:col-span-1"}
         [:div {:class "mb-3 lg:hidden"}
          (stats/section-header "Wallet")]
-        [:div {:class "flex justify-center lg:h-full lg:justify-end"}
+        [:div {:class "flex items-center justify-center lg:h-full lg:justify-end"}
          (cards/bank-card
           :finances finances
           :budget-items budget-items

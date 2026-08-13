@@ -39,12 +39,14 @@
                        (+ net-monthly-income (max 0 other-income))
                        (or total-income 0))
         balance      (- income total-expenses)]
-    [:div {:class "relative flex h-48 w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50/60 via-white to-white p-6 ring-1 ring-emerald-500/15 shadow-card-md lg:h-full lg:from-zinc-800 lg:via-zinc-900 lg:to-black lg:ring-white/10"}
+    [:div {:class "relative flex w-full max-w-sm aspect-[1.586/1] flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50/60 via-white to-white p-6 ring-1 ring-emerald-500/15 shadow-card-md lg:from-zinc-800 lg:via-zinc-900 lg:to-black lg:shadow-card-hover lg:ring-white/10"}
      [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"}]
+     [:div {:class "hidden absolute inset-x-6 top-px h-px bg-gradient-to-r from-transparent via-white/25 to-transparent lg:block"}]
      [:div {:class "absolute -top-24 -right-20 h-64 w-64 rounded-full bg-emerald-400/10 blur-3xl lg:bg-emerald-500/20"}]
+     [:div {:class "hidden absolute -top-16 -left-16 h-56 w-56 rounded-full bg-white/[0.06] blur-3xl lg:block"}]
      [:div {:class "relative"}
       [:div {:class "flex items-start justify-between"}
-       [:span {:class "text-zinc-400 lg:text-zinc-300"} (svgs/card-chip)]
+       [:span {:class "text-zinc-400 lg:rounded-[5px] lg:bg-gradient-to-br lg:from-emerald-300/25 lg:via-emerald-500/15 lg:to-emerald-800/20 lg:p-1 lg:text-emerald-200/90 lg:ring-1 lg:ring-white/10"} (svgs/card-chip)]
        [:span {:class "text-zinc-400 lg:text-zinc-300"} (svgs/contactless)]]
       [:div {:class "mt-4"}
        (if bank
