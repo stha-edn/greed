@@ -121,6 +121,24 @@
      (when hint
        [:p {:class "mt-1 text-xs text-zinc-400"} hint])]))
 
+(defn labeled-input
+  "Label + input + optional hint, with an explicit :value — unlike app-input,
+   which derives its value from ctx. Pass :prefix (e.g. \"R\") for a
+   currency-style field, styled identically to app-input's :prefix variant."
+  [& {:keys [id label type value hint prefix required? min]
+      :or {required? false type "text"}}]
+  [:div
+   (form-label id label)
+   (if prefix
+     [:div {:class "relative flex items-center"}
+      [:div {:class "absolute left-3 pointer-events-none select-none text-sm font-medium text-zinc-400"} prefix]
+      [:input {:class "block w-full pl-7 pr-3 py-2 text-sm text-zinc-700 placeholder-zinc-400 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+               :id id :name id :type type :value value :required required? :min min}]]
+     [:input {:class (base-input-class)
+              :id id :name id :type type :value value :required required? :min min}])
+   (when hint
+     [:p {:class "mt-1 text-xs text-zinc-400"} hint])])
+
 (defn app-select [ctx & {:keys [id label options required? hint attrs]
                          :or {required? false}}]
   (let [{:keys [session]} ctx

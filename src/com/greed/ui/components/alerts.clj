@@ -52,7 +52,7 @@
     {:class "flex items-center justify-center w-12 bg-emerald-600 text-white"}
     (svgs/success)]
    [:div
-    {:class "flex flex-1 items-start justify-between gap-2 px-4 py-3"}
+    {:class "flex flex-1 items-center justify-between gap-2 px-4 py-3"}
     [:div
      {:class "mx-3"}
      [:p {:class "font-semibold text-lg text-zinc-900"} "Success"]

@@ -644,8 +644,8 @@
 (defn- hero-stats-row
   "Three supporting figures under the headline, split by a hairline rule."
   [& substats]
-  [:div {:class "grid grid-cols-3 gap-4 pt-5 mt-6 border-t border-zinc-100"}
-   substats])
+  (into [:div {:class "grid grid-cols-3 gap-4 pt-5 mt-6 border-t border-zinc-100"}]
+        substats))
 
 (defn- hero-substat
   "One supporting figure: tiny uppercase label over a medium value."

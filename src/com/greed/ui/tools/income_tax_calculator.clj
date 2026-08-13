@@ -36,7 +36,7 @@
     (tools/panel-heading "How this tool works")
     [:div {:class "px-5 pb-5 sm:px-6"}
      [:p {:class "text-sm text-zinc-500 leading-relaxed"}
-      "Enter your gross monthly salary and pick your rebate tier. The calculator applies the SARS 2026/27 tax brackets and rebates and updates your take-home pay live as you type."]
+      "Enter your gross monthly salary, pick your rebate tier, then click Calculate. The calculator applies the SARS 2026/27 tax brackets and rebates to show your take-home pay."]
      [:p {:class "mt-2 text-sm text-zinc-500 leading-relaxed"}
       "Use this to quickly understand how much of your salary you actually keep, or to compare offers at different salary levels."]])
 
@@ -68,7 +68,8 @@
    [:p {:class "text-xs text-zinc-400 mb-2"} "Age 65+ and 75+ earn extra annual rebates."]
    [:div {:class "grid grid-cols-3 gap-1 rounded-xl bg-zinc-100 p-1"}
     (for [[value label] tiers]
-      [:label {:class (str "cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors "
+      [:label {:class (str "cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] "
+                           "focus-within:ring-2 focus-within:ring-emerald-500/50 focus-within:ring-offset-1 "
                            (if (= selected value)
                              "bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-900/5"
                              "text-zinc-500 hover:text-zinc-700"))}
@@ -87,12 +88,11 @@
        {:hx-post     "/app/tax/income-tax-calculator"
         :hx-target   "#tax-result"
         :hx-swap     "outerHTML"
-        :hx-trigger  "input changed delay:300ms, change, submit"}
+        :hx-trigger  "submit"}
        [:div {:class "space-y-5"}
         (salary-field (:income params))
         (tier-field selected)]
-       [:div {:class "mt-6 flex items-center justify-between"}
-        [:span {:class "text-xs text-zinc-400"} "Results update as you type"]
+       [:div {:class "mt-6 flex items-center justify-end"}
         (shared/btn :variant :primary :size :md :class "px-8" :type "submit" "Calculate")])])))
 
 (defn- income-split [take-share tax-share net-income net-tax]
@@ -152,7 +152,7 @@
          [:div {:class "mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50"}
           [:span {:class "text-emerald-500"} (svgs/percent-badge)]]
          [:p {:class "text-sm font-medium text-zinc-500"} "Enter your salary to see your take-home pay"]
-         [:p {:class "mt-1 max-w-xs text-xs text-zinc-400"} "Your results update as you type — no Calculate button needed."]])]
+         [:p {:class "mt-1 max-w-xs text-xs text-zinc-400"} "Enter your salary and click Calculate to see your take-home pay."]])]
       [:div#tax-result {:class "space-y-4"}
        (tools/result-hero
         :eyebrow "Your take-home pay"

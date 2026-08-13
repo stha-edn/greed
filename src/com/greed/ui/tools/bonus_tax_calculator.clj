@@ -38,7 +38,7 @@
      [:p {:class "text-sm text-zinc-500 leading-relaxed"}
       "A bonus (or 13th cheque) is taxed at your marginal rate — the rate on your top slice of income. This calculator works out the tax by comparing your annual tax with and without the bonus; the difference is the PAYE withheld from the bonus."]
      [:p {:class "mt-2 text-sm text-zinc-500 leading-relaxed"}
-      "Enter your bonus amount, your regular monthly salary and your rebate tier. The result shows the tax on the bonus and what you'll actually take home — updating live as you type."]])
+      "Enter your bonus amount, your regular monthly salary and your rebate tier, then click Calculate. The result shows the tax on the bonus and what you'll actually take home."]])
 
    (tools/panel
     (tools/panel-heading "Understanding your results")
@@ -71,7 +71,8 @@
    [:p {:class "text-xs text-zinc-400 mb-2"} "Age 65+ and 75+ earn extra annual rebates."]
    [:div {:class "grid grid-cols-3 gap-1 rounded-xl bg-zinc-100 p-1"}
     (for [[value label] tiers]
-      [:label {:class (str "cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors "
+      [:label {:class (str "cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] "
+                           "focus-within:ring-2 focus-within:ring-emerald-500/50 focus-within:ring-offset-1 "
                            (if (= selected value)
                              "bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-900/5"
                              "text-zinc-500 hover:text-zinc-700"))}
@@ -90,7 +91,7 @@
        {:hx-post     "/app/tax/bonus-tax-calculator"
         :hx-target   "#bonus-result"
         :hx-swap     "outerHTML"
-        :hx-trigger  "input changed delay:300ms, change, submit"}
+        :hx-trigger  "submit"}
        [:div {:class "space-y-5"}
         (amount-field {:id "bonus" :label "Bonus amount" :lg? true
                        :hint "The once-off bonus or 13th cheque"
@@ -99,8 +100,7 @@
                        :hint "Your regular salary before the bonus — sets your marginal rate"
                        :value (:income params)})
         (tier-field selected)]
-       [:div {:class "mt-6 flex items-center justify-between"}
-        [:span {:class "text-xs text-zinc-400"} "Results update as you type"]
+       [:div {:class "mt-6 flex items-center justify-end"}
         (shared/btn :variant :primary :size :md :class "px-8" :type "submit" "Calculate")])])))
 
 (defn- bonus-split [take-share tax-share net-bonus bonus-tax]
@@ -160,7 +160,7 @@
          [:div {:class "mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50"}
           [:span {:class "text-emerald-500"} (svgs/gift)]]
          [:p {:class "text-sm font-medium text-zinc-500"} "Enter a bonus amount to see what you'll take home"]
-         [:p {:class "mt-1 max-w-xs text-xs text-zinc-400"} "Your net bonus updates live as you type — no Calculate button needed."]])]
+         [:p {:class "mt-1 max-w-xs text-xs text-zinc-400"} "Enter a bonus amount and click Calculate to see your net bonus."]])]
       [:div#bonus-result {:class "space-y-4"}
        (tools/result-hero
         :eyebrow "Net bonus"

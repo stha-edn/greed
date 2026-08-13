@@ -42,7 +42,7 @@
               ["" {:get tools/page}]
               ["/income-tax-calculator" {:get income-tax-calculator/page-get :post income-tax-calculator/page}]
               ["/bonus-tax-calculator" {:get bonus-tax-calculator/page-get :post bonus-tax-calculator/page}]
-              ["/tax-returns" {:get tax-returns/page :post tax-returns/result-page}]]
+              ["/tax-returns" {:get tax-returns/page-get :post tax-returns/page}]]
              ;; Legacy redirects — Tools was renamed to Tax.
              ["/tools" {:get (redirect-to "/app/tax")}]
              ["/tools/income-tax-calculator" {:get (redirect-to "/app/tax/income-tax-calculator")}]

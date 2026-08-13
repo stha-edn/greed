@@ -51,8 +51,8 @@
        [:span {:class "text-sm font-medium text-zinc-400"} suffix]]
       [:p {:class "mt-3 text-sm text-zinc-500"} status]
       (when body body)
-      [:div {:class "grid grid-cols-3 gap-4 pt-5 mt-6 border-t border-zinc-100"}
-       substats]]]))
+      (into [:div {:class "grid grid-cols-3 gap-4 pt-5 mt-6 border-t border-zinc-100"}]
+            substats)]]))
 
 (defn hero-substat
   "One supporting figure: tiny uppercase label over a medium value."
@@ -77,6 +77,14 @@
    [:p {:class "px-5 pt-4 pb-1 text-[11px] font-medium text-zinc-500 uppercase tracking-wider sm:px-6"} label]
    [:div {:class "divide-y divide-zinc-100"} rows]])
 
+(defn form-section
+  "Groups related form fields under a small uppercase label, so a long form
+   reads as related clusters instead of one undifferentiated grid."
+  [label & fields]
+  [:div {:class "border-t border-zinc-100 pt-5 mt-5 first:mt-0 first:border-t-0 first:pt-0"}
+   [:p {:class "mb-3 text-[11px] font-medium text-zinc-500 uppercase tracking-wider"} label]
+   (into [:div {:class "grid grid-cols-1 gap-5 sm:grid-cols-2"}] fields)])
+
 (defn glossary-item [term & description]
   [:div {:class "px-5 py-3 sm:px-6"}
    [:p {:class "text-sm font-medium text-zinc-900"} term]
@@ -90,12 +98,6 @@
 
 (defn panel-footer [& body]
   [:div {:class "flex justify-end border-t border-zinc-100 px-5 py-3 sm:px-6"} body])
-
-(defn back-link [href label]
-  [:a {:href href
-       :class "group inline-flex items-center gap-1 text-sm font-medium text-emerald-600 transition hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/70 focus-visible:ring-offset-2 active:scale-[0.97] active:text-emerald-800"}
-   [:span {:class "transition-transform group-hover:-translate-x-0.5"} "←"]
-   label])
 
 (defn- tool-card [& {:keys [title description link badge icon]}]
   [:a {:href link

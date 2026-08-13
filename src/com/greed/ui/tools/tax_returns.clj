@@ -151,57 +151,52 @@
          [:a {:href "/app/settings" :class "font-medium text-emerald-600 hover:underline"} "Settings"]
          " to enable auto assessment."]]))))
 
-(defn- field [id label type & [hint required?]]
+(defn- field [id label type & [hint required? value]]
   [:div
    [:label {:for id :class "block text-sm font-medium text-zinc-700 mb-1"} label]
    (when hint [:p {:class "text-xs text-zinc-400 mb-1"} hint])
    [:input {:id id :name id :type type :min "0" :step "any"
             :class (shared/base-input-class)
             :required (boolean required?)
-            :placeholder "0"}]])
+            :placeholder "0"
+            :value (or value "")}]])
 
-(defn- logbook-select []
+(defn- logbook-select [selected]
   [:div
    [:label {:for "logbook" :class "block text-sm font-medium text-zinc-700 mb-1"} "Travel logbook kept?"]
    [:select {:id "logbook" :name "logbook"
              :class (shared/base-input-class)}
-    [:option {:value "no"} "No (80% taxable)"]
-    [:option {:value "yes"} "Yes (20% taxable)"]]])
+    [:option {:value "no" :selected (= selected "no")} "No (80% taxable)"]
+    [:option {:value "yes" :selected (= selected "yes")} "Yes (20% taxable)"]]])
 
-(defn- form-card []
+(defn- form-card [params]
   (tools/panel
    (tools/panel-heading "ITR12 Tax Return Simulator")
    [:div {:class "px-5 pb-6 sm:px-6"}
     [:p {:class "text-sm text-zinc-500 mb-5"}
-     "Estimate your SARS tax refund or amount owed for the 2026 year of assessment."]
+     "Enter figures from your IRP5, then click Simulate Return to estimate your SARS refund or amount owed."]
     (biff/form
-     {:action "/app/tax/tax-returns"}
-     [:div {:class "grid grid-cols-1 gap-5 sm:grid-cols-2"}
-      (field "annual-income" "Gross Annual Income (R)" "number" "Exclude travel allowance" true)
-      (field "age" "Age" "number" nil true)
-      (field "paye-paid" "Total PAYE Paid to SARS (R)" "number" "Source code 4102 on your IRP5" true)
-      (field "medical-contributions" "Medical Aid Contributions p/m (R)" "number")
-      (field "dependants" "Medical Aid Dependants" "number" "Excluding yourself")
-      (field "ra-annual" "Retirement Annuity Contributions p/a (R)" "number" "Max deduction: 27.5% of income or R350,000")
-      (field "travel-allowance" "Travel Allowance p/a (R)" "number" "Source code 3701")
-      (logbook-select)
-      (field "out-of-pocket-medical" "Out-of-pocket Medical Expenses p/a (R)" "number" "Not covered by medical aid")]
+     {:hx-post    "/app/tax/tax-returns"
+      :hx-target  "#tax-result"
+      :hx-swap    "outerHTML"
+      :hx-trigger "submit"}
+     (tools/form-section "Income & PAYE"
+       (field "annual-income" "Gross Annual Income (R)" "number" "Exclude travel allowance" true (:annual-income params))
+       (field "age" "Age" "number" nil true (:age params))
+       (field "paye-paid" "Total PAYE Paid to SARS (R)" "number" "Source code 4102 on your IRP5" true (:paye-paid params)))
+     (tools/form-section "Medical Aid"
+       (field "medical-contributions" "Medical Aid Contributions p/m (R)" "number" nil false (:medical-contributions params))
+       (field "dependants" "Medical Aid Dependants" "number" "Excluding yourself" false (:dependants params))
+       (field "out-of-pocket-medical" "Out-of-pocket Medical Expenses p/a (R)" "number" "Not covered by medical aid" false (:out-of-pocket-medical params)))
+     (tools/form-section "Retirement & Travel"
+       (field "ra-annual" "Retirement Annuity Contributions p/a (R)" "number" "Max deduction: 27.5% of income or R350,000" false (:ra-annual params))
+       (field "travel-allowance" "Travel Allowance p/a (R)" "number" "Source code 3701" false (:travel-allowance params))
+       (logbook-select (:logbook params)))
      [:div {:class "mt-6 flex justify-end"}
       (shared/btn :variant :primary :size :md :class "px-8" :type "submit"
                   "Simulate Return")])]))
 
-(defn page [ctx]
-  (ui/app
-   ctx
-   [:div {:class "space-y-7"}
-    (headers/pages-heading ["Tax" "Tax Returns"]
-                           "Estimate your SARS tax refund or amount owed for the 2026 year of assessment.")
-    (auto-assessment-card ctx)
-    [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start"}
-     (form-card)
-     (guide)]]))
-
-(defn result-page [{:keys [params] :as ctx}]
+(defn- result-region [params]
   (let [->n             #(try (double (BigDecimal. (or % "0")))
                             (catch Exception _ 0.0))
         annual-income   (->n (:annual-income params))
@@ -224,27 +219,29 @@
         final-tax       (max 0 (- net-tax mtc add-med-credit))
         refund?         (>= paye-paid final-tax)
         difference      (Math/abs (double (- paye-paid final-tax)))]
-
-    (ui/app
-     ctx
-     [:div {:class "space-y-7"}
-      (headers/pages-heading ["Tax" "Tax Returns"]
-                             "Estimate your SARS tax refund or amount owed for the 2026 year of assessment.")
-      (tools/result-hero
-       :eyebrow "Your 2026 tax return"
-       :badge "2026 year"
-       :headline (tools/whole->rands difference)
-       :suffix (if refund? "refund" "owed to SARS")
-       :tone (if refund? "text-emerald-600" "text-rose-600")
-       :status (if refund?
-                 (str "You paid " (utilities/amount->rands paye-paid) " in PAYE against "
-                      (utilities/amount->rands final-tax) " of tax — SARS owes you this back.")
-                 (str "You paid " (utilities/amount->rands paye-paid) " in PAYE against "
-                      (utilities/amount->rands final-tax) " of tax — you still owe this to SARS."))
-       :substats [(tools/hero-substat "Gross income" (utilities/amount->rands total-income))
-                  (tools/hero-substat "Net tax payable" (utilities/amount->rands final-tax))
-                  (tools/hero-substat "PAYE paid" (utilities/amount->rands paye-paid))])
-      [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start"}
+    (if (not (pos? annual-income))
+      [:div#tax-result
+       (tools/panel
+        [:div {:class "flex flex-col items-center justify-center px-6 py-16 text-center"}
+         [:div {:class "mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50"}
+          [:span {:class "text-emerald-500"} (svgs/wallet)]]
+         [:p {:class "text-sm font-medium text-zinc-500"} "Enter your IRP5 details to estimate your return"]
+         [:p {:class "mt-1 max-w-xs text-xs text-zinc-400"} "Fill in the form and click Simulate Return to see your refund or amount owed."]])]
+      [:div#tax-result {:class "space-y-4"}
+       (tools/result-hero
+        :eyebrow "Your 2026 tax return"
+        :badge "2026 year"
+        :headline (tools/whole->rands difference)
+        :suffix (if refund? "refund" "owed to SARS")
+        :tone (if refund? "text-emerald-600" "text-rose-600")
+        :status (if refund?
+                  (str "You paid " (utilities/amount->rands paye-paid) " in PAYE against "
+                       (utilities/amount->rands final-tax) " of tax — SARS owes you this back.")
+                  (str "You paid " (utilities/amount->rands paye-paid) " in PAYE against "
+                       (utilities/amount->rands final-tax) " of tax — you still owe this to SARS."))
+        :substats [(tools/hero-substat "Gross income" (utilities/amount->rands total-income))
+                   (tools/hero-substat "Net tax payable" (utilities/amount->rands final-tax))
+                   (tools/hero-substat "PAYE paid" (utilities/amount->rands paye-paid))])
        (tools/panel
         (tools/panel-heading "2026 Tax Summary")
         (tools/breakdown-section "Income"
@@ -273,7 +270,24 @@
           (utilities/amount->rands difference)]]
         [:div {:class "px-5 py-4 sm:px-6"}
          [:p {:class "text-xs text-zinc-400"}
-          "This is an estimate only. Consult a tax practitioner for advice."]
-         [:div {:class "mt-4"}
-          (tools/back-link "/app/tax/tax-returns" "Run another simulation")]])
-       (guide)]])))
+          "This is an estimate only. Consult a tax practitioner for advice."]])])))
+
+(defn- page-template [ctx params]
+  (ui/app
+   ctx
+   [:div {:class "space-y-7"}
+    (headers/pages-heading ["Tax" "Tax Returns"]
+                           "Estimate your SARS tax refund or amount owed for the 2026 year of assessment.")
+    (auto-assessment-card ctx)
+    [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start"}
+     (form-card params)
+     (result-region params)]
+    (guide)]))
+
+(defn page-get [ctx]
+  (page-template ctx {}))
+
+(defn page [{:keys [params] :as ctx}]
+  (if (get-in ctx [:headers "hx-request"])
+    (result-region params)
+    (page-template ctx params)))
