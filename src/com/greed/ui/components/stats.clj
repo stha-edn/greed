@@ -656,24 +656,47 @@
                     (or value-cls "text-zinc-900"))} value]])
 
 (defn dashboard-hero
-  "Dashboard feature card leading with monthly net take-home."
-  [finances income-tax-data]
-  (let [{:finances/keys [salary payday]} finances
-        {:keys [net-tax net-income effective-rate]} income-tax-data
-        monthly-net (when net-income (/ net-income 12))
-        monthly-tax (when net-tax (/ net-tax 12))]
-    (hero-panel
-     {:class "h-full" :inner-class "flex flex-col h-full"}
-     (hero-eyebrow "Net take-home"
-                   :badge (when payday
-                            [:span {:class "flex-shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-600/15"}
-                             (str "Payday · " (utilities/ordinal payday))]))
-     (hero-headline (if monthly-net (utilities/amount->rands monthly-net) "—") "p/m")
-     [:div {:class "flex-1"}]
-     (hero-stats-row
-      (hero-substat "Gross salary"   (utilities/amount->rands (or salary 0)))
-      (hero-substat "Est. tax / mo"  (if monthly-tax (utilities/amount->rands monthly-tax) "—"))
-      (hero-substat "Effective rate" (utilities/->percentage (or effective-rate 0)))))))
+  "Dashboard feature card leading with the person's month, not their tax
+   bracket — what's left to plan, framed by savings rate, goals progress and
+   payday. The tax breakdown has its own section further down the page."
+  [budget-items payday goals]
+  (let [{:keys [total-income total-expenses total-savings]} (c.ui/get-budget-data budget-items)
+        income        (or total-income 0)
+        leftover      (- income (or total-expenses 0) (or total-savings 0))
+        overspend?    (neg? leftover)
+        savings-rate  (pct-share total-savings income)
+        goals-saved   (reduce + (map #(or (:goal/saved %) 0) goals))
+        goals-target  (reduce + (map #(or (:goal/target %) 0) goals))
+        goals-pct     (goal-pct goals-saved goals-target)
+        today         (LocalDate/now)
+        pd            (next-payday today payday)
+        pd-until      (when pd (days-until today pd))]
+    (if (zero? income)
+      (hero-panel
+       {:class "h-full" :inner-class "flex flex-col items-center justify-center h-full px-6 py-12 text-center"}
+       [:div {:class "mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50"}
+        [:span {:class "text-emerald-500"} (svgs/wallet)]]
+       [:p {:class "text-sm font-medium text-zinc-500"} "No income yet"]
+       [:p {:class "mt-1 text-xs text-zinc-400"} "Add your income in Finances to see your month at a glance."]
+       (shared/btn :variant :primary :size :md :class "mt-5" :href "/app/finances" "Add your income"))
+      (hero-panel
+       {:class "h-full" :inner-class "flex flex-col h-full"}
+       (hero-eyebrow "Your month"
+                     :badge (when pd
+                              [:span {:class "flex-shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-600/15"}
+                               (str "Payday · " (format-date pd))]))
+       (hero-headline (whole->rands (Math/abs (double leftover))) (if overspend? "over budget" "left to plan"))
+       (hero-status (if overspend?
+                      "Spending is ahead of income this month — worth a look."
+                      "On track — spending is under income so far.")
+                    :tone (when overspend? "text-rose-600"))
+       [:div {:class "flex-1"}]
+       (hero-stats-row
+        (hero-substat "Savings rate" (pct-label savings-rate))
+        (hero-substat "Goals funded" (if (pos? goals-target) (str goals-pct "%") "—"))
+        (hero-substat "Payday" (cond (nil? pd) "—"
+                                     (zero? pd-until) "Today"
+                                     :else (str "in " pd-until "d"))))))))
 
 (defn goals-hero
   "Goals feature card leading with how much of the overall goal total is funded."

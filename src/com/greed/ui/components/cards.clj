@@ -39,27 +39,29 @@
                        (+ net-monthly-income (max 0 other-income))
                        (or total-income 0))
         balance      (- income total-expenses)]
-    [:div {:class "relative flex h-48 w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-800 via-zinc-900 to-black p-6 text-white shadow-card-md ring-1 ring-white/10 lg:h-full"}
-     [:div {:class "absolute -top-24 -right-20 h-64 w-64 rounded-full bg-emerald-500/20 blur-3xl"}]
+    [:div {:class "relative flex h-48 w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50/60 via-white to-white p-6 ring-1 ring-emerald-500/15 shadow-card-md lg:h-full lg:from-zinc-800 lg:via-zinc-900 lg:to-black lg:ring-white/10"}
+     [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"}]
+     [:div {:class "absolute -top-24 -right-20 h-64 w-64 rounded-full bg-emerald-400/10 blur-3xl lg:bg-emerald-500/20"}]
      [:div {:class "relative"}
       [:div {:class "flex items-start justify-between"}
-       [:span {:class "text-zinc-300"} (svgs/card-chip)]
-       [:span {:class "text-zinc-300"} (svgs/contactless)]]
+       [:span {:class "text-zinc-400 lg:text-zinc-300"} (svgs/card-chip)]
+       [:span {:class "text-zinc-400 lg:text-zinc-300"} (svgs/contactless)]]
       [:div {:class "mt-4"}
        (if bank
          [:<>
-          [:p {:class "text-xs font-semibold uppercase tracking-widest text-zinc-300"} (utilities/->string bank)]
-          [:p {:class "mt-0.5 text-xs text-zinc-500"} (or account-type "Debit Card")]]
+          [:p {:class "text-xs font-semibold uppercase tracking-widest text-zinc-500 lg:text-zinc-300"} (utilities/->string bank)]
+          [:p {:class "mt-0.5 text-xs text-zinc-400 lg:text-zinc-500"} (or account-type "Debit Card")]]
          [:a {:href "/app/settings"
-              :class "inline-flex items-center gap-1 text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-200 active:scale-[0.97]"}
+              :class "inline-flex items-center gap-1 text-xs font-medium text-emerald-600 transition-colors hover:text-emerald-700 active:scale-[0.97] lg:text-zinc-400 lg:hover:text-zinc-200"}
           "Add your bank"
           (svgs/->next {:class "size-3"})])]]
      [:div {:class "relative mt-auto"}
       [:div {:class "flex items-center gap-2"}
        (for [_ (range 3)]
-         [:span {:class "text-sm tracking-[0.2em] text-zinc-500"} "••••"])
-       [:span {:class "text-sm font-mono tracking-[0.2em] text-zinc-300"} last-four]]
+         [:span {:class "text-sm tracking-[0.2em] text-zinc-300 lg:text-zinc-500"} "••••"])
+       [:span {:class "text-sm font-mono tracking-[0.2em] text-zinc-500 lg:text-zinc-300"} last-four]]
       [:div {:class "mt-4 flex items-baseline justify-between gap-4"}
-       [:p {:class "text-xs uppercase tracking-wider text-zinc-500"} "Balance"]
-       [:p {:class "text-2xl font-bold tracking-tight tabular-nums text-white lg:text-3xl"}
+       [:p {:class "text-xs uppercase tracking-wider text-zinc-400 lg:text-zinc-500"} "Balance"]
+       [:p {:class (str "text-2xl font-bold tracking-tight tabular-nums lg:text-3xl "
+                        (if (neg? balance) "text-rose-600 lg:text-rose-400" "text-zinc-900 lg:text-white"))}
         (utilities/amount->rands balance)]]]]))

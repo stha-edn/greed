@@ -64,13 +64,16 @@
       ;; Hero: net take-home feature card + bank card
       [:div {:class "grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3"}
        [:div {:class "lg:col-span-2"}
-        (stats/dashboard-hero finances income-tax-data)]
-       [:div {:class "flex justify-center lg:col-span-1 lg:justify-end"}
-        (cards/bank-card
-         :finances finances
-         :budget-items budget-items
-         :net-monthly-income (when-let [net (:net-income income-tax-data)]
-                               (/ net 12)))]]
+        (stats/dashboard-hero budget-items payday goals)]
+       [:div {:class "lg:col-span-1"}
+        [:div {:class "mb-3 lg:hidden"}
+         (stats/section-header "Wallet")]
+        [:div {:class "flex justify-center lg:h-full lg:justify-end"}
+         (cards/bank-card
+          :finances finances
+          :budget-items budget-items
+          :net-monthly-income (when-let [net (:net-income income-tax-data)]
+                                (/ net 12)))]]]
 
       ;; Glanceable reads, ordered by importance: the core Tax surface, what's
       ;; next, the plan, and progress. Each panel shares one uniform grid.
