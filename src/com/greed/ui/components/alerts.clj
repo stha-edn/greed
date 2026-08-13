@@ -47,7 +47,7 @@
             "  add .greed-alert-out\n"
             "  wait 200ms\n"
             "  hide #success-alert")
-    :class "flex w-full max-w-sm overflow-hidden rounded-xl bg-white ring-1 ring-emerald-200 shadow-card greed-alert-in"}
+    :class "flex items-center w-full max-w-sm overflow-hidden rounded-xl bg-white ring-1 ring-emerald-200 shadow-card greed-alert-in"}
    [:div
     {:class "flex items-center justify-center w-12 bg-emerald-600 text-white"}
     (svgs/success)]
@@ -97,7 +97,7 @@
                   "  add .greed-alert-out\n"
                   "  wait 200ms\n"
                   "  hide #info-alert"))
-        :class (str "flex items-start gap-3 w-full rounded-xl ring-1 shadow-card p-4 greed-alert-in "
+        :class (str "flex items-center gap-3 w-full rounded-xl ring-1 shadow-card p-4 greed-alert-in "
                     (if error? "bg-rose-50 ring-rose-200" "bg-emerald-50 ring-emerald-200"))}
        [:div
         {:class (str "flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center "
