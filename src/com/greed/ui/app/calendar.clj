@@ -2,7 +2,8 @@
   (:require [com.greed.ui :as ui]
             [com.greed.data.core :as data]
             [com.greed.ui.components.headers :as headers]
-            [com.greed.ui.components.calendars :as calendars])
+            [com.greed.ui.components.calendars :as calendars]
+            [com.greed.ui.components.stats :as stats])
   (:import [java.time LocalDate]))
 
 (defn- current-month-year []
@@ -19,6 +20,7 @@
      ctx
      [:div {:class "space-y-7"}
       (headers/pages-heading ["Calendar"])
+      (stats/calendar-hero payday events)
       [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-start"}
        [:div {:class "lg:col-span-2"} (calendars/calendar year month payday events)]
        [:div {:class "lg:col-span-1"} (calendars/events-panel ctx events)]]])))

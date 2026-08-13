@@ -155,7 +155,7 @@
         {:class "flex items-start"}
         [:div
          {:class "flex items-center justify-center flex-shrink-0 w-12 h-12"}
-         (svgs/chart-bar)]
+         (svgs/percent-badge)]
         [:div
          {:class "flex-1 mt-0 ml-4"}
          [:h3
@@ -189,7 +189,7 @@
          {:class "flex items-center gap-3"}
          [:div
           {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-300"}
-          (svgs/suit-case)]
+          (svgs/heart)]
          [:div
           {:class "min-w-0"}
           [:p {:class "text-sm font-medium text-zinc-200"} "Medical aid"]
@@ -198,7 +198,7 @@
          {:class "flex items-center gap-3"}
          [:div
           {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-300"}
-          (svgs/target)]
+          (svgs/umbrella)]
          [:div
           {:class "min-w-0"}
           [:p {:class "text-sm font-medium text-zinc-200"} "Retirement annuity"]

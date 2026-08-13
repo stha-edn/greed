@@ -20,55 +20,6 @@
   [p]
   (str (int (Math/round (double p))) "%"))
 
-(defn- hero-substat [label value value-cls]
-  [:div {:class "min-w-0"}
-   [:p {:class "text-[11px] font-medium text-zinc-500 uppercase tracking-wider whitespace-nowrap"} label]
-   [:p {:class (str "mt-1 text-sm font-semibold whitespace-nowrap tabular-nums sm:text-lg "
-                    (or value-cls "text-zinc-900"))} value]])
-
-(defn- hero
-  "Leads the page with the single most useful health signal — the savings rate —
-   and keeps income, expenses and what's left one glance away beneath it."
-  [total-income total-expenses leftover overspend? savings-rate]
-  (let [rate-num (int (Math/round savings-rate))
-        status   (cond
-                   (not (pos? total-income))
-                   [:span "Add your "
-                    [:a {:href "/app/finances"
-                         :class "font-semibold text-emerald-600 underline underline-offset-2"}
-                     "income"]
-                    " in Finances to get a read on your savings."]
-                   overspend?
-                   [:span {:class "text-rose-600"} "You're spending more than you earn — review your budget in Finances."]
-                   (>= rate-num 20) "A strong savings foundation — keep it up."
-                   (>= rate-num 10) "On a healthy track. A 20% savings rate is a great goal."
-                   (pos? rate-num) "A solid start — every little bit compounds."
-                   :else
-                   [:span "Nothing set aside yet. "
-                    [:a {:href "/app/finances"
-                         :class "font-semibold text-emerald-600 underline underline-offset-2"}
-                     "Add savings"]
-                    " in Finances."])]
-    [:div {:class "relative overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200/70 shadow-card-md"}
-     [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"}]
-     [:div {:class "absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl"}]
-     [:div {:class "relative px-6 py-6 sm:px-8 sm:py-7"}
-      [:div {:class "flex items-center gap-2.5"}
-       [:span {:class "h-1.5 w-1.5 rounded-full bg-emerald-500"}]
-       [:p {:class "text-[11px] sm:text-xs font-semibold text-emerald-600 uppercase tracking-[0.18em]"}
-        "Monthly savings rate"]]
-      [:div {:class "mt-5 flex items-baseline gap-2.5 sm:mt-6"}
-       [:p {:class "text-5xl sm:text-6xl font-bold text-zinc-900 leading-none tracking-[-0.05em] tabular-nums"}
-        (if (pos? total-income) (pct-str savings-rate) "—")]
-       [:span {:class "text-sm font-medium text-zinc-400"} "of income saved"]]
-      [:p {:class (str "mt-3 text-sm " (if overspend? "text-rose-600" "text-zinc-500"))} status]
-      [:div {:class "grid grid-cols-3 gap-4 pt-5 border-t border-zinc-100 mt-6"}
-       (hero-substat "Income" (utilities/amount->rands total-income) "text-emerald-600")
-       (hero-substat "Expenses" (utilities/amount->rands total-expenses) "text-rose-600")
-       (hero-substat (if overspend? "Overspend" "Unallocated")
-                     (utilities/amount->rands (Math/abs (long leftover)))
-                     (if overspend? "text-rose-600" "text-zinc-900"))]]]))
-
 (defn- legend-row [dot-cls label amount pct amount-cls]
   [:div {:class "flex items-center gap-3"}
    [:span {:class (str "flex-shrink-0 w-2 h-2 rounded-full " dot-cls)}]
@@ -149,6 +100,8 @@
 (defn page [{:keys [session] :as ctx}]
   (let [user-id      (:uid session)
         budget-items (data/get-budget-items ctx user-id)
+        finances     (data/get-finances ctx user-id)
+        payday       (:finances/payday finances)
         {:keys [total-income total-expenses total-savings]} (c.ui/get-budget-data budget-items)
         expense-items (filterv #(= (:budget-item/type %) :expenses) budget-items)
         leftover      (- total-income total-expenses total-savings)
@@ -163,9 +116,10 @@
       (if (empty? budget-items)
         (empty-state)
         [:<>
-         (hero total-income total-expenses leftover overspend? savings-rate)
+         (stats/insights-hero total-income total-expenses leftover overspend? savings-rate)
          [:div
           (stats/section-header "This month" :href "/app/finances/" :link-label "View in Finances")
-          [:div {:class "grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2"}
+          [:div {:class "grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3"}
            (allocation-card total-income total-expenses total-savings leftover overspend?)
-           (expense-breakdown-card expense-items total-expenses)]]])])))
+           (expense-breakdown-card expense-items total-expenses)
+           (stats/savings-pace budget-items payday)]]])])))

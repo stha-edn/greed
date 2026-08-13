@@ -4,6 +4,37 @@
 (def ^:private default-age-secondary-rebate 65)
 (def ^:private default-age-tertiary-rebate 75)
 
+;; SARS medical aid tax credit (monthly) — used by the tax returns simulator
+;; and the tax page's deductions panel.
+(def ^:private mtc-main 364)
+(def ^:private mtc-additional 246)
+
+(defn medical-tax-credit
+  "Annual medical aid tax credit: R364/month for the member and first
+   dependant, R246/month for each additional dependant."
+  [dependants]
+  (let [main-and-first (min (inc dependants) 2)
+        extra (max 0 (dec dependants))]
+    (* 12 (+ (* main-and-first mtc-main)
+             (* extra mtc-additional)))))
+
+(defn ra-deduction
+  "Retirement annuity deduction: contributions up to 27.5% of income or
+   R350,000, whichever is lower."
+  [annual-income ra-annual]
+  (min ra-annual (* 0.275 annual-income) 350000))
+
+(defn additional-medical-credit
+  "Section 6B additional medical expense credit: 33.3% of qualifying expenses
+   exceeding 4x the annual medical credit (under 65), or 33.3% of all such
+   expenses (65 and older)."
+  [age medical-monthly out-of-pocket mtc]
+  (let [annual-contributions (* medical-monthly 12)
+        total-medical (+ annual-contributions out-of-pocket)]
+    (if (>= age 65)
+      (* 0.333 total-medical)
+      (max 0 (* 0.333 (- total-medical (* 4 mtc)))))))
+
 (defn calculate-income-tax
   "Calculates South African income tax for individuals based on SARS tax rates.
 

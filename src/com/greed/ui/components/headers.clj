@@ -15,11 +15,13 @@
    (navs/mobile-sidebar ctx)
    (navs/mobile-bottom-nav ctx)])
 
-(defn pages-heading [breadcrumbs]
+(defn pages-heading [breadcrumbs & [subtitle]]
   [:div {:class "mb-6"}
    (breadcrumbs/breadcrumbs breadcrumbs)
    [:h1 {:class "mt-1 text-xl font-semibold text-zinc-900"}
-    (last breadcrumbs)]])
+    (last breadcrumbs)]
+   (when subtitle
+     [:p {:class "mt-0.5 text-sm text-zinc-500"} subtitle])])
 
 (defn- greeting []
   (let [hour (.getHour (java.time.LocalTime/now))]

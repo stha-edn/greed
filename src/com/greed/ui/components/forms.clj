@@ -234,20 +234,35 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
                :class "flex-1 px-4 py-2 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2"}
       "Calculate"]])])
 
-(defn budget-item-form []
-  (let [budget-item-options (:budget-item/types c/common-config)]
+(def ^:private budget-item-form-copy
+  "Modal heading + blurb per category, so the Add dialog says exactly what it
+   will create. Falls back to the generic copy when no :type is given."
+  {:income   {:title "Add income"  :desc "Add an income source to your budget."}
+   :expenses {:title "Add expense" :desc "Add an expense to your budget."}
+   :savings  {:title "Add savings" :desc "Add a savings item to your budget."}})
+
+(defn budget-item-form
+  "Add a budget item. Pass :type to fix the category (used by each list's Add
+   button); without it, the category select is shown."
+  [& {:keys [type]}]
+  (let [budget-item-options (:budget-item/types c/common-config)
+        modal-id            (if type (str "budget-add-" (name type) "-modal") "budget-add-modal")
+        {:keys [title desc]} (get budget-item-form-copy type
+                                  {:title "Add Budget Item" :desc "Add a new item to your budget"})]
     [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card-md p-6 w-full max-w-sm"}
-     [:h3 {:class "text-base font-semibold text-zinc-900"} "Add Budget Item"]
-     [:p {:class "mt-1 text-sm text-zinc-500 mb-4"} "Add a new item to your budget"]
+     [:h3 {:class "text-base font-semibold text-zinc-900"} title]
+     [:p {:class "mt-1 text-sm text-zinc-500 mb-4"} desc]
      (biff/form
       {:class "mt-4" :action "/app/finances/create-budget-item"}
-      (shared/modal-select :id "type" :label "Category" :options budget-item-options :required? true)
+      (if type
+        [:input {:type "hidden" :name "type" :value (name type)}]
+        (shared/modal-select :id "type" :label "Category" :options budget-item-options :required? true))
       (shared/modal-input :id "title" :type "text" :label "Title" :required? true)
       (shared/modal-input :id "amount" :type "number" :label "Amount (R)" :required? true)
-[:div {:class "flex gap-2 mt-5"}
-        [:button {:type "button" :_ (shared/close-actions "budget-add-modal")
-                  :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"}
-         "Cancel"]
+      [:div {:class "flex gap-2 mt-5"}
+       [:button {:type "button" :_ (shared/close-actions modal-id)
+                 :class "flex-1 px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"}
+        "Cancel"]
        [:button {:type "submit"
                  :class "flex-1 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"}
         "Add item"]])]))

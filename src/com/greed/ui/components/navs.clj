@@ -49,14 +49,16 @@
 
 (def ^:private primary-links
   "Primary app destinations, shared by the desktop sidebar, mobile bottom bar,
-   and mobile drawer. Items with :bottom? true live in the mobile bottom bar,
-   so the mobile drawer only lists the remainder (no duplicated primary nav)."
-  [{:href "/app"           :label "Dashboard" :icon (svgs/dashboard)   :bottom? true}
-   {:href "/app/finances/" :label "Finances"  :icon (svgs/credit-card) :bottom? true}
-   {:href "/app/goals"     :label "Goals"     :icon (svgs/target)      :bottom? true}
-   {:href "/app/insights"  :label "Insights"  :icon (svgs/chart-bar)   :bottom? false}
-   {:href "/app/calendar"  :label "Calendar"  :icon (svgs/calendar)    :bottom? true}
-   {:href "/app/tax"       :label "Tax"       :icon (svgs/tools)       :bottom? true}])
+   and mobile drawer. Ordered by importance: Dashboard first, then the app's
+   core Tax surface, day-to-day planning (Finances), what's coming (Calendar),
+   and progress (Goals) — Insights is the passive read. Items with :bottom? true
+   live in the mobile bottom bar, so the drawer only lists the remainder."
+  [{:href "/app"           :label "Dashboard" :icon (svgs/squares-2x2)   :bottom? true}
+   {:href "/app/tax"       :label "Tax"       :icon (svgs/percent-badge) :bottom? true}
+   {:href "/app/finances/" :label "Finances"  :icon (svgs/credit-card)   :bottom? true}
+   {:href "/app/calendar"  :label "Calendar"  :icon (svgs/calendar)      :bottom? true}
+   {:href "/app/goals"     :label "Goals"     :icon (svgs/target)        :bottom? true}
+   {:href "/app/insights"  :label "Insights"  :icon (svgs/chart-bar)     :bottom? false}])
 
 (defn- sidebar-inner [uri firstname lastname admin?]
   (let [initials (str (or (first firstname) \?) (or (first lastname) \?))]

@@ -61,9 +61,13 @@
      [:div {:class "flex items-center gap-3 px-5 py-4"}
       [:div {:class (str "flex flex-shrink-0 items-center justify-center w-9 h-9 rounded-xl " cls)}
        [:span {:class "w-5 h-5 [&_svg]:w-full [&_svg]:h-full"} icon]]
-      [:div {:class "min-w-0"}
+      [:div {:class "min-w-0 flex-1"}
        [:p {:class "text-sm font-semibold text-zinc-900"} label]
-       [:p {:class "text-xs text-zinc-400"} (str count (if (= 1 count) " item" " items"))]]]
+       [:p {:class "text-xs text-zinc-400"} (str count (if (= 1 count) " item" " items"))]]
+      (shared/btn :variant :outline :size :sm
+                  :attrs {"_" (shared/open-actions (str "budget-add-" title "-modal"))}
+                  (svgs/plus {:class "w-3.5 h-3.5"})
+                  "Add item")]
      (if (seq items)
        [:ul {:class "divide-y divide-zinc-100 border-t border-zinc-100"}
         (for [item items]
@@ -74,4 +78,6 @@
         [:p {:class "text-sm font-medium text-zinc-500"} "Nothing here yet"]
         [:p {:class "mt-0.5 text-xs text-zinc-400"} (str "Add your first " title " item")]])
      (for [item items]
-       (budget-row-modal :item item :protected-titles protected-titles))]))
+       (budget-row-modal :item item :protected-titles protected-titles))
+     (shared/modal (str "budget-add-" title "-modal")
+                   (forms/budget-item-form :type (keyword title)))]))
