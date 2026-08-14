@@ -4,14 +4,17 @@
    [com.greed.utilities.core :as utilities]))
 
 (defn note-from-greed []
-  [:div {:class "relative overflow-hidden max-w-md p-8 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-card-md"}
-   [:div {:class "absolute top-0 inset-x-0 h-1 bg-emerald-500"}]
-   [:div {:class "absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl"}]
+  [:div {:class "relative overflow-hidden max-w-md p-8 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black rounded-2xl ring-1 ring-white/10 shadow-card-md"}
+   [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent"}]
+   [:div {:class "absolute -top-24 -right-24 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl"}]
+   [:div {:class "absolute -top-16 -left-16 h-56 w-56 rounded-full bg-white/[0.06] blur-3xl"}]
    [:div {:class "relative"}
-    [:p {:class "text-xs font-semibold text-emerald-500 uppercase tracking-[0.2em]"} "A note from Greed"]
-    [:p {:class "mt-5 text-zinc-100 leading-relaxed"}
+    [:div {:class "flex items-center gap-2"}
+     [:span {:class "w-1.5 h-1.5 rounded-full bg-emerald-400"}]
+     [:p {:class "text-xs font-semibold uppercase tracking-[0.18em] text-emerald-400"} "A note from Greed"]]
+    [:p {:class "mt-5 text-base font-medium text-zinc-100 leading-relaxed"}
      "Money is private — and so is your ambition. Greed exists to take every part of your financial life off the messy back of your mind and put it in one clear place: salary, tax, spending, savings and the dates that matter."]
-    [:p {:class "mt-4 text-zinc-400 leading-relaxed"}
+    [:p {:class "mt-4 text-sm text-zinc-400 leading-relaxed"}
      "No judgment, no jargon, no instant-wealth promises. Just a system that lets you feel what you earn and build control, one decision at a time."]
     [:div {:class "flex items-center gap-4 mt-8"}
      [:div {:class "h-px w-10 bg-emerald-500"}]

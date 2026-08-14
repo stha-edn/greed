@@ -5,6 +5,7 @@
    [com.greed.email :as email]
    [com.greed.ui :as ui]
    [com.greed.ui.pages.about :as p.about]
+   [com.greed.ui.pages.contact :as p.contact]
    [com.greed.ui.pages.home :as p.home]
    [com.greed.ui.pages.legal :as p.legal]
    [com.greed.ui.pages.team :as p.team]
@@ -29,6 +30,12 @@
     ctx
     (headers/pages ctx)
     (p.about/page ctx)))
+
+(defn contact-page [ctx]
+  (ui/page
+    ctx
+    (headers/pages ctx)
+    (p.contact/page ctx)))
 
 (defn privacy-page [ctx]
   (ui/page
@@ -77,6 +84,7 @@
 (def module
   {:routes [["/"                  {:get home-page}]
             ["/about"             {:get about-page}]
+            ["/contact"           {:get contact-page}]
             ["/team"              {:get team-page}]
             ["/privacy"           {:get privacy-page}]
             ["/terms"             {:get terms-page}]

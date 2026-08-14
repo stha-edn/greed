@@ -14,6 +14,9 @@
       [:a {:href "/team"
            :class "whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
        "Team"]
+      [:a {:href "/contact"
+           :class "whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
+       "Contact"]
       (if signed-in?
         [:a {:href "/app"
              :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors active:scale-[0.97]"}

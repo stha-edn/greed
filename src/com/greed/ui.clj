@@ -48,7 +48,7 @@
 
 (defn page [ctx & body]
   (base ctx [:div {:class "min-h-screen flex flex-col"}
-             [:div {:class "pattern flex-1"} body]
+             [:div {:class "marketing-bg flex-1"} body]
              (footer/footer)]))
 
 (defn app [ctx & body]
@@ -59,7 +59,7 @@
     [:main {:class "flex-1 min-w-0 pt-[calc(3.5rem+env(safe-area-inset-top))] md:pt-0 md:ml-64 min-h-screen flex flex-col"}
      [:div {:class "p-6 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-6 flex-1 min-w-0"}
       body]
-     (footer/footer)]
+     (footer/app-footer)]
     (alerts/confirm-dialog)]))
 
 (defn on-error [{:keys [status] :as ctx}]
