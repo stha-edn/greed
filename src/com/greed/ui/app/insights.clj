@@ -1,24 +1,11 @@
 (ns com.greed.ui.app.insights
   (:require [com.greed.ui :as ui]
             [com.greed.data.core :as data]
-            [com.greed.ui.core :as c.ui]
             [com.greed.ui.components.headers :as headers]
             [com.greed.ui.components.shared :as shared]
             [com.greed.ui.components.stats :as stats]
             [com.greed.ui.components.svgs :as svgs]
             [com.greed.utilities.core :as utilities]))
-
-(defn- safe-pct
-  "part as a percentage of whole (0.0 when whole is 0)."
-  [part whole]
-  (if (and whole (pos? whole))
-    (double (* 100.0 (/ (double (or part 0)) whole)))
-    0.0))
-
-(defn- pct-str
-  "Rounds a percentage to a whole number for display, e.g. 17.03 -> '17%'."
-  [p]
-  (str (int (Math/round (double p))) "%"))
 
 (defn- legend-row [dot-cls label amount pct amount-cls]
   [:div {:class "flex items-center gap-3"}
@@ -33,9 +20,9 @@
    legible. An overspend can't be drawn as a bar (it exceeds 100%), so it's
    surfaced honestly as a warning strip instead."
   [income expenses savings leftover overspend?]
-  (let [exp-pct (safe-pct expenses income)
-        sav-pct (safe-pct savings income)
-        rem-pct (safe-pct leftover income)]
+  (let [exp-pct (or (utilities/pct-share expenses income) 0)
+        sav-pct (or (utilities/pct-share savings income) 0)
+        rem-pct (or (utilities/pct-share leftover income) 0)]
     [:div {:class "p-6 bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card"}
      [:h3 {:class "text-sm font-semibold text-zinc-900 tracking-tight"} "Where your income goes"]
      [:p {:class "mt-0.5 mb-5 text-xs text-zinc-400 leading-relaxed"}
@@ -53,11 +40,11 @@
              [:div {:class "h-full bg-emerald-500" :style {:width (str (int sav-pct) "%")}}]
              [:div {:class "h-full bg-zinc-200" :style {:width (str (int rem-pct) "%")}}]]]])
         [:div {:class "space-y-2.5 mt-5"}
-         (legend-row "bg-rose-400" "Expenses" expenses (pct-str exp-pct) nil)
-         (legend-row "bg-emerald-500" "Savings" savings (pct-str sav-pct) nil)
+         (legend-row "bg-rose-400" "Expenses" expenses (utilities/pct-label exp-pct) nil)
+         (legend-row "bg-emerald-500" "Savings" savings (utilities/pct-label sav-pct) nil)
          (legend-row "bg-zinc-300" (if overspend? "Overspend" "Unallocated")
                      (Math/abs (long leftover))
-                     (if overspend? "—" (pct-str rem-pct))
+                     (if overspend? "—" (utilities/pct-label rem-pct))
                      (when overspend? "text-rose-600"))]]
        [:p {:class "text-center py-6 text-sm text-zinc-400"}
         "Add your "
@@ -72,7 +59,7 @@
    (if (seq expense-items)
      [:div {:class "divide-y divide-zinc-100"}
       (for [{:budget-item/keys [title amount]} (sort-by :budget-item/amount > expense-items)]
-        (let [p (safe-pct amount total-expenses)]
+        (let [p (or (utilities/pct-share amount total-expenses) 0)]
           [:div {:class "py-3.5"}
            [:div {:class "flex items-center justify-between gap-3"}
             [:p {:class "min-w-0 text-sm font-medium text-zinc-800 truncate"} title]
@@ -82,8 +69,8 @@
             [:div {:class "flex-1 overflow-hidden h-1.5 bg-zinc-100 rounded-full"}
              [:div {:class "h-full w-full rounded-full greed-bar-grow bg-rose-400"
                     :style {:width (str (int p) "%")}}]]
-            [:span {:class "flex-shrink-0 w-10 text-right text-xs font-medium text-rose-500 tabular-nums"}
-             (pct-str p)]]]))]
+             [:span {:class "flex-shrink-0 w-10 text-right text-xs font-medium text-rose-500 tabular-nums"}
+              (utilities/pct-label p)]]]))]
      [:p {:class "text-center py-6 text-sm text-zinc-400"}
       "No expenses yet. Add them in "
       [:a {:href "/app/finances" :class "font-medium text-emerald-600 hover:underline"} "Finances"]
@@ -102,11 +89,11 @@
         budget-items (data/get-budget-items ctx user-id)
         finances     (data/get-finances ctx user-id)
         payday       (:finances/payday finances)
-        {:keys [total-income total-expenses total-savings]} (c.ui/get-budget-data budget-items)
+        {:keys [total-income total-expenses total-savings]} (data/get-budget-data budget-items)
         expense-items (filterv #(= (:budget-item/type %) :expenses) budget-items)
         leftover      (- total-income total-expenses total-savings)
         overspend?    (neg? leftover)
-        savings-rate  (safe-pct total-savings total-income)]
+        savings-rate  (or (utilities/pct-share total-savings total-income) 0)]
     (ui/app
      ctx
      [:div {:class "space-y-7"}

@@ -172,7 +172,56 @@
                          :session {:uid bob-id}
                          :params {:event-id (str event-id)})]
           (data/delete-event ctx)
-          (is (some? (data/get-event {:biff/db (xt/db node)} event-id))))))))
+          (is (some? (data/get-event {:biff/db (xt/db node)} event-id)))))
+      (testing "a user cannot toggle another user's event"
+        (let [ctx (assoc (get-context node)
+                         :session {:uid bob-id}
+                         :params {:event-id (str event-id)})]
+          (data/toggle-event ctx)
+          (is (nil? (:event/done (data/get-event {:biff/db (xt/db node)} event-id))))))
+      (testing "a user can toggle their own event"
+        (let [toggle-ctx (fn []
+                           (assoc (get-context node)
+                                  :session {:uid alice-id}
+                                  :params {:event-id (str event-id)}))]
+          (data/toggle-event (toggle-ctx))
+          (is (true? (:event/done (data/get-event {:biff/db (xt/db node)} event-id))))
+          (data/toggle-event (toggle-ctx))
+          (is (false? (:event/done (data/get-event {:biff/db (xt/db node)} event-id)))))))))
+
+(deftest create-event-test
+  (let [uid #uuid "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"]
+    (with-open [node (test-xtdb-node [{:xt/id      uid
+                                       :user/email "eve@example.com"
+                                       :user/password (data/hash-password "eve-pass")
+                                       :user/firstname "Eve"}])]
+      (testing "an event without a date or type defaults to an open todo"
+        (let [ctx (assoc (get-context node) :session {:uid uid} :params {:title "Buy milk"})]
+          (data/create-event ctx)
+          (let [events (data/get-events {:biff/db (xt/db node)} uid)]
+            (is (= 1 (count events)))
+            (is (= :todo (:event/type (first events))))
+            (is (nil? (:event/date (first events))))
+            (is (false? (:event/done (first events)))))))
+      (testing "a dated event keeps its type and date"
+        (let [ctx (assoc (get-context node) :session {:uid uid}
+                         :params {:title "Rent" :type "bill" :date "2026-09-01"})]
+          (data/create-event ctx)
+          (let [events (data/get-events {:biff/db (xt/db node)} uid)]
+            (is (= 2 (count events)))
+            (is (= :bill (:event/type (last events))))
+            (is (= "2026-09-01" (:event/date (last events))))
+            (is (false? (:event/done (last events)))))))
+      (testing "a todo with a date stays a todo and keeps its date"
+        (let [ctx (assoc (get-context node) :session {:uid uid}
+                         :params {:title "Water plants" :date "2026-08-20"})]
+          (data/create-event ctx)
+          (let [events (data/get-events {:biff/db (xt/db node)} uid)
+                todo   (first (filter #(= "Water plants" (:event/title %)) events))]
+            (is (= 3 (count events)))
+            (is (= :todo (:event/type todo)))
+            (is (= "2026-08-20" (:event/date todo)))
+            (is (false? (:event/done todo)))))))))
 
 (deftest signup-auto-signin-test
   (testing "a freshly signed-up user is signed in even though the ctx db is stale"

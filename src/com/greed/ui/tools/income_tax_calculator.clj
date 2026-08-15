@@ -12,11 +12,6 @@
   (try (double (BigDecimal. (or s "0")))
        (catch Exception _ 0.0)))
 
-(def tiers
-  [["under-65" "Under 65"]
-   ["65-74"    "65–74"]
-   ["75-plus"  "75+"]])
-
 (defn- tier->age [tier]
   (case tier
     "under-65" 30
@@ -66,16 +61,23 @@
   [:div
    [:label {:class "block text-sm font-medium text-zinc-700 mb-1"} "Your rebate tier"]
    [:p {:class "text-xs text-zinc-400 mb-2"} "Age 65+ and 75+ earn extra annual rebates."]
-   [:div {:class "grid grid-cols-3 gap-1 rounded-xl bg-zinc-100 p-1"}
-    (for [[value label] tiers]
-      [:label {:class (str "cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] "
-                           "focus-within:ring-2 focus-within:ring-emerald-500/50 focus-within:ring-offset-1 "
-                           (if (= selected value)
-                             "bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-900/5"
-                             "text-zinc-500 hover:text-zinc-700"))}
-       [:input {:type "radio" :name "rebate-tier" :value value
-                :class "sr-only" :checked (= selected value)}]
-       label])]])
+   [:div {:class "relative grid grid-cols-3 gap-1 rounded-xl bg-zinc-100 p-1"}
+    [:input {:type "radio" :name "rebate-tier" :value "under-65" :id "rebate-tier-1"
+             :class "sr-only peer peer/1" :checked (= selected "under-65")}]
+    [:input {:type "radio" :name "rebate-tier" :value "65-74" :id "rebate-tier-2"
+             :class "sr-only peer peer/2" :checked (= selected "65-74")}]
+    [:input {:type "radio" :name "rebate-tier" :value "75-plus" :id "rebate-tier-3"
+             :class "sr-only peer peer/3" :checked (= selected "75-plus")}]
+    [:label {:for "rebate-tier-1"
+             :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/1:ring-2 peer-focus-visible/1:ring-emerald-500/50 peer-checked/1:text-zinc-900"}
+     "Under 65"]
+    [:label {:for "rebate-tier-2"
+             :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/2:ring-2 peer-focus-visible/2:ring-emerald-500/50 peer-checked/2:text-zinc-900"}
+     "65–74"]
+    [:label {:for "rebate-tier-3"
+             :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/3:ring-2 peer-focus-visible/3:ring-emerald-500/50 peer-checked/3:text-zinc-900"}
+     "75+"]
+    [:div {:class "pointer-events-none absolute inset-y-1 left-1 w-[calc((100%-1rem)/3)] rounded-lg bg-white shadow-sm ring-1 ring-zinc-900/5 transition-transform duration-300 ease-out peer-checked/1:translate-x-0 peer-checked/2:translate-x-[calc(100%+0.25rem)] peer-checked/3:translate-x-[calc(200%+0.5rem)]"}]]])
 
 (defn- form-card [params]
   (let [selected (or (:rebate-tier params)
@@ -157,12 +159,12 @@
        (tools/result-hero
         :eyebrow "Your take-home pay"
         :badge "2026/27"
-        :headline (tools/whole->rands net-monthly)
+        :headline (utilities/whole->rands net-monthly)
         :suffix "per month"
         :status status
         :body (income-split take-share tax-share net-income net-tax)
-        :substats [(tools/hero-substat "Effective rate" (tools/pct effective-rate) "text-rose-600")
-                   (tools/hero-substat "Marginal rate" (tools/pct marginal-rate))
+        :substats [(tools/hero-substat "Effective rate" (utilities/pct-label effective-rate) "text-rose-600")
+                   (tools/hero-substat "Marginal rate" (utilities/pct-label marginal-rate))
                    (tools/hero-substat "Annual take-home" (utilities/amount->rands net-income))])
        (breakdown-panel income annual-income gross-tax rebates net-tax net-monthly net-income)])))
 
@@ -170,12 +172,12 @@
   (ui/app
    ctx
    [:div {:class "space-y-7"}
-    (headers/pages-heading ["Tax" "Income Tax Calculator"]
+    (headers/pages-heading [["Tax" "/app/tax"] "Income Tax Calculator"]
                            "See how much of your salary you keep after SARS 2026/27 income tax.")
-    [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start"}
+    (tools/tool-layout
      (form-card params)
-     (result-region params)]
-    (guide)]))
+     (guide)
+     (result-region params))]))
 
 (defn page-get [ctx]
   (page-template ctx {}))

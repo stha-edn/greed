@@ -2,7 +2,7 @@
  ;; every user (see dashboard/app-update-banner-due?). Not tied to any
  ;; build/deploy tooling — just an explicit marker you change by hand
  ;; whenever there's something worth announcing.
- :app/version "3"
+ :app/version "4"
 
  :error/recaptcha "You failed the recaptcha test. Try again, and make sure you aren't blocking scripts from Google."
  :error/invalid-email "Invalid email. Try again with a different address."

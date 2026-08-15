@@ -38,6 +38,7 @@
              ["/calendar/grid" {:get calendar/calendar-grid}]
              ["/calendar/create-event" {:post calendar/create-event}]
              ["/calendar/delete-event" {:post calendar/delete-event}]
+             ["/calendar/toggle-event" {:post calendar/toggle-event}]
              ["/tax"
               ["" {:get tools/page}]
               ["/income-tax-calculator" {:get income-tax-calculator/page-get :post income-tax-calculator/page}]
@@ -49,6 +50,7 @@
              ["/tools/tax-returns" {:get (redirect-to "/app/tax/tax-returns")}]
              ["/settings" {:get settings/page}]
              ["/admin" {:middleware [mid/wrap-admin]}
+              ["" {:get (redirect-to "/app/admin/users")}]
               ["/users" {:get admin/page}]
               ["/users/update" {:post mid/admin-update-user}]
               ["/users/hash-password" {:post mid/admin-hash-user-password}]

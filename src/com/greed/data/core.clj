@@ -61,6 +61,20 @@
        :where [[budget-item :budget-item/user-id user-id]]}
      user-id))
 
+(defn get-budget-data
+  "Totals the month's budget items grouped by type."
+  [budget-items]
+  (let [income-items (filterv #(= (:budget-item/type %) :income) budget-items)
+        expenses-items (filterv #(= (:budget-item/type %) :expenses) budget-items)
+        savings-items (filterv #(= (:budget-item/type %) :savings) budget-items)
+
+        total-income (reduce + (map :budget-item/amount income-items))
+        total-expenses (reduce + (map :budget-item/amount expenses-items))
+        total-savings (reduce + (map :budget-item/amount savings-items))]
+    {:total-income total-income
+     :total-expenses total-expenses
+     :total-savings total-savings}))
+
 (defn get-salary-budget-item [{:keys [biff/db]} user-id]
   (first (q db
             '{:find (pull budget-item [*])
@@ -338,7 +352,7 @@
                             :db/op :delete}])))))
 
 (defn get-events [{:keys [biff/db]} user-id]
-  (sort-by :event/date
+  (sort-by (fn [event] (or (:event/date event) ""))
            (q db
               '{:find (pull event [*])
                 :in [user-id]
@@ -347,15 +361,17 @@
 
 (defn create-event [{:keys [params] :as ctx}]
   (let [user-id (get-user-id-from-session ctx)
-        type    (or (some-> (:type params) utilities/->keyword) :general)]
+        type    (or (some-> (:type params) utilities/->keyword) :todo)
+        date    (not-empty (:date params))]
     (logger/info "Creating event...")
     (biff/submit-tx ctx
                     [{:db/doc-type :event
                       :xt/id (java.util.UUID/randomUUID)
                       :event/user-id user-id
                       :event/title (:title params)
-                      :event/date (:date params)
-                      :event/type type}])))
+                      :event/date date
+                      :event/type type
+                      :event/done false}])))
 
 (defn get-event [{:keys [biff/db]} event-id]
   (first (q db
@@ -363,6 +379,18 @@
               :in [event-id]
               :where [[event :xt/id event-id]]}
             event-id)))
+
+(defn toggle-event [{:keys [params] :as ctx}]
+  (let [event-id (utilities/->uuid (:event-id params))
+        event    (get-event ctx event-id)]
+    (if (and event (owned-by-session? ctx (:event/user-id event)))
+      (do (logger/info "Toggling event...")
+          (biff/submit-tx ctx
+                          [{:db/doc-type :event
+                            :xt/id event-id
+                            :db/op :update
+                            :event/done (not (:event/done event))}]))
+      (logger/info "Event not found or unauthorized"))))
 
 (defn delete-event [{:keys [params] :as ctx}]
   (let [event-id (utilities/->uuid (:event-id params))

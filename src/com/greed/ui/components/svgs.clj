@@ -89,9 +89,9 @@
      :stroke-linecap "round",
      :stroke-linejoin "round"}]])
 
-(defn check []
+(defn check [& [{:keys [class]}]]
   [:svg
-   {:class "w-6 h-6",
+   {:class (or class "w-6 h-6"),
     :viewBox "0 0 24 24",
     :fill "none",
     :xmlns "http://www.w3.org/2000/svg"}

@@ -136,7 +136,7 @@
              [:span {:class "font-semibold text-zinc-900"} (utilities/amount->rands monthly-tax) "/month"]
              " in PAYE."]
             [:p {:class "text-xs text-zinc-400 mt-1"}
-             "Effective tax rate: " (tools/pct effective-rate) "."
+             "Effective tax rate: " (utilities/pct-label effective-rate) "."
              (when-not has-profile?
                 " Add your medical aid and RA details in Settings for a more accurate estimate.")]]]]))
       (tools/panel
@@ -231,7 +231,7 @@
        (tools/result-hero
         :eyebrow "Your 2026 tax return"
         :badge "2026 year"
-        :headline (tools/whole->rands difference)
+        :headline (utilities/whole->rands difference)
         :suffix (if refund? "refund" "owed to SARS")
         :tone (if refund? "text-emerald-600" "text-rose-600")
         :status (if refund?
@@ -276,13 +276,13 @@
   (ui/app
    ctx
    [:div {:class "space-y-7"}
-    (headers/pages-heading ["Tax" "Tax Returns"]
+    (headers/pages-heading [["Tax" "/app/tax"] "Tax Returns"]
                            "Estimate your SARS tax refund or amount owed for the 2026 year of assessment.")
     (auto-assessment-card ctx)
-    [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start"}
+    (tools/tool-layout
      (form-card params)
-     (result-region params)]
-    (guide)]))
+     (guide)
+     (result-region params))]))
 
 (defn page-get [ctx]
   (page-template ctx {}))

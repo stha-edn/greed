@@ -1,5 +1,5 @@
 (ns com.greed.ui.components.cards
-  (:require [com.greed.ui.core :as c.ui]
+  (:require [com.greed.data.core :as c.data]
    [com.greed.ui.components.svgs :as svgs]
    [com.greed.utilities.core :as utilities]))
 
@@ -20,17 +20,10 @@
      [:div {:class "h-px w-10 bg-emerald-500"}]
      [:span {:class "text-xl font-giza font-bold text-zinc-100 leading-none"} "greed."]]]])
 
-(defn- mock-last-four
-  "Deterministic decorative last-4 digits for the card mockup, derived from a
-   stable seed so it doesn't shuffle on every render. Purely cosmetic — never
-   sourced from or resembling a real card number."
-  [seed]
-  (format "%04d" (mod (Math/abs (hash seed)) 10000)))
-
 (defn bank-card [& {:keys [budget-items finances net-monthly-income]}]
-  (let [{:keys [total-income total-expenses]} (c.ui/get-budget-data budget-items)
+  (let [{:keys [total-income total-expenses]} (c.data/get-budget-data budget-items)
         {:finances/keys [bank user-id account-type]} finances
-        last-four (mock-last-four (or user-id bank))
+        last-four (utilities/mock-last-four (or user-id bank))
         salary-budget-amount (or (some (fn [item]
                                          (when (and (= (:budget-item/type item) :income)
                                                  (= (:budget-item/title item) "Salary"))

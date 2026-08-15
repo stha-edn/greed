@@ -57,6 +57,51 @@
   [d]
   (format "%.2f%%" (double d)))
 
+(defn fmt-d
+  "Formats a number for HTML attributes (SVG dasharray/dashoffset, CSS widths)
+   with a dot decimal separator regardless of the JVM locale — en-ZA would
+   otherwise emit commas, which break attribute parsing."
+  [f n]
+  (String/format (java.util.Locale/ROOT) f (object-array [(double n)])))
+
+(defn pct-share
+  "Share of `amount` as a percentage of `total`, or nil when `total` isn't
+   positive (nothing to divide against)."
+  [amount total]
+  (when (pos? (double (or total 0)))
+    (double (* 100.0 (/ (double (or amount 0)) (double total))))))
+
+(defn whole->rands
+  "Rands at display scale — whole, no trailing decimals — for large hero
+   figures where a '.00' suffix would read as noise."
+  [n]
+  (format "R%,d" (long (Math/round (double (or n 0))))))
+
+(defn rate-label
+  "Formats a rate as a fraction (e.g. 0.26) as '26%'."
+  [rate]
+  (str (int (Math/round (* 100 (double (or rate 0))))) "%"))
+
+(defn pct-label
+  "Formats an already-percentage value (e.g. 31.0) as '31%'."
+  [p]
+  (str (int (Math/round (double (or p 0)))) "%"))
+
+(defn goal-pct
+  "Progress through a goal: saved/target as a 0–100 integer (0 when target
+   isn't positive)."
+  [saved target]
+  (if (and target (pos? target))
+    (int (min 100 (Math/round (* 100.0 (/ (double (or saved 0)) target)))))
+    0))
+
+(defn mock-last-four
+  "Deterministic decorative last-4 digits for the card mockup, derived from a
+   stable seed so it doesn't shuffle on every render. Purely cosmetic — never
+   sourced from or resembling a real card number."
+  [seed]
+  (format "%04d" (mod (Math/abs (hash seed)) 10000)))
+
 
 (defn ->keyword
   "Converts a string to a keyword.

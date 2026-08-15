@@ -15,13 +15,15 @@
    (navs/mobile-sidebar ctx)
    (navs/mobile-bottom-nav ctx)])
 
-(defn pages-heading [breadcrumbs & [subtitle]]
-  [:div {:class "mb-6"}
-   (breadcrumbs/breadcrumbs breadcrumbs)
-   [:h1 {:class "mt-1 text-xl font-semibold text-zinc-900"}
-    (last breadcrumbs)]
-   (when subtitle
-     [:p {:class "mt-0.5 text-sm text-zinc-500"} subtitle])])
+(defn pages-heading [crumbs & [subtitle]]
+  (let [current (last crumbs)
+        label   (if (string? current) current (first current))]
+    [:div {:class "mb-6"}
+     (breadcrumbs/breadcrumbs crumbs)
+     [:h1 {:class "mt-1 text-xl font-semibold tracking-tight text-zinc-900"}
+      label]
+     (when subtitle
+       [:p {:class "mt-0.5 text-sm text-zinc-500"} subtitle])]))
 
 (defn- greeting []
   (let [hour (.getHour (java.time.LocalTime/now))]

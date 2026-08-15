@@ -11,11 +11,6 @@
   (:import [java.time LocalDate]
            [java.time.format DateTimeFormatter]))
 
-(defn- pct [saved target]
-  (if (and target (pos? target))
-     (int (min 100 (Math/round (* 100.0 (/ (double (or saved 0)) target)))))
-     0))
-
 (defn- format-target-date [date-str]
   (when date-str
     (try
@@ -72,7 +67,7 @@
         modal-id  (str "goal-edit-" id)
         saved     (or saved 0)
         target    (or target 0)
-        p         (pct saved target)
+        p         (utilities/goal-pct saved target)
         remaining (max 0 (- target saved))
         complete? (>= saved target)]
     [:div {:class "p-5 bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card transition-all duration-200 hover:shadow-card-hover"}

@@ -165,6 +165,6 @@
      ctx
 [:div {:class "space-y-4"}
        (when (:alert params) (alerts/info params))
-      (headers/pages-heading ["Admin" "Users"])
+      (headers/pages-heading [["Admin" "/app/admin"] "Users"])
       (insecure-password-banner unhashed-count)
       (users-table users (:uid session))])))

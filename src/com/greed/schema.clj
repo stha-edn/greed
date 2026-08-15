@@ -34,8 +34,9 @@
            [:xt/id          :event/id]
            [:event/user-id  :user/id]
            [:event/title    :string]
-           [:event/date     :string]
-           [:event/type     {:optional true} [:maybe :keyword]]]
+           [:event/date     {:optional true} [:maybe :string]]
+           [:event/type     {:optional true} [:maybe :keyword]]
+           [:event/done     {:optional true} [:maybe :boolean]]]
 
    :goal/id :uuid
    :goal [:map {:closed true}

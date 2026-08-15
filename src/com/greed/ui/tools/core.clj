@@ -2,16 +2,6 @@
   (:require [com.greed.ui.components.svgs :as svgs]
             [com.greed.ui.components.stats :as stats]))
 
-(defn whole->rands
-  "Compact Rand figure with thousands separators, no decimals — the hero scale."
-  [n]
-  (format "R%,d" (long (Math/round (double (or n 0))))))
-
-(defn pct
-  "Formats an already-percentage value (e.g. 31.0) as '31%'."
-  [p]
-  (str (int (Math/round (double (or p 0)))) "%"))
-
 (defn panel
   "Tool-page surface in the dashboard panel chrome: white, hairline ring.
    Sections inside provide their own padding, like the other app panels."
@@ -95,6 +85,45 @@
   [& content]
   [:div {:class "rounded-xl bg-amber-50 p-5 ring-1 ring-amber-600/15"}
    (into [:p {:class "text-sm leading-relaxed text-amber-900"}] content)])
+
+(def ^:private guide-toggle-actions
+  "hyperscript for the mobile guide disclosure: toggles the `hidden` class
+   on the guide and rotates the plus icon into an ×. The button itself is
+   `xl:hidden`, so this only runs below the xl breakpoint."
+  (str "on click\n"
+       "  if the @aria-expanded of me is 'true'\n"
+       "    set the @aria-expanded of me to 'false'\n"
+       "  else\n"
+       "    set the @aria-expanded of me to 'true'\n"
+       "  end\n"
+       "  toggle .hidden on #tool-guide\n"
+       "  toggle .rotate-45 on .guide-caret"))
+
+(defn tool-layout
+  "Two-column shell for tool pages. The form and the explanatory guide
+   stack in one column while the result sits beside them — so a tall
+   result never pushes the guide down the page. Stacks on smaller
+   screens (form, guide, result) with the guide collapsed behind a
+   toggle, so the result stays high up the page."
+  [form guide result]
+  [:div {:class "grid grid-cols-1 gap-4 xl:grid-cols-5 xl:items-start"}
+   [:div {:class "space-y-4 xl:col-span-2 xl:min-w-0"}
+    form
+    [:div {:class "xl:sticky xl:top-6"}
+     [:button {:id "guide-toggle"
+               :type "button"
+               :aria-expanded "false"
+               :aria-controls "tool-guide"
+               :class "flex w-full items-center justify-between gap-2 rounded-lg bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:scale-[0.97] xl:hidden"
+               :_ guide-toggle-actions}
+      [:span "How it works"]
+      [:span {:class "flex h-5 w-5 items-center justify-center text-zinc-500"}
+       [:span {:class "guide-caret flex transition-transform duration-200"}
+        (svgs/plus {:class "size-4"})]]]
+     [:div {:id "tool-guide" :class "mt-3 hidden xl:mt-0 xl:block"}
+      guide]]]
+   [:div {:class "xl:col-span-3 xl:min-w-0"}
+    result]])
 
 (defn panel-footer [& body]
   [:div {:class "flex justify-end border-t border-zinc-100 px-5 py-3 sm:px-6"} body])
