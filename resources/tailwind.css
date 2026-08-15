@@ -115,6 +115,15 @@
   .site-header { background-color: white; backdrop-filter: none; }
 }
 
+/* Dark scrims (confirm dialog, shared modal, finance-tax prompt) are also
+   translucent chrome — same fallback as .site-header above: go solid and
+   drop the blur when the user has asked for less transparency. */
+@media (prefers-reduced-transparency: reduce) {
+  .confirm-overlay,
+  .greed-modal-overlay { background-color: rgb(0 0 0 / 0.9); backdrop-filter: none; }
+  .greed-scrim-in { background-color: rgb(9 9 11 / 0.9); backdrop-filter: none; }
+}
+
 /* Vanilla-JS confirm dialog (no Alpine). Hidden until JS adds the
    `data-open` attribute (display) and `confirm-visible` class (transition). */
 #confirm-dialog { display: none; }

@@ -75,18 +75,22 @@
           :net-monthly-income (when-let [net (:net-income income-tax-data)]
                                 (/ net 12)))]]]
 
-      ;; Money at a glance — charts carry the story, summary cards the
-      ;; shortcuts. Both rows share the same uniform grid rhythm.
+      ;; Money at a glance — charts carry the budget/savings story already
+      ;; told by the hero above; the summary row below moves on to the
+      ;; surfaces that don't have a hero-sized treatment of their own.
+      (stats/section-header "Money at a glance")
       [:div {:class "grid grid-cols-1 items-stretch gap-4 lg:grid-cols-5"}
        [:div {:class "lg:col-span-3"}
         (stats/cashflow-donut budget-items)]
        [:div {:class "lg:col-span-2"}
         (stats/savings-ring budget-items)]]
 
-      ;; Glanceable reads, ordered by importance: the core Tax surface, what's
-      ;; next, the plan, and progress. Each card shares one uniform grid.
-      [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch"}
-       (stats/tax-summary income-tax-data)
+      ;; More to explore — ordered by what's actionable first (what's next),
+      ;; then the two background reads (Tax, Goals). Budget is deliberately
+      ;; not repeated here: the hero and the donut above already cover it
+      ;; twice. Each card shares one uniform grid.
+      (stats/section-header "More to explore")
+      [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-stretch"}
        (stats/upcoming-summary payday events)
-       (stats/budget-summary budget-items)
+       (stats/tax-summary income-tax-data)
        (stats/goals-summary goals)]])))

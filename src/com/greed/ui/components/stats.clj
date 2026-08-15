@@ -238,37 +238,6 @@
    (when (seq children)
      [:div {:class "mt-4 border-t border-zinc-100"} children])])
 
-(defn budget-summary
-  "Dashboard widget for the planning surface: what's left to plan this month,
-   with the income split in colour."
-  [budget-items]
-  (let [{:keys [total-income total-expenses total-savings]} (c.data/get-budget-data budget-items)
-        income     (or total-income 0)
-        expenses   (or total-expenses 0)
-        savings    (or total-savings 0)
-        leftover   (- income expenses savings)
-        overspend? (neg? leftover)]
-    (if (zero? income)
-      (summary-card
-        :label "Budget"
-        :icon (svgs/wallet)
-        :icon-cls "bg-emerald-50 text-emerald-600"
-        :href "/app/finances"
-        :value "—"
-        :reveal "reveal"
-        :reading "Add your income to start planning this month.")
-      (summary-card
-        :label "Budget"
-        :icon (svgs/wallet)
-        :icon-cls "bg-emerald-50 text-emerald-600"
-        :href "/app/finances"
-        :value (utilities/whole->rands (Math/abs (double leftover)))
-        :value-cls (if overspend? "text-rose-600" "text-emerald-600")
-        :reading (if overspend?
-                   "over budget — spending is ahead of income."
-                   (str "left to plan · of " (utilities/whole->rands income) " income this month."))
-        :reveal "reveal"))))
-
 (defn- bracket-row [i b active-idx brackets]
   (let [active? (= i active-idx)
         from    (get b :threshold 0)
@@ -482,7 +451,7 @@
         :reading (str (if pd (str "Salary · " (u.time/format-date pd)) "No payday set")
                    (when (pos? n-ahead)
                      (str " · " n-ahead " event" (when (not= 1 n-ahead) "s") " ahead")))
-        :reveal "reveal reveal-3"
+        :reveal "reveal"
         :children
         [:div {:class "divide-y divide-zinc-100"}
          (when pd
@@ -506,7 +475,7 @@
         :icon-cls "bg-sky-50 text-sky-600"
         :href "/app/calendar"
         :value "—"
-        :reveal "reveal reveal-3"
+        :reveal "reveal"
         :reading "Add bills and paydays to see what's next."))))
 
 (defn goals-summary
@@ -527,7 +496,7 @@
         :reading (if banked
                    (str "of " (utilities/whole->rands total-target) " target · " (utilities/pct-label banked) " banked")
                    (str "across " (count goals) " goal" (when (not= 1 (count goals)) "s")))
-        :reveal "reveal reveal-4"
+        :reveal "reveal reveal-3"
         :children
         [:div {:class "divide-y divide-zinc-100"}
          (for [{:goal/keys [title saved target]} (take 2 goals)]
@@ -547,7 +516,7 @@
         :icon-cls "bg-amber-50 text-amber-600"
         :href "/app/goals"
         :value "—"
-        :reveal "reveal reveal-4"
+        :reveal "reveal reveal-3"
         :reading "Set a target and watch your savings grow."))))
 
 ;; ---------------------------------------------------------------------------
@@ -575,6 +544,7 @@
         cx     (/ size 2)
         cy     (/ size 2)]
     [:svg {:viewBox (str "0 0 " size " " size)
+           :aria-hidden "true"
            :class "block h-auto w-full"}
      [:g {:transform (str "rotate(-90 " cx " " cy ")")}
       [:circle {:cx cx :cy cy :r r
@@ -608,14 +578,17 @@
         k      (count segs)
         gap    (+ stroke 4)
         avail  (max 0.0 (- c (* k gap)))
-        total  (reduce + (map (fn [s] (double (:frac s))) segs))
         arcs   (loop [i 0, start 0.0, acc []]
                  (if (>= i k)
                    acc
                    (let [{:keys [cls frac]} (nth segs i)
-                         d (if (pos? total)
-                             (* avail (/ (double frac) total))
-                             0.0)]
+                         ;; Divide by a fixed 100, not the segments' own sum —
+                         ;; that would re-normalise an overspend back down to
+                         ;; a full circle. Dividing by 100 lets the segments'
+                         ;; combined length exceed `avail`, so the dasharray
+                         ;; wraps past twelve o'clock and visibly overlaps
+                         ;; itself, which is the overflow cue the ring is for.
+                         d (* avail (/ (double frac) 100.0))]
                      (recur (inc i)
                        (+ start d gap)
                        (conj acc
@@ -628,6 +601,7 @@
                                    :stroke-dasharray (str (utilities/fmt-d "%.2f" d) " " c)
                                    :stroke-dashoffset (utilities/fmt-d "%.2f" (- start))}])))))]
     [:svg {:viewBox (str "0 0 " size " " size)
+           :aria-hidden "true"
            :class "block h-auto w-full"}
      (into [:g {:transform (str "rotate(-90 " cx " " cy ")")}]
        (cond-> [(when track-cls

@@ -50,7 +50,7 @@
           [:p {:class "text-xs font-semibold uppercase tracking-widest text-zinc-500 lg:text-zinc-300"} (utilities/->string bank)]
           [:p {:class "mt-0.5 text-xs text-zinc-400 lg:text-zinc-500"} (or account-type "Debit Card")]]
          [:a {:href "/app/settings"
-              :class "inline-flex items-center gap-1 text-xs font-medium text-emerald-600 transition-colors hover:text-emerald-700 active:scale-[0.97] lg:text-zinc-400 lg:hover:text-zinc-200"}
+              :class "inline-flex items-center gap-1 rounded-sm text-xs font-medium text-emerald-600 transition hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500/70 active:scale-[0.97] lg:text-zinc-400 lg:hover:text-zinc-200"}
           "Add your bank"
           (svgs/->next {:class "size-3"})])]]
      [:div {:class "relative mt-auto"}
