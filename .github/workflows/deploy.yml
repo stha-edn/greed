@@ -1,0 +1,36 @@
+name: Deploy
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/prod_key
+          chmod 600 ~/.ssh/prod_key
+          ssh-keyscan -H mygreed.co.za >> ~/.ssh/known_hosts
+
+      - name: Install Clojure CLI
+        uses: DeLaGuardo/setup-clojure@12
+        with:
+          cli: 1.12.2.1565
+
+      - name: Build CSS
+        run: clj -M:dev css --minify
+
+      - name: Upload CSS
+        run: scp -i ~/.ssh/prod_key target/resources/public/css/main.css app@mygreed.co.za:/home/app/target/resources/public/css/main.css
+
+      - name: Push to prod
+        run: |
+          git remote add prod ssh://app@mygreed.co.za/home/app/repo.git
+          git push prod master
+        env:
+          GIT_SSH_COMMAND: ssh -i ~/.ssh/prod_key -o IdentitiesOnly=yes
