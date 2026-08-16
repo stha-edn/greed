@@ -11,7 +11,8 @@
             [com.greed.ui.pages.team :as p.team]
             [com.greed.ui.pages.signin :as p.signin]
             [com.greed.ui.pages.signup :as p.signup]
-            [com.greed.ui.components.headers :as headers]))
+            [com.greed.ui.components.headers :as headers]
+            [com.greed.password :as password]))
 
 (defn home-page [ctx]
   (ui/page
@@ -90,6 +91,11 @@
             ["/terms"             {:get terms-page}]
             ["/signin"             {:get signin-page}]
             ["/signup"             {:get signup-page}]
+            ["/forgot-password"      {:get password/forgot-password-page
+                                      :post password/forgot-password-action}]
+            ["/forgot-password-sent" {:get password/forgot-password-sent-page}]
+            ["/reset-password"       {:get password/reset-password-page
+                                      :post password/reset-password-action}]
             ["/authenticate" {:middleware [mid/wrap-authenticate]}
              ["/signin" {:post signin-success-page}]
              ["/signup" {:post signup-success-page}]]

@@ -10,7 +10,9 @@
           [:user/lastname  :string]
           [:user/age       :int]
           [:user/roles     {:optional true} [:maybe [:set :keyword]]]
-          [:user/active    :boolean]]
+          [:user/active    :boolean]
+          [:user/password-reset-token {:optional true} [:maybe :string]]
+          [:user/password-reset-at    {:optional true} [:maybe inst?]]]
 
    :finances/id :uuid
    :finances [:map {:closed true}

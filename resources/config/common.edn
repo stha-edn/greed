@@ -10,6 +10,9 @@
  :error/account-deactivated "This account has been deactivated. Please contact support to get reactivated."
  :error/send-failed "We weren't able to send an email to that address. If the problem persists, try another address."
  :error/email-taken "That email is already in use by another account."
+ :error/invalid-link "This password reset link is invalid or has expired. Request a new one."
+ :error/password-blank "Your password can't be empty."
+ :error/password-mismatch "The passwords don't match. Try again."
  :error/default "There was an error."
 
  :alert/user-saved "Your user has been successfully saved or updated."

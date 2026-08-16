@@ -1,9 +1,9 @@
 (ns com.greed.email
-  (:require [com.greed.settings :as settings]
+  (:require [cheshire.core :as json]
+            [clj-http.client :as http]
+            [com.greed.settings :as settings]
             [clojure.tools.logging :as log]
-            [rum.core :as rum])
-  (:import [jakarta.mail Message Message$RecipientType Session]
-           [jakarta.mail.internet InternetAddress MimeBodyPart MimeMessage MimeMultipart]))
+            [rum.core :as rum]))
 
 (defn signin-link [{:keys [to url user-exists]}]
   (let [[subject action] (if user-exists
@@ -78,56 +78,65 @@
               "support@mygreed.co.za.\n\n"
               "— The " settings/app-name " team")})
 
+(defn password-reset [{:keys [to url]}]
+  {:to [{:email to}]
+   :subject (str "Reset your " settings/app-name " password")
+   :html (rum/render-static-markup
+          [:html
+           [:body
+            [:p "We received a request to reset the password for your " settings/app-name
+             " account."]
+            [:p [:a {:href url :target "_blank"} "Click here to reset your password."]]
+            [:p "This link will expire in one hour. If you did not request this, "
+             "you can ignore this email and your password will stay the same."]]])
+   :text (str "We received a request to reset the password for your " settings/app-name
+              " account.\n"
+              "\n"
+              "Click here to reset your password:\n"
+              url "\n"
+              "\n"
+              "This link will expire in one hour. If you did not request this, "
+              "you can ignore this email and your password will stay the same.")})
+
 (defn template [k opts]
   ((case k
      :signin-link signin-link
      :signin-code signin-code
-     :welcome welcome)
+     :welcome welcome
+     :password-reset password-reset)
    opts))
 
-(defn- smtp-session [{:keys [smtp/host smtp/port]}]
-  (let [props (doto (java.util.Properties.)
-                (.put "mail.smtp.host" host)
-                (.put "mail.smtp.port" (str port))
-                (.put "mail.smtp.auth" "true")
-                (.put "mail.smtp.starttls.enable" "true")
-                (.put "mail.smtp.connectiontimeout" "15000")
-                (.put "mail.smtp.timeout" "20000")
-                (.put "mail.smtp.writetimeout" "20000"))]
-    (Session/getInstance props)))
-
-(defn send-smtp [{:keys [biff/secret smtp/from smtp/username smtp/host smtp/port] :as ctx}
-                 form-params]
-  (try
-    (let [session (smtp-session ctx)
-          message (doto (MimeMessage. session)
-                    (.setFrom (InternetAddress. from settings/app-name))
-                    (.setRecipients Message$RecipientType/TO
-                                    (into-array InternetAddress
-                                                (map (fn [r] (InternetAddress. (:email r)))
-                                                     (:to form-params))))
-                    (.setSubject (:subject form-params)))
-          multipart (MimeMultipart.)]
-      (when-some [text (:text form-params)]
-        (let [part (MimeBodyPart.)]
-          (.setText part text "utf-8")
-          (.addBodyPart multipart part)))
-      (when-some [html (:html form-params)]
-        (let [part (MimeBodyPart.)]
-          (.setContent part html "text/html; charset=utf-8")
-          (.addBodyPart multipart part)))
-      (.setContent message multipart)
-      (let [transport (.getTransport session)]
-        (try
-          (.connect transport host (int port) username (secret :smtp/password))
-          (.sendMessage transport message (.getAllRecipients message))
-          (finally
-            (.close transport))))
-      (log/info "Email sent via SMTP" {:to (:to form-params) :subject (:subject form-params)})
-      true)
-    (catch Exception e
-      (log/error e "Failed to send email via SMTP")
-      false)))
+(defn send-mailersend [{:keys [biff/secret
+                               mailersend/from
+                               mailersend/from-name
+                               mailersend/reply-to] :as ctx}
+                       form-params]
+  (let [api-key    (secret :mailersend/api-key)
+        recipients (mapv (fn [r] {:email (if (string? r) r (:email r))})
+                         (if (string? (:to form-params))
+                           [(:to form-params)]
+                           (:to form-params)))
+        body (cond-> {:from {:email from :name from-name}
+                      :to recipients
+                      :subject (:subject form-params)}
+               (:text form-params) (assoc :text (:text form-params))
+               (:html form-params) (assoc :html (:html form-params))
+               (some? reply-to) (assoc :reply_to {:email reply-to}))]
+    (try
+      (let [res (http/post "https://api.mailersend.com/v1/email"
+                           {:headers {"Authorization" (str "Bearer " api-key)}
+                            :content-type :json
+                            :accept :json
+                            :body (json/generate-string body)
+                            :socket-timeout 20000
+                            :connection-timeout 15000})]
+        (log/info "Email sent via MailerSend" {:to (:to form-params)
+                                               :subject (:subject form-params)
+                                               :status (:status res)})
+        true)
+      (catch Exception e
+        (log/error e "Failed to send email via MailerSend")
+        false))))
 
 (defn send-console [_ctx form-params]
   (println "TO:" (:to form-params))
@@ -135,15 +144,15 @@
   (println)
   (println (:text form-params))
   (println)
-  (println "To send real emails instead of printing them, add an app password for"
-           "admin@mygreed.co.za to SMTP_PASSWORD in config.env.")
+  (println "To send real emails instead of printing them, create an API token at"
+           "https://app.mailersend.com/integrations/api and add it as MAILERSEND_API_KEY"
+           "in config.env.")
   true)
 
 (defn send-email [{:keys [biff/secret] :as ctx} opts]
   (let [form-params (if-some [template-key (:template opts)]
                       (template template-key opts)
                       opts)]
-    (if (and (some? secret)
-             (some? (secret :smtp/password)))
-      (send-smtp ctx form-params)
+    (if (some? (when secret (secret :mailersend/api-key)))
+      (send-mailersend ctx form-params)
       (send-console ctx form-params))))

@@ -21,12 +21,10 @@
  :biff/jwt-secret               #biff/secret JWT_SECRET
  :biff.refresh/enabled          #profile {:dev true :default false}
 
- :smtp/host     #or [#biff/env SMTP_HOST "smtp.gmail.com"]
- :smtp/port     #long #or [#biff/env SMTP_PORT 587]
- :smtp/username #biff/env SMTP_USERNAME
- :smtp/password #biff/secret SMTP_PASSWORD
- :smtp/from     #or [#biff/env SMTP_FROM "admin@mygreed.co.za"]
- :smtp/reply-to #or [#biff/env SMTP_REPLY_TO "support@mygreed.co.za"]
+ :mailersend/api-key    #biff/secret MAILERSEND_API_KEY
+ :mailersend/from       #or [#biff/env MAILERSEND_FROM "admin@mygreed.co.za"]
+ :mailersend/from-name  #or [#biff/env MAILERSEND_FROM_NAME "Greed"]
+ :mailersend/reply-to   #or [#biff/env MAILERSEND_REPLY_TO "support@mygreed.co.za"]
 
  :recaptcha/secret-key #biff/secret RECAPTCHA_SECRET_KEY
  :recaptcha/site-key   #biff/env RECAPTCHA_SITE_KEY

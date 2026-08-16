@@ -20,6 +20,9 @@
             :account-deactivated (:error/account-deactivated config)
             :send-failed (:error/send-failed config)
             :email-taken (:error/email-taken config)
+            :invalid-link (:error/invalid-link config)
+            :password-blank (:error/password-blank config)
+            :password-mismatch (:error/password-mismatch config)
             (:error/default config)))]])))
 
 (defn sign-in [{:keys [site-key] :as ctx}]
@@ -38,6 +41,8 @@
       (biff/recaptcha-callback "submitSignin" "signin")
       (shared/input :id "email" :type "email" :label "Email address" :required? true)
       (shared/input :id "password" :type "password" :label "Password" :required? true)
+      [:div {:class "mt-1 text-right"}
+       [:a {:href "/forgot-password" :class "text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:underline"} "Forgot password?"]]
       [:div {:class "mt-5"}
        (shared/btn :variant :dark :size :md :type "submit"
                    :class (str "w-full" (when site-key " g-recaptcha"))
@@ -79,6 +84,87 @@
      [:p {:class "text-sm text-zinc-500"}
       "Already have an account? "
       [:a {:href "/signin" :class "font-medium text-zinc-700 hover:text-zinc-900 hover:underline"} "Sign in"]]]]])
+
+(defn forgot-password [{:keys [site-key] :as ctx}]
+  [:div {:class "w-full max-w-sm mx-auto"}
+   [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
+    [:div {:class "px-8 py-8"}
+     [:div {:class "mb-6 text-center"}
+      [:a {:href "/"}
+       [:span {:class "text-3xl font-giza font-bold text-zinc-900 leading-none"} "greed."]]
+      [:h2 {:class "mt-4 text-lg font-semibold text-zinc-900 tracking-tight"} "Reset your password"]
+      [:p {:class "mt-1 text-sm text-zinc-500"} "Enter your email and we'll send you a reset link."]]
+     (biff/form
+      {:action "/forgot-password"
+       :id "forgot-password"}
+      (biff/recaptcha-callback "submitForgotPassword" "forgot-password")
+      (shared/input :id "email" :type "email" :label "Email address" :required? true)
+      [:div {:class "mt-5"}
+       (shared/btn :variant :dark :size :md :type "submit"
+                   :class (str "w-full" (when site-key " g-recaptcha"))
+                   :attrs (when site-key {:data-sitekey site-key :data-callback "submitForgotPassword"})
+                   "Send reset link")]
+      (on-error ctx))]
+    [:div {:class "px-8 py-4 bg-zinc-50 border-t border-zinc-100 text-center"}
+     [:p {:class "text-sm text-zinc-500"}
+      "Remembered your password? "
+      [:a {:href "/signin" :class "font-medium text-zinc-700 hover:text-zinc-900 hover:underline"} "Sign in"]]]]])
+
+(defn reset-password [{:keys [site-key params] :as ctx}]
+  (let [token (:token params)]
+    [:div {:class "w-full max-w-sm mx-auto"}
+     [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
+      [:div {:class "px-8 py-8"}
+       [:div {:class "mb-6 text-center"}
+        [:a {:href "/"}
+         [:span {:class "text-3xl font-giza font-bold text-zinc-900 leading-none"} "greed."]]
+        [:h2 {:class "mt-4 text-lg font-semibold text-zinc-900 tracking-tight"} "Choose a new password"]
+        [:p {:class "mt-1 text-sm text-zinc-500"} "Your new password will take effect immediately."]]
+       (biff/form
+        {:action "/reset-password"
+         :id "reset-password"
+         :hidden {:token token}}
+        (biff/recaptcha-callback "submitResetPassword" "reset-password")
+        (shared/input :id "password" :type "password" :label "New password" :required? true)
+        (shared/input :id "confirm-password" :type "password" :label "Confirm new password" :required? true)
+        [:div {:class "mt-5"}
+         (shared/btn :variant :primary :size :md :type "submit"
+                     :class (str "w-full" (when site-key " g-recaptcha"))
+                     :attrs (when site-key {:data-sitekey site-key :data-callback "submitResetPassword"})
+                     "Reset password")]
+        (on-error ctx))]
+      [:div {:class "px-8 py-4 bg-zinc-50 border-t border-zinc-100 text-center"}
+       [:p {:class "text-sm text-zinc-500"}
+        [:a {:href "/signin" :class "font-medium text-zinc-700 hover:text-zinc-900 hover:underline"} "Back to sign in"]]]]]))
+
+(defn password-reset-sent [_ctx]
+  [:div {:class "w-full max-w-sm mx-auto"}
+   [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
+    [:div {:class "px-8 py-8 text-center"}
+     [:a {:href "/"}
+      [:span {:class "text-3xl font-giza font-bold text-zinc-900 leading-none"} "greed."]]
+     [:h2 {:class "mt-4 text-lg font-semibold text-zinc-900 tracking-tight"} "Check your email"]
+     [:p {:class "mt-2 text-sm text-zinc-500"}
+      "If an account exists for that email, we've sent you a password reset link. "
+      "It expires in one hour."]
+     [:div {:class "mt-6 flex flex-col gap-2"}
+      (shared/btn :variant :dark :size :md :href "/forgot-password"
+                  "Send another link")
+      (shared/btn :variant :ghost :size :md :href "/signin"
+                  "Back to sign in")]]]])
+
+(defn invalid-link [_ctx]
+  [:div {:class "w-full max-w-sm mx-auto"}
+   [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
+    [:div {:class "px-8 py-8 text-center"}
+     [:a {:href "/"}
+      [:span {:class "text-3xl font-giza font-bold text-zinc-900 leading-none"} "greed."]]
+     [:h2 {:class "mt-4 text-lg font-semibold text-zinc-900 tracking-tight"} "Invalid reset link"]
+     [:p {:class "mt-2 text-sm text-zinc-500"}
+      "This password reset link is invalid or has expired."]
+     [:div {:class "mt-6"}
+      (shared/btn :variant :dark :size :md :href "/forgot-password" :class "w-full"
+                  "Request a new link")]]]])
 
 (defn user [ctx]
   (shared/card {:class "p-6"}

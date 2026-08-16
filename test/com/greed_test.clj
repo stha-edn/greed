@@ -9,10 +9,26 @@
             [com.greed.data.core :as data]
             [com.greed.home :as home]
             [com.greed.middleware :as mid]
+            [com.greed.password :as pwd]
+            [com.greed.email :as email]
+            [com.biffweb.impl.auth :as biff-auth]
             [com.greed.ui.app.dashboard :as dashboard]
             [malli.generator :as mg]
             [rum.core :as rum]
             [xtdb.api :as xt]))
+
+(deftest send-mailersend-uses-resolved-api-key-test
+  (let [captured (atom nil)]
+    (with-redefs [clj-http.client/post (fn [_url opts]
+                                         (reset! captured opts)
+                                         {:status 202})]
+      (is (true? (email/send-email {:biff/secret (fn [_] "real-key")
+                                    :mailersend/from "admin@example.com"
+                                    :mailersend/from-name "Greed"}
+                                   {:to "user@example.com"
+                                    :subject "Subject"
+                                    :text "Body"})))
+      (is (= "Bearer real-key" (get-in @captured [:headers "Authorization"]))))))
 
 (deftest example-test
   (is (= 4 (+ 2 2))))
@@ -66,6 +82,120 @@
   {:biff.xtdb/node  node
    :biff/db         (xt/db node)
    :biff/malli-opts #'main/malli-opts})
+
+(deftest password-reset-flow-test
+  (let [uid  #uuid "dddddddd-dddd-dddd-dddd-dddddddddddd"
+        sent (atom nil)
+        jwt-secret (biff/generate-secret 32)
+        secret (fn [k]
+                 (case k
+                   :biff/jwt-secret jwt-secret
+                   :recaptcha/secret-key nil
+                   nil))
+        capture-send! (fn [_ctx opts]
+                        (reset! sent opts)
+                        true)]
+    (with-open [node (test-xtdb-node [{:xt/id       uid
+                                       :user/email  "dave@example.com"
+                                       :user/password (data/hash-password "old-pass")
+                                       :user/firstname "Dave"
+                                       :user/lastname "D"
+                                       :user/age 30
+                                       :user/active true}])]
+      (let [ctx-for (fn [params]
+                      (assoc (get-context node)
+                             :biff/secret secret
+                             :params params))]
+        (with-redefs [biff-auth/passed-recaptcha? (constantly true)
+                      email/send-email capture-send!]
+          (testing "forgot-password always redirects to the generic sent page"
+            (let [resp (pwd/forgot-password-action (ctx-for {:email "dave@example.com"}))]
+              (is (= 303 (:status resp)))
+              (is (= "/forgot-password-sent" (get-in resp [:headers "location"]))))
+            (is (some? @sent))
+            (is (= :password-reset (:template @sent)))
+            (is (str/includes? (:url @sent) "/reset-password?token=")))
+          (let [token (second (re-find #"token=([^&]+)" (:url @sent)))]
+            (testing "the reset link changes the password and signs the user in"
+              (let [resp (pwd/reset-password-action (ctx-for {:token token
+                                                              :password "new-pass"
+                                                              :confirm-password "new-pass"}))
+                    db (xt/db node)
+                    user (data/get-user {:biff/db db} uid)]
+                (is (= 303 (:status resp)))
+                (is (= "/app?success=signin" (get-in resp [:headers "location"])))
+                (is (= uid (get-in resp [:session :uid])))
+                (is (:valid? (auth/validate-password? "new-pass" (:user/password user))))
+                (is (nil? (:user/password-reset-token user)))))
+            (testing "a reset token can only be redeemed once"
+              (let [resp (pwd/reset-password-action (ctx-for {:token token
+                                                              :password "third-pass"
+                                                              :confirm-password "third-pass"}))
+                    db (xt/db node)
+                    user (data/get-user {:biff/db db} uid)]
+                (is (= "/reset-password?error=invalid-link" (get-in resp [:headers "location"])))
+                (is (:valid? (auth/validate-password? "new-pass" (:user/password user))))))))
+            (testing "unknown emails get the generic response and no email is sent"
+              (reset! sent nil)
+              (let [resp (pwd/forgot-password-action (ctx-for {:email "nobody@example.com"}))]
+                (is (= "/forgot-password-sent" (get-in resp [:headers "location"])))
+                (is (nil? @sent))))))))
+
+(deftest password-reset-rejects-bad-input-test
+  (let [uid  #uuid "dddddddd-dddd-dddd-dddd-dddddddddddd"
+        jwt-secret (biff/generate-secret 32)
+        secret (fn [k]
+                 (case k
+                   :biff/jwt-secret jwt-secret
+                   :recaptcha/secret-key nil
+                   nil))
+        make-token (fn [& {:keys [token email exp-in]
+                           :or {token "abc123" email "dave@example.com" exp-in 3600}}]
+                     (biff/jwt-encrypt {:intent "reset-password"
+                                        :email email
+                                        :token token
+                                        :exp-in exp-in}
+                                       jwt-secret))]
+    (with-open [node (test-xtdb-node [{:xt/id       uid
+                                       :user/email  "dave@example.com"
+                                       :user/password (data/hash-password "old-pass")
+                                       :user/password-reset-token "abc123"
+                                       :user/firstname "Dave"
+                                       :user/active true}])]
+      (with-redefs [biff-auth/passed-recaptcha? (constantly true)]
+        (let [ctx (fn [params]
+                    (assoc (get-context node)
+                           :biff/secret secret
+                           :params params))]
+          (testing "a malformed token is rejected"
+            (let [resp (pwd/reset-password-action (ctx {:token "garbage"
+                                                        :password "x"
+                                                        :confirm-password "x"}))]
+              (is (= "/reset-password?error=invalid-link" (get-in resp [:headers "location"])))))
+          (testing "an expired token is rejected"
+            (let [resp (pwd/reset-password-action (ctx {:token (make-token :exp-in -10)
+                                                        :password "x"
+                                                        :confirm-password "x"}))]
+              (is (= "/reset-password?error=invalid-link" (get-in resp [:headers "location"])))))
+          (testing "a token that doesn't match the stored one is rejected"
+            (let [resp (pwd/reset-password-action (ctx {:token (make-token :token "other-token")
+                                                        :password "x"
+                                                        :confirm-password "x"}))]
+              (is (= "/reset-password?error=invalid-link" (get-in resp [:headers "location"])))))
+          (testing "mismatched passwords are rejected and the password is unchanged"
+            (let [resp (pwd/reset-password-action (ctx {:token (make-token)
+                                                        :password "new-pass"
+                                                        :confirm-password "different"}))
+                  db (xt/db node)
+                  user (data/get-user {:biff/db db} uid)]
+              (is (str/starts-with? (get-in resp [:headers "location"])
+                                    (str "/reset-password?error=password-mismatch&token=")))
+              (is (:valid? (auth/validate-password? "old-pass" (:user/password user))))))
+          (testing "a blank password is rejected"
+            (let [resp (pwd/reset-password-action (ctx {:token (make-token)
+                                                        :password " "
+                                                        :confirm-password " "}))]
+              (is (str/includes? (get-in resp [:headers "location"]) "error=password-blank")))))))))
 
 (deftest save-user-scoped-to-session-test
   (let [alice-id #uuid "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"

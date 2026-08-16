@@ -17,12 +17,13 @@
          ^:private legend-row)
 
 (defn finance-hero
-  "Finances-page hero: the month's plan read at a glance. One headline number
-   — what's left to plan after expenses and savings — framed by the pay period:
-   how far through it we are, what that leaves to spend per day, and the bills
-   still to clear before the next payday. Overspend flips the headline and its
-   tone instead of hiding the problem."
-  [budget-items payday events]
+  "Finances-page hero: the month's plan read at a glance, in the same language
+   as the tax hero. One headline number — what's left to plan after expenses
+   and savings — with a stacked bar of where every rand of income goes. The pay
+   period anchors the pace below it: how far through the month we are, and what
+   that leaves to spend per day. Overspend flips the headline and its tone
+   instead of hiding the problem."
+  [budget-items payday]
   (let [{:keys [total-income total-expenses total-savings]} (c.data/get-budget-data budget-items)
         income     (or total-income 0)
         leftover   (- income (or total-expenses 0) (or total-savings 0))
@@ -37,14 +38,9 @@
         remaining  (when pd (long (.between ChronoUnit/DAYS today pd)))
         spend-per-day (when (and remaining (pos? remaining) (pos? income))
                         (/ (double (Math/abs (double leftover))) remaining))
-        bills-ahead (->> events
-                         (filter (fn [{:event/keys [type date]}]
-                                   (when (and (= (or type :general) :bill) date)
-                                     (let [until (u.time/days-until today (LocalDate/parse date))]
-                                       (and (not (neg? until))
-                                            (or (nil? pd) (<= until remaining))))))))
-        bills       (take 3 bills-ahead)
-        bills-more  (max 0 (- (count bills-ahead) (count bills)))]
+        expenses-share (if (pos? income) (* 100.0 (/ (double (or total-expenses 0)) income)) 0.0)
+        savings-share  (if (pos? income) (* 100.0 (/ (double (or total-savings 0)) income)) 0.0)
+        leftover-share (- 100.0 expenses-share savings-share)]
     (if (zero? income)
       ;; Nothing to plan yet — keep the surface, explain, and point at the one
       ;; way in (the income list's Add item). Same pattern as the dashboard's
@@ -73,43 +69,30 @@
                         (str "That's " (utilities/amount->rands (Math/abs (double leftover)))
                              " more going out than coming in this month.")
                         (str "Out of " (utilities/amount->rands income) " in income."))
-                      :tone (when overspend? "text-rose-600"))
+                      :tone (when overspend? "text-rose-600"))]
+        [:div {:class "rounded-xl bg-zinc-50 p-5 ring-1 ring-zinc-200/50"}
+         [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider"} "Where your money goes"]
+         [:div {:class "mt-3 flex h-2.5 w-full overflow-hidden rounded-full bg-zinc-200/70"}
+          [:div {:class "h-full rounded-l-full bg-rose-400 greed-bar-grow"
+                 :style {:width (str (min 100.0 (max 0.0 expenses-share)) "%")}}]
+          [:div {:class "h-full bg-emerald-500"
+                 :style {:width (str (min 100.0 (max 0.0 savings-share)) "%")}}]
+          [:div {:class "h-full rounded-r-full bg-emerald-300"
+                 :style {:width (str (min 100.0 (max 0.0 leftover-share)) "%")}}]]
          (when (and pd prev-pd)
-           [:div {:class "mt-6"}
+           [:div {:class "mt-4 border-t border-zinc-100 pt-4"}
             [:div {:class "flex items-center justify-between gap-3"}
-             [:p {:class "text-[11px] font-medium text-zinc-500 uppercase tracking-wider"} "Pay period"]
+             [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider"} "Pay period"]
              [:p {:class "text-xs font-medium text-zinc-400 tabular-nums"}
               (str "Day " elapsed " of " period-len)]]
-            [:div {:class "mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100"}
+            [:div {:class "mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200/70"}
              [:div {:class (str "h-full rounded-full " (if overspend? "bg-rose-400" "bg-emerald-400"))
-                    :style {:width (str (min 100.0 (double (* 100.0 (/ (double elapsed) (double period-len))))) "%")}}]]])
-         (when spend-per-day
-           [:p {:class (str "mt-3 text-sm font-semibold tabular-nums "
-                            (if overspend? "text-rose-600" "text-emerald-600"))}
-            (utilities/amount->rands (Math/round (double spend-per-day)))
-            (if overspend? " per day over until payday" " per day to spend until payday")])]
-        [:div
-         [:div {:class "flex items-center justify-between gap-3"}
-          [:p {:class "text-xs font-semibold text-zinc-400 uppercase tracking-wider"} "Bills before payday"]
-          [:a {:href "/app/calendar"
-               :class "group inline-flex items-center gap-0.5 rounded-md text-xs font-medium text-emerald-600 transition hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/70 focus-visible:ring-offset-2 active:text-emerald-800 active:scale-[0.97]"}
-           "View calendar"
-           (svgs/->next {:class "size-3.5 -translate-x-0.5 transition-transform group-hover:translate-x-0"})]]
-         (if (seq bills)
-           [:div {:class "mt-4 divide-y divide-zinc-100"}
-            (for [{:event/keys [title date]} bills]
-              (let [until (u.time/days-until today (LocalDate/parse date))]
-                [:div {:class "flex items-center gap-3 py-2.5"}
-                 [:span {:class "flex-shrink-0 w-2 h-2 rounded-full bg-rose-400"}]
-                 [:div {:class "min-w-0 flex-1"}
-                  [:p {:class "truncate text-sm font-medium text-zinc-800"} title]
-                  [:p {:class "mt-0.5 text-xs text-zinc-400"} (u.time/format-date (LocalDate/parse date))]]
-                 [:span {:class "flex-shrink-0 text-xs font-medium text-zinc-500 tabular-nums"}
-                  (u.time/relative-date until)]]))
-            (when (pos? bills-more)
-              [:p {:class "pt-2.5 text-xs text-zinc-400"}
-               (str bills-more " more before payday")])]
-           [:p {:class "mt-4 text-sm text-zinc-400"} "No bills scheduled before payday."])]]
+                    :style {:width (str (min 100.0 (double (* 100.0 (/ (double elapsed) (double period-len))))) "%")}}]]
+            (when spend-per-day
+              [:p {:class (str "mt-3 text-sm font-semibold tabular-nums "
+                               (if overspend? "text-rose-600" "text-emerald-600"))}
+               (utilities/amount->rands (Math/round (double spend-per-day)))
+               (if overspend? " per day over until payday" " per day to spend until payday")])])]]
        [:div {:class "flex-1"}]
        (hero-stats-row
         (hero-substat "Income" (utilities/amount->rands income) "text-emerald-600")
@@ -797,7 +780,7 @@
   "The hero's single headline number, with a muted unit beside it. One shared
    display scale (same as the finance hero) so figures read consistently."
   [value suffix]
-  [:div {:class "mt-5 flex items-baseline gap-2.5 sm:mt-6"}
+  [:div {:class "mt-4 flex items-baseline gap-2.5 sm:mt-5"}
    [:p {:class "text-4xl sm:text-5xl font-bold text-zinc-900 leading-none tracking-[-0.04em] tabular-nums"}
     value]
    [:span {:class "text-sm font-medium text-zinc-400"} suffix]])
@@ -806,12 +789,12 @@
   "One-line reading of the headline, below it. Tone defaults to zinc; pass an
    explicit tone for warnings (e.g. an overspend)."
   [content & {:keys [tone]}]
-  [:p {:class (str "mt-3 text-sm " (or tone "text-zinc-500"))} content])
+  [:p {:class (str "mt-2 text-sm " (or tone "text-zinc-500"))} content])
 
 (defn- hero-stats-row
   "Three supporting figures under the headline, split by a hairline rule."
   [& substats]
-  (into [:div {:class "grid grid-cols-3 gap-4 pt-5 mt-6 border-t border-zinc-100"}]
+  (into [:div {:class "grid grid-cols-3 gap-4 pt-4 mt-4 border-t border-zinc-100"}]
         substats))
 
 (defn- hero-substat
@@ -862,20 +845,17 @@
                         "On track — spending is under income so far.")
                       :tone (when overspend? "text-rose-600"))]
         (when (and pd prev-pd)
-          [:div {:class "flex flex-col items-center justify-center gap-2.5"}
-           [:div {:class "relative w-40"}
-            (ring-progress period-pct
-                           :size 160 :stroke 14
-                           :track-cls "text-zinc-100"
-                           :arc-cls (if overspend? "text-rose-400" "text-emerald-500"))
-            [:div {:class "absolute inset-0 flex flex-col items-center justify-center text-center"}
-             [:p {:class (str "text-3xl font-bold leading-none tracking-tight tabular-nums "
-                              (if overspend? "text-rose-600" "text-zinc-900"))}
-              (str "Day " elapsed)]
-             [:p {:class "mt-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400"}
-              (str "of " period-len)]]]
-           [:p {:class "text-[11px] font-semibold uppercase tracking-wider text-zinc-400"}
-            "Pay period · payday to payday"]])]
+          [:div {:class "relative w-28"}
+           (ring-progress period-pct
+                          :size 112 :stroke 10
+                          :track-cls "text-zinc-100"
+                          :arc-cls (if overspend? "text-rose-400" "text-emerald-500"))
+           [:div {:class "absolute inset-0 flex flex-col items-center justify-center text-center"}
+            [:p {:class (str "text-xl font-bold leading-none tracking-tight tabular-nums "
+                             (if overspend? "text-rose-600" "text-zinc-900"))}
+             (str "Day " elapsed)]
+             [:p {:class "mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400"}
+              (str "of " period-len)]]])]
        [:div {:class "flex-1"}]
        (hero-stats-row
         (hero-substat "Savings rate" (utilities/pct-label savings-rate))

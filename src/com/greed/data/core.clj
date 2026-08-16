@@ -100,6 +100,34 @@
   [user]
   (true? (:user/active user)))
 
+(defn get-user-by-email [ctx email]
+  (let [target (biff/normalize-email email)]
+    (first (filter (fn [user]
+                     (= target (biff/normalize-email (:user/email user))))
+                   (get-users ctx)))))
+
+(defn set-password-reset-token
+  "Stores a single-use token on the user so password-reset links can only be
+  redeemed once. Requesting a new reset overwrites any previous token."
+  [ctx user-id token]
+  (biff/submit-tx ctx
+                  [{:db/doc-type :user
+                    :xt/id user-id
+                    :db/op :update
+                    :user/password-reset-token token
+                    :user/password-reset-at :db/now}]))
+
+(defn reset-password
+  "Sets a new password hash and clears the single-use reset token."
+  [ctx user-id new-password]
+  (biff/submit-tx ctx
+                  [{:db/doc-type :user
+                    :xt/id user-id
+                    :db/op :update
+                    :user/password (hash-password new-password)
+                    :user/password-reset-token :db/dissoc
+                    :user/password-reset-at :db/dissoc}]))
+
 (defn upsert-user [{:keys [params] :as ctx}]
   (let [user-id (java.util.UUID/randomUUID)]
     (logger/info "Creating user...")

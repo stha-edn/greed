@@ -24,12 +24,11 @@
   (let [user-id      (:uid session)
         budget-items (data/get-budget-items ctx user-id)
         finances     (data/get-finances ctx user-id)
-        payday       (:finances/payday finances)
-        events       (data/get-events ctx user-id)]
+        payday       (:finances/payday finances)]
     (ui/app
      ctx
      [:div {:class "space-y-6"}
       (when (:alert params) (alerts/info params))
       (headers/pages-heading ["Finances"] "Budget")
-      (stats/finance-hero budget-items payday events)
+      (stats/finance-hero budget-items payday)
       (budget-lists :budget-items budget-items)])))
