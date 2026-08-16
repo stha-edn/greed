@@ -2,20 +2,40 @@
   (:require [com.greed.data.core :as data]
             [com.greed.ui.components.svgs :as svgs]))
 
+(def ^:private public-menu-toggle-actions
+  "hyperscript for the public-nav hamburger (mobile only): toggles the `open`
+   attribute on the compact link menu, mirroring the app drawer's pattern."
+  (str "on click\n"
+       "  if the @open of #public-nav-menu is 'true'\n"
+       "    remove @open from #public-nav-menu\n"
+       "    set the @aria-expanded of #public-nav-toggle to 'false'\n"
+       "  else\n"
+       "    add @open='true' to #public-nav-menu\n"
+       "    set the @aria-expanded of #public-nav-toggle to 'true'\n"
+       "  end"))
+
+(def ^:private public-menu-escape-actions
+  "hyperscript for the nav wrapper: Escape closes the public-nav menu."
+  (str "on keydown[key == 'Escape'] from window\n"
+       "  if the @open of #public-nav-menu is 'true'\n"
+       "    remove @open from #public-nav-menu\n"
+       "    set the @aria-expanded of #public-nav-toggle to 'false'\n"
+       "  end"))
+
 (defn nav [{:keys [session]}]
   (let [signed-in? (some? (:uid session))]
-    [:nav {:class "flex items-center justify-between gap-3 py-4"}
+    [:nav {:class "relative flex items-center justify-between gap-3 py-4" :_ public-menu-escape-actions}
      [:a {:href "/" :class "active:scale-[0.97] transition-transform"}
       [:span {:class "text-2xl sm:text-3xl font-giza font-bold text-zinc-900"} "greed."]]
      [:div {:class "flex items-center gap-1.5 sm:gap-2"}
       [:a {:href "/about"
-           :class "whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
+           :class "hidden sm:inline-block whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
        "About"]
       [:a {:href "/team"
-           :class "whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
+           :class "hidden sm:inline-block whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
        "Team"]
       [:a {:href "/contact"
-           :class "whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
+           :class "hidden sm:inline-block whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
        "Contact"]
       (if signed-in?
         [:a {:href "/app"
@@ -27,7 +47,27 @@
           "Sign In"]
          [:a {:href "/signup"
               :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors active:scale-[0.97]"}
-          "Sign Up"]])]]))
+          "Sign Up"]])
+      ;; Mobile-only entry point to the links that collapse above (About,
+      ;; Team, Contact). Keeps every page reachable from the header itself
+      ;; instead of relying on the footer. Sign In/Sign Up stay visible on
+      ;; the top nav at every width, so they're not repeated here.
+      [:button {:id "public-nav-toggle"
+                :type "button"
+                :aria-label "Open menu"
+                :aria-haspopup "true"
+                :aria-controls "public-nav-menu"
+                :aria-expanded "false"
+                :_ public-menu-toggle-actions
+                :class "sm:hidden p-2 -mr-1 text-zinc-500 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500/70"}
+       [:svg {:class "w-5 h-5" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
+        [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2"
+                :d "M4 6h16M4 12h16M4 18h16"}]]]]
+     [:div {:id "public-nav-menu"
+            :class "sm:hidden absolute right-0 top-full z-50 mt-2 w-48 origin-top-right rounded-xl bg-white py-1.5 shadow-lg ring-1 ring-zinc-200/70 opacity-0 scale-95 -translate-y-1 pointer-events-none transition duration-150 ease-out [&[open]]:opacity-100 [&[open]]:scale-100 [&[open]]:translate-y-0 [&[open]]:pointer-events-auto"}
+      [:a {:href "/about" :class "block px-4 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors active:scale-[0.98]"} "About"]
+      [:a {:href "/team" :class "block px-4 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors active:scale-[0.98]"} "Team"]
+      [:a {:href "/contact" :class "block px-4 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors active:scale-[0.98]"} "Contact"]]]))
 
 (defn- link-active? [uri href]
   "True when the current request path is on the nav item's route.

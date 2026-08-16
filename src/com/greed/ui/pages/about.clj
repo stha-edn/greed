@@ -45,15 +45,14 @@
                    "reveal-3")]]
 
      ;; Why the name
-     [:div {:class "reveal pb-20 lg:pb-28"}
-      [:div {:class "grid gap-12 items-center lg:grid-cols-2 lg:gap-20"}
+     [:div {:class "pb-20 lg:pb-28"}
+      [:div {:class "reveal text-center max-w-2xl mx-auto"}
        [:div
         (badge "Why the name")
         [:h2 {:class "text-3xl font-bold text-zinc-900 tracking-tight text-balance lg:text-4xl"}
          "Greed means refusing to settle for "
-         [:span {:class "text-emerald-600"} "financial confusion."]]]
-       [:div {:class "max-w-xl"}
-        [:p {:class "text-lg text-zinc-500 leading-relaxed"}
+         [:span {:class "text-emerald-600"} "financial confusion."]]
+        [:p {:class "mt-6 text-lg text-zinc-500 leading-relaxed"}
          "For us, Greed doesn't mean taking without limits. It means wanting more — more security, more ownership, more choice — disciplined by a plan you can actually see."]]]]
 
      ;; Security
