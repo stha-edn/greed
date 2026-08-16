@@ -6,7 +6,6 @@
             [com.greed.ui.components.headers :as headers]
             [com.greed.ui.components.stats :as stats]))
 
-
 (defn page [ctx]
   (let [user-id         (:uid (:session ctx))
         user            (data/get-user ctx user-id)

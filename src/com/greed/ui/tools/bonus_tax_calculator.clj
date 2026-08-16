@@ -55,8 +55,8 @@
           [:p {:class "text-sm text-zinc-500"}
            "Based on your salary of "
            [:span {:class "font-medium text-zinc-700"} (utilities/amount->rands salary) "/month"]
-            " and age " [:span {:class "font-medium text-zinc-700"} age]
-            " (" (tier-label tier) " tier). Pick a bonus size to calculate instantly:"]
+           " and age " [:span {:class "font-medium text-zinc-700"} age]
+           " (" (tier-label tier) " tier). Pick a bonus size to calculate instantly:"]
           (biff/form
            {:hx-post    "/app/tax/bonus-tax-calculator"
             :hx-target  "#bonus-result"
@@ -186,13 +186,13 @@
   (tools/panel
    (tools/panel-heading "Bonus Breakdown")
    (tools/breakdown-section "Inputs"
-     (tools/row "Monthly Gross Salary" (utilities/amount->rands income))
-     (tools/row "Annual Salary" (utilities/amount->rands annual-salary))
-     (tools/bold-row "Bonus Amount" (utilities/amount->rands bonus)))
+                            (tools/row "Monthly Gross Salary" (utilities/amount->rands income))
+                            (tools/row "Annual Salary" (utilities/amount->rands annual-salary))
+                            (tools/bold-row "Bonus Amount" (utilities/amount->rands bonus)))
    (tools/breakdown-section "Tax on Bonus"
-     (tools/row "Annual tax without bonus" (utilities/amount->rands tax-without))
-     (tools/row "Annual tax with bonus" (utilities/amount->rands tax-with))
-     (tools/bold-row "Tax on Bonus" (utilities/amount->rands bonus-tax) "text-rose-600"))))
+                            (tools/row "Annual tax without bonus" (utilities/amount->rands tax-without))
+                            (tools/row "Annual tax with bonus" (utilities/amount->rands tax-with))
+                            (tools/bold-row "Tax on Bonus" (utilities/amount->rands bonus-tax) "text-rose-600"))))
 
 (defn- bank-total [net-salary net-bonus month-total]
   [:div {:class "mt-4 rounded-xl bg-emerald-50 p-5 ring-1 ring-emerald-600/15"}
@@ -251,7 +251,7 @@
         :suffix "take-home"
         :status status
         :body [:<> (bonus-split take-share tax-share net-bonus bonus-tax)
-                   (bank-total net-salary net-bonus month-total)]
+               (bank-total net-salary net-bonus month-total)]
         :substats [(tools/hero-substat "Bonus amount" (utilities/amount->rands bonus))
                    (tools/hero-substat "Tax on bonus" (utilities/amount->rands bonus-tax) "text-rose-600")
                    (tools/hero-substat "Effective rate" (utilities/pct-label eff-rate) "text-rose-600")])
@@ -267,8 +267,7 @@
     (tools/tool-layout
      (form-card params)
      (guide)
-     (result-region params user finances))
-    ]))
+     (result-region params user finances))]))
 
 (defn page-get [ctx]
   (let [user-id  (data/get-user-id-from-session ctx)

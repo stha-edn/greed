@@ -1,7 +1,6 @@
 (ns com.greed.data.validation
   (:require [com.greed.utilities.core :as utilities]))
 
-
 (defn valid-payday? [payday]
   (and (>= payday 1)
        (<= payday 31)))
@@ -16,7 +15,7 @@
 
 (defn valid-amount? [amount]
   (and (number? amount)
-         (>= amount 0)))
+       (>= amount 0)))
 
 (defn ->valid-amount [amount]
   (let [amt (utilities/->int amount)]

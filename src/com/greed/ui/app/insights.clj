@@ -69,8 +69,8 @@
             [:div {:class "flex-1 overflow-hidden h-1.5 bg-zinc-100 rounded-full"}
              [:div {:class "h-full w-full rounded-full greed-bar-grow bg-rose-400"
                     :style {:width (str (int p) "%")}}]]
-             [:span {:class "flex-shrink-0 w-10 text-right text-xs font-medium text-rose-500 tabular-nums"}
-              (utilities/pct-label p)]]]))]
+            [:span {:class "flex-shrink-0 w-10 text-right text-xs font-medium text-rose-500 tabular-nums"}
+             (utilities/pct-label p)]]]))]
      [:p {:class "text-center py-6 text-sm text-zinc-400"}
       "No expenses yet. Add them in "
       [:a {:href "/app/finances" :class "font-medium text-emerald-600 hover:underline"} "Finances"]

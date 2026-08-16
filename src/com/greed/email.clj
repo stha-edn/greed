@@ -117,7 +117,7 @@
           (.setContent part html "text/html; charset=utf-8")
           (.addBodyPart multipart part)))
       (.setContent message multipart)
-      (let [transport (.getTransport session) ]
+      (let [transport (.getTransport session)]
         (try
           (.connect transport host (int port) username (secret :smtp/password))
           (.sendMessage transport message (.getAllRecipients message))

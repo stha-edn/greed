@@ -18,8 +18,8 @@
          :aria-labelledby "confirm-dialog-title"
          :aria-describedby "confirm-dialog-message"
          :class "fixed inset-0 z-50 flex items-center justify-center p-4"}
-    [:div {:data-cf-overlay "true"
-           :class "absolute inset-0 bg-black/50 backdrop-blur-sm confirm-overlay"}]
+   [:div {:data-cf-overlay "true"
+          :class "absolute inset-0 bg-black/50 backdrop-blur-sm confirm-overlay"}]
    [:div {:data-cf-card "true"
           :class "relative z-10 w-full max-w-sm rounded-2xl bg-white p-6 shadow-card-md confirm-card"}
     [:h3 {:data-cf-title "true" :class "text-base font-semibold text-zinc-900"}
@@ -87,7 +87,7 @@
         error?    (alert-error? alert-key)
         close-btn-class (str "flex-shrink-0 self-start p-1 -m-1 rounded-md transition active:scale-[0.9] "
                              (if error? "text-rose-400 hover:text-rose-700 hover:bg-rose-100"
-                                "text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100"))]
+                                 "text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100"))]
     (when message
       [:div
        {:id "info-alert"
@@ -109,7 +109,7 @@
          message]]
        (if dismiss-href
          (biff/form {:action dismiss-href}
-           [:button {:type "submit" :class close-btn-class} (svgs/close)])
+                    [:button {:type "submit" :class close-btn-class} (svgs/close)])
          [:button
           {:type "button"
            :_ (str "on click\n"
@@ -203,15 +203,15 @@
           {:class "min-w-0"}
           [:p {:class "text-sm font-medium text-zinc-200"} "Retirement annuity"]
           [:p {:class "text-xs text-zinc-500"} "Annual RA contributions"]]]]
-        [:div
-         {:class "flex justify-end gap-3 mt-6"}
-         (biff/form {:action "/app/dismiss-finance-tax-prompt"}
-           [:button
-            {:id "finance-tax-prompt-later-submit"
-             :type "submit"
-             :class "px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-md transition hover:bg-zinc-50 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"}
-            "Later"])
-         [:a
+       [:div
+        {:class "flex justify-end gap-3 mt-6"}
+        (biff/form {:action "/app/dismiss-finance-tax-prompt"}
+                   [:button
+                    {:id "finance-tax-prompt-later-submit"
+                     :type "submit"
+                     :class "px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-md transition hover:bg-zinc-50 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"}
+                    "Later"])
+        [:a
          {:href "/app/settings"
           :class "inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-emerald-500/20 border border-transparent rounded-md transition hover:bg-emerald-600/20 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"}
          "Update"]]]]]]])

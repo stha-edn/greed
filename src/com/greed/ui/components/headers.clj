@@ -1,7 +1,7 @@
 (ns com.greed.ui.components.headers
   (:require [com.greed.ui.components.breadcrumbs :as breadcrumbs]
-   [com.greed.ui.components.navs :as navs]
-   [clojure.string :as string]))
+            [com.greed.ui.components.navs :as navs]
+            [clojure.string :as string]))
 
 (defn pages [ctx & content]
   [:header {:class "site-header sticky top-0 z-40 shadow-sm shadow-zinc-900/5"}

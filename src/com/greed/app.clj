@@ -17,14 +17,12 @@
 (defn- redirect-to [location]
   (fn [_] {:status 301 :headers {"location" location}}))
 
-
-
 (def module
   {:routes [["/app" {:middleware [mid/wrap-signed-in]}
              ["" {:get dashboard/page}]
-["/finances"
-               ["/" {:get finances/page}]
-               ["/account-type-options" {:get forms/account-type-field}]
+             ["/finances"
+              ["/" {:get finances/page}]
+              ["/account-type-options" {:get forms/account-type-field}]
               ["/create-budget-item" {:post mid/create-budget-item}]
               ["/update-budget-item" {:post mid/update-budget-item}]
               ["/delete-budget-item" {:post mid/delete-budget-item}]]

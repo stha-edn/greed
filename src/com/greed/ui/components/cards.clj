@@ -1,7 +1,7 @@
 (ns com.greed.ui.components.cards
   (:require [com.greed.data.core :as c.data]
-   [com.greed.ui.components.svgs :as svgs]
-   [com.greed.utilities.core :as utilities]))
+            [com.greed.ui.components.svgs :as svgs]
+            [com.greed.utilities.core :as utilities]))
 
 (defn note-from-greed []
   [:div {:class "relative overflow-hidden max-w-md p-8 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black rounded-2xl ring-1 ring-white/10 shadow-card-md"}
@@ -26,10 +26,10 @@
         last-four (utilities/mock-last-four (or user-id bank))
         salary-budget-amount (or (some (fn [item]
                                          (when (and (= (:budget-item/type item) :income)
-                                                 (= (:budget-item/title item) "Salary"))
+                                                    (= (:budget-item/title item) "Salary"))
                                            (:budget-item/amount item)))
-                                   (or budget-items []))
-                               0)
+                                       (or budget-items []))
+                                 0)
         other-income (- (or total-income 0) salary-budget-amount)
         income       (if net-monthly-income
                        (+ net-monthly-income (max 0 other-income))

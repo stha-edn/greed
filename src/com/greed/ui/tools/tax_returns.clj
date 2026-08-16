@@ -57,17 +57,17 @@
                          :description "Medical aid gives you two potential tax benefits — leave both fields at 0 if you are not on medical aid.")
     [:div {:class "divide-y divide-zinc-100 border-t border-zinc-100"}
      (tools/glossary-item "Medical Aid Tax Credit (MTC)"
-       "SARS gives every medical aid member a fixed monthly credit that reduces your tax bill directly — it is not a deduction from income. For 2026: "
-       [:span {:class "font-medium text-zinc-700"} "R364/month"]
-       " for yourself and your first dependant, "
-       [:span {:class "font-medium text-zinc-700"} "R246/month"]
-       " for each additional dependant. The credit is applied automatically once you enter your monthly contribution amount.")
+                          "SARS gives every medical aid member a fixed monthly credit that reduces your tax bill directly — it is not a deduction from income. For 2026: "
+                          [:span {:class "font-medium text-zinc-700"} "R364/month"]
+                          " for yourself and your first dependant, "
+                          [:span {:class "font-medium text-zinc-700"} "R246/month"]
+                          " for each additional dependant. The credit is applied automatically once you enter your monthly contribution amount.")
      (tools/glossary-item "No medical aid?"
-       "Leave medical contributions at 0. No MTC will be applied and your result will reflect your tax position accurately without it.")
+                          "Leave medical contributions at 0. No MTC will be applied and your result will reflect your tax position accurately without it.")
      (tools/glossary-item "Out-of-pocket medical expenses (Section 6B)"
-       "If you paid medical costs that your scheme did not cover (co-payments, dentist, spectacles, medicines etc.), you may claim an additional credit. SARS applies "
-       [:span {:class "font-medium text-zinc-700"} "33.3%"]
-       " of qualifying expenses exceeding 4x your annual MTC (under 65), or 33.3% of all such expenses (65 and older). Only enter amounts you have receipts for.")])
+                          "If you paid medical costs that your scheme did not cover (co-payments, dentist, spectacles, medicines etc.), you may claim an additional credit. SARS applies "
+                          [:span {:class "font-medium text-zinc-700"} "33.3%"]
+                          " of qualifying expenses exceeding 4x your annual MTC (under 65), or 33.3% of all such expenses (65 and older). Only enter amounts you have receipts for.")])
 
    (tools/notice
     "This simulator is an estimate only and does not account for all deductions (e.g. home office, commission expenses). Consult a registered tax practitioner or SARS for your official assessment.")])
@@ -94,7 +94,7 @@
             ra-ded         (tax/ra-deduction annual-income ra-annual)
             taxable-income (max 0 (- annual-income ra-ded))
             {:keys [gross-tax rebates net-tax effective-rate]}
-              (tax/calculate-income-tax taxable-income age (c/get-tax-returns-config))
+            (tax/calculate-income-tax taxable-income age (c/get-tax-returns-config))
             mtc            (if (pos? med-monthly) (tax/medical-tax-credit dependants) 0)
             add-med        (tax/additional-medical-credit age med-monthly 0 mtc)
             final-tax      (max 0 (- net-tax mtc add-med))
@@ -138,7 +138,7 @@
             [:p {:class "text-xs text-zinc-400 mt-1"}
              "Effective tax rate: " (utilities/pct-label effective-rate) "."
              (when-not has-profile?
-                " Add your medical aid and RA details in Settings for a more accurate estimate.")]]]]))
+               " Add your medical aid and RA details in Settings for a more accurate estimate.")]]]]))
       (tools/panel
        [:div {:class "flex flex-col items-center justify-center px-6 py-12 text-center"}
         [:div {:class "mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50"}
@@ -181,24 +181,24 @@
       :hx-swap    "outerHTML"
       :hx-trigger "submit"}
      (tools/form-section "Income & PAYE"
-       (field "annual-income" "Gross Annual Income (R)" "number" "Exclude travel allowance" true (:annual-income params))
-       (field "age" "Age" "number" nil true (:age params))
-       (field "paye-paid" "Total PAYE Paid to SARS (R)" "number" "Source code 4102 on your IRP5" true (:paye-paid params)))
+                         (field "annual-income" "Gross Annual Income (R)" "number" "Exclude travel allowance" true (:annual-income params))
+                         (field "age" "Age" "number" nil true (:age params))
+                         (field "paye-paid" "Total PAYE Paid to SARS (R)" "number" "Source code 4102 on your IRP5" true (:paye-paid params)))
      (tools/form-section "Medical Aid"
-       (field "medical-contributions" "Medical Aid Contributions p/m (R)" "number" nil false (:medical-contributions params))
-       (field "dependants" "Medical Aid Dependants" "number" "Excluding yourself" false (:dependants params))
-       (field "out-of-pocket-medical" "Out-of-pocket Medical Expenses p/a (R)" "number" "Not covered by medical aid" false (:out-of-pocket-medical params)))
+                         (field "medical-contributions" "Medical Aid Contributions p/m (R)" "number" nil false (:medical-contributions params))
+                         (field "dependants" "Medical Aid Dependants" "number" "Excluding yourself" false (:dependants params))
+                         (field "out-of-pocket-medical" "Out-of-pocket Medical Expenses p/a (R)" "number" "Not covered by medical aid" false (:out-of-pocket-medical params)))
      (tools/form-section "Retirement & Travel"
-       (field "ra-annual" "Retirement Annuity Contributions p/a (R)" "number" "Max deduction: 27.5% of income or R350,000" false (:ra-annual params))
-       (field "travel-allowance" "Travel Allowance p/a (R)" "number" "Source code 3701" false (:travel-allowance params))
-       (logbook-select (:logbook params)))
+                         (field "ra-annual" "Retirement Annuity Contributions p/a (R)" "number" "Max deduction: 27.5% of income or R350,000" false (:ra-annual params))
+                         (field "travel-allowance" "Travel Allowance p/a (R)" "number" "Source code 3701" false (:travel-allowance params))
+                         (logbook-select (:logbook params)))
      [:div {:class "mt-6 flex justify-end"}
       (shared/btn :variant :primary :size :md :class "px-8" :type "submit"
                   "Simulate Return")])]))
 
 (defn- result-region [params]
   (let [->n             #(try (double (BigDecimal. (or % "0")))
-                            (catch Exception _ 0.0))
+                              (catch Exception _ 0.0))
         annual-income   (->n (:annual-income params))
         age             (or (utilities/->int (:age params)) 0)
         paye-paid       (->n (:paye-paid params))
@@ -245,23 +245,23 @@
        (tools/panel
         (tools/panel-heading "2026 Tax Summary")
         (tools/breakdown-section "Income"
-          (tools/row "Gross Annual Income" (utilities/amount->rands annual-income))
-          (when (pos? travel)
-            (tools/row (str "Taxable Travel (" (if logbook? "20%" "80%") ")")
-                       (utilities/amount->rands taxable-travel)))
-          (tools/row "Retirement Annuity Deduction" (str "(" (utilities/amount->rands ra-ded) ")"))
-          (tools/bold-row "Taxable Income" (utilities/amount->rands taxable-income)))
+                                 (tools/row "Gross Annual Income" (utilities/amount->rands annual-income))
+                                 (when (pos? travel)
+                                   (tools/row (str "Taxable Travel (" (if logbook? "20%" "80%") ")")
+                                              (utilities/amount->rands taxable-travel)))
+                                 (tools/row "Retirement Annuity Deduction" (str "(" (utilities/amount->rands ra-ded) ")"))
+                                 (tools/bold-row "Taxable Income" (utilities/amount->rands taxable-income)))
         (tools/breakdown-section "Tax Calculation"
-          (tools/row "Gross Tax" (utilities/amount->rands gross-tax))
-          (tools/row "Primary / Age Rebates" (str "(" (utilities/amount->rands rebates) ")"))
-          (when (pos? mtc)
-            (tools/row "Medical Aid Tax Credit" (str "(" (utilities/amount->rands mtc) ")")))
-          (when (pos? add-med-credit)
-            (tools/row "Additional Medical Credit (s6B)" (str "(" (utilities/amount->rands add-med-credit) ")")))
-          (tools/bold-row "Net Tax Payable" (utilities/amount->rands final-tax)))
+                                 (tools/row "Gross Tax" (utilities/amount->rands gross-tax))
+                                 (tools/row "Primary / Age Rebates" (str "(" (utilities/amount->rands rebates) ")"))
+                                 (when (pos? mtc)
+                                   (tools/row "Medical Aid Tax Credit" (str "(" (utilities/amount->rands mtc) ")")))
+                                 (when (pos? add-med-credit)
+                                   (tools/row "Additional Medical Credit (s6B)" (str "(" (utilities/amount->rands add-med-credit) ")")))
+                                 (tools/bold-row "Net Tax Payable" (utilities/amount->rands final-tax)))
         (tools/breakdown-section "PAYE Reconciliation"
-          (tools/row "PAYE Paid" (utilities/amount->rands paye-paid))
-          (tools/row "Net Tax Payable" (utilities/amount->rands final-tax)))
+                                 (tools/row "PAYE Paid" (utilities/amount->rands paye-paid))
+                                 (tools/row "Net Tax Payable" (utilities/amount->rands final-tax)))
         [:div {:class (str "flex items-center justify-between gap-3 px-5 py-4 sm:px-6 "
                            (if refund? "bg-emerald-50/60" "bg-rose-50/60"))}
          [:span {:class (str "text-sm font-semibold " (if refund? "text-emerald-800" "text-rose-800"))}

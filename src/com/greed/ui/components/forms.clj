@@ -69,11 +69,11 @@
       (shared/input :id "age" :type "number" :label "Age" :required? true)
       (shared/input :id "email" :type "email" :label "Email address" :required? true)
       (shared/input :id "password" :type "password" :label "Password" :required? true)
-       [:div {:class "mt-5"}
-        (shared/btn :variant :primary :size :md :type "submit"
-                    :class (str "w-full" (when site-key " g-recaptcha"))
-                    :attrs (when site-key {:data-sitekey site-key :data-callback "submitSignup"})
-                    "Create account")]
+      [:div {:class "mt-5"}
+       (shared/btn :variant :primary :size :md :type "submit"
+                   :class (str "w-full" (when site-key " g-recaptcha"))
+                   :attrs (when site-key {:data-sitekey site-key :data-callback "submitSignup"})
+                   "Create account")]
       (on-error ctx))]
     [:div {:class "px-8 py-4 bg-zinc-50 border-t border-zinc-100 text-center"}
      [:p {:class "text-sm text-zinc-500"}
@@ -82,23 +82,23 @@
 
 (defn user [ctx]
   (shared/card {:class "p-6"}
-   [:h2 {:class "text-base font-semibold text-zinc-900 tracking-tight mb-5"} "Personal Information"]
-   (biff/form
-    {:action "/app/save-user"}
-    [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
-     (shared/app-input ctx :id "firstname" :type "text" :label "First Name" :required? true)
-     (shared/app-input ctx :id "lastname" :type "text" :label "Last Name" :required? true)
-     (shared/app-input ctx :id "age" :type "number" :label "Age" :required? true)
-     (shared/app-input ctx :id "email" :type "text" :label "Email" :required? true)
-     [:div {:class "mt-4"}
-      [:label {:class "block text-sm font-medium text-zinc-700 mb-1" :for "password"} "Password"]
-      [:input {:class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 placeholder-zinc-400 transition-colors duration-150"
-               :id "password" :name "password" :type "password"
-               :placeholder "Leave blank to keep your current password"}]
-      [:p {:class "text-xs text-zinc-400 mt-1"} "Only enter a new password if you want to change it."]]]
-    [:div {:class "flex justify-end mt-5"}
-     (shared/btn :variant :dark :type "submit"
-      "Save changes")])))
+               [:h2 {:class "text-base font-semibold text-zinc-900 tracking-tight mb-5"} "Personal Information"]
+               (biff/form
+                {:action "/app/save-user"}
+                [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
+                 (shared/app-input ctx :id "firstname" :type "text" :label "First Name" :required? true)
+                 (shared/app-input ctx :id "lastname" :type "text" :label "Last Name" :required? true)
+                 (shared/app-input ctx :id "age" :type "number" :label "Age" :required? true)
+                 (shared/app-input ctx :id "email" :type "text" :label "Email" :required? true)
+                 [:div {:class "mt-4"}
+                  [:label {:class "block text-sm font-medium text-zinc-700 mb-1" :for "password"} "Password"]
+                  [:input {:class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 placeholder-zinc-400 transition-colors duration-150"
+                           :id "password" :name "password" :type "password"
+                           :placeholder "Leave blank to keep your current password"}]
+                  [:p {:class "text-xs text-zinc-400 mt-1"} "Only enter a new password if you want to change it."]]]
+                [:div {:class "flex justify-end mt-5"}
+                 (shared/btn :variant :dark :type "submit"
+                             "Save changes")])))
 
 (defn- account-type-options
   [bank]
@@ -120,80 +120,80 @@
         current-bank       (or (:finances/bank finances) (first bank-options))
         current-account-type (:finances/account-type finances)]
     (shared/card {:class "p-6"}
-     [:div {:class "mb-6"}
-      [:h2 {:class "text-base font-semibold text-zinc-900 tracking-tight"} "Financial Details"]
-      [:p {:class "text-sm text-zinc-400 mt-0.5"} "Personalises your dashboard, bank card, and tax estimates."]]
-     (biff/form
-      {:action "/app/save-finances"}
+                 [:div {:class "mb-6"}
+                  [:h2 {:class "text-base font-semibold text-zinc-900 tracking-tight"} "Financial Details"]
+                  [:p {:class "text-sm text-zinc-400 mt-0.5"} "Personalises your dashboard, bank card, and tax estimates."]]
+                 (biff/form
+                  {:action "/app/save-finances"}
 
       ;; Banking
-      [:div
-       [:p {:class "text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3"} "Banking"]
-       [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
-        (shared/app-select ctx :id "bank" :label "Bank" :options bank-options :required? true
-                           :hint "Your primary banking institution"
-                           :attrs {"hx-get" "/app/finances/account-type-options"
-                                   "hx-trigger" "change"
-                                   "hx-target" "#account-type-field"
-                                   "hx-swap" "outerHTML"
-                                   "_" "on htmx:beforeRequest add .opacity-50 to #account-type-field
+                  [:div
+                   [:p {:class "text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3"} "Banking"]
+                   [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
+                    (shared/app-select ctx :id "bank" :label "Bank" :options bank-options :required? true
+                                       :hint "Your primary banking institution"
+                                       :attrs {"hx-get" "/app/finances/account-type-options"
+                                               "hx-trigger" "change"
+                                               "hx-target" "#account-type-field"
+                                               "hx-swap" "outerHTML"
+                                               "_" "on htmx:beforeRequest add .opacity-50 to #account-type-field
 on htmx:afterRequest remove .opacity-50 from #account-type-field"})
-        (shared/app-account-type-select :id "account-type" :label "Account Type"
-                                        :hint "The type of account you hold at this bank"
-                                        :options (account-type-options current-bank)
-                                        :selected current-account-type)]]
+                    (shared/app-account-type-select :id "account-type" :label "Account Type"
+                                                    :hint "The type of account you hold at this bank"
+                                                    :options (account-type-options current-bank)
+                                                    :selected current-account-type)]]
 
       ;; Income
-      [:div {:class "border-t border-zinc-100 pt-5 mt-5"}
-       [:p {:class "text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3"} "Income"]
-       [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
-        (shared/app-input ctx :id "salary" :type "number" :label "Monthly Gross Salary" :required? true
-                          :prefix "R" :hint "Your salary before any deductions")
-        (shared/app-input ctx :id "payday" :type "number" :label "Pay Day" :required? true
-                          :hint "Day of the month you receive your salary (1–31)")]]
+                  [:div {:class "border-t border-zinc-100 pt-5 mt-5"}
+                   [:p {:class "text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3"} "Income"]
+                   [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
+                    (shared/app-input ctx :id "salary" :type "number" :label "Monthly Gross Salary" :required? true
+                                      :prefix "R" :hint "Your salary before any deductions")
+                    (shared/app-input ctx :id "payday" :type "number" :label "Pay Day" :required? true
+                                      :hint "Day of the month you receive your salary (1–31)")]]
 
-      [:div {:class "flex justify-end pt-5 mt-5 border-t border-zinc-100"}
-       (shared/btn :variant :dark :type "submit"
-        "Save changes")]))))
+                  [:div {:class "flex justify-end pt-5 mt-5 border-t border-zinc-100"}
+                   (shared/btn :variant :dark :type "submit"
+                               "Save changes")]))))
 
 (defn tax-profile [{:keys [session] :as ctx}]
   (let [user-id (:uid session)
         tp      (data/get-tax-profile ctx user-id)
         val     (fn [k] (str (or (k tp) 0)))]
     (shared/card {:class "p-6"}
-     [:div {:class "mb-6"}
-      [:h2 {:class "text-base font-semibold text-zinc-900 tracking-tight"} "Tax Assessment Profile"]
-      [:p {:class "text-sm text-zinc-400 mt-0.5"}
-       "Stored and used automatically in your tax return auto assessment."]]
-     (biff/form
-      {:action "/app/save-tax-profile"}
+                 [:div {:class "mb-6"}
+                  [:h2 {:class "text-base font-semibold text-zinc-900 tracking-tight"} "Tax Assessment Profile"]
+                  [:p {:class "text-sm text-zinc-400 mt-0.5"}
+                   "Stored and used automatically in your tax return auto assessment."]]
+                 (biff/form
+                  {:action "/app/save-tax-profile"}
 
       ;; Medical Aid
-      [:div
-       [:p {:class "text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3"} "Medical Aid"]
-       [:p {:class "text-xs text-zinc-400 mb-4 leading-relaxed"}
-        "Leave these at 0 if you are not on medical aid. Credits are applied automatically (R364/month for you + first dependant, R246/month for each additional)."]
-       [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
-        (shared/labeled-input :id "medical-monthly" :type "number" :label "Monthly Contributions"
-                              :prefix "R" :min "0" :value (val :tax-profile/medical-monthly)
-                              :hint "Your share of the monthly medical aid premium")
-        (shared/labeled-input :id "medical-dependants" :type "number" :label "Dependants"
-                              :min "0" :value (val :tax-profile/medical-dependants)
-                              :hint "Number of registered dependants, excluding yourself")]]
+                  [:div
+                   [:p {:class "text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3"} "Medical Aid"]
+                   [:p {:class "text-xs text-zinc-400 mb-4 leading-relaxed"}
+                    "Leave these at 0 if you are not on medical aid. Credits are applied automatically (R364/month for you + first dependant, R246/month for each additional)."]
+                   [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
+                    (shared/labeled-input :id "medical-monthly" :type "number" :label "Monthly Contributions"
+                                          :prefix "R" :min "0" :value (val :tax-profile/medical-monthly)
+                                          :hint "Your share of the monthly medical aid premium")
+                    (shared/labeled-input :id "medical-dependants" :type "number" :label "Dependants"
+                                          :min "0" :value (val :tax-profile/medical-dependants)
+                                          :hint "Number of registered dependants, excluding yourself")]]
 
       ;; Retirement
-      [:div {:class "border-t border-zinc-100 pt-5 mt-5"}
-       [:p {:class "text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3"} "Retirement Annuity"]
-       [:p {:class "text-xs text-zinc-400 mb-4 leading-relaxed"}
-        "RA contributions reduce your taxable income. The deduction is capped at 27.5% of your income or R350,000, whichever is lower."]
-       [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
-        (shared/labeled-input :id "ra-annual" :type "number" :label "Annual RA Contributions"
-                              :prefix "R" :min "0" :value (val :tax-profile/ra-annual)
-                              :hint "Total personal RA contributions for the year")]]
+                  [:div {:class "border-t border-zinc-100 pt-5 mt-5"}
+                   [:p {:class "text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3"} "Retirement Annuity"]
+                   [:p {:class "text-xs text-zinc-400 mb-4 leading-relaxed"}
+                    "RA contributions reduce your taxable income. The deduction is capped at 27.5% of your income or R350,000, whichever is lower."]
+                   [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
+                    (shared/labeled-input :id "ra-annual" :type "number" :label "Annual RA Contributions"
+                                          :prefix "R" :min "0" :value (val :tax-profile/ra-annual)
+                                          :hint "Total personal RA contributions for the year")]]
 
-      [:div {:class "flex justify-end pt-5 mt-5 border-t border-zinc-100"}
-       (shared/btn :variant :dark :type "submit"
-        "Save changes")]))))
+                  [:div {:class "flex justify-end pt-5 mt-5 border-t border-zinc-100"}
+                   (shared/btn :variant :dark :type "submit"
+                               "Save changes")]))))
 
 (def ^:private budget-item-form-copy
   "Modal heading + blurb per category, so the Add dialog says exactly what it

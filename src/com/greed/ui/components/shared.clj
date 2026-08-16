@@ -59,10 +59,10 @@
          :or {variant :light}} opts]
     (into [:div
            {:class (str/join " "
-              [(case variant
-                 :light "bg-white border border-zinc-200/70 rounded-xl shadow-card"
-                 :soft "bg-gradient-to-br from-white via-white to-emerald-50/80 border border-zinc-200/70 rounded-xl shadow-card"
-                 :dark "bg-zinc-900 border border-zinc-800 rounded-2xl shadow-card-md")
+                             [(case variant
+                                :light "bg-white border border-zinc-200/70 rounded-xl shadow-card"
+                                :soft "bg-gradient-to-br from-white via-white to-emerald-50/80 border border-zinc-200/70 rounded-xl shadow-card"
+                                :dark "bg-zinc-900 border border-zinc-800 rounded-2xl shadow-card-md")
                               class])}]
           body)))
 
@@ -211,9 +211,9 @@
     [:div {:id id
            :role "dialog"
            :aria-modal "true"
-            :_ (str "on keydown[key == 'Escape'] from window\n"
-                    "  if the @open of #" id " is 'true'\n"
-                    (modal-exit-sequence id))
+           :_ (str "on keydown[key == 'Escape'] from window\n"
+                   "  if the @open of #" id " is 'true'\n"
+                   (modal-exit-sequence id))
            :class "greed-modal fixed inset-0 z-50 flex items-center justify-center p-4 invisible pointer-events-none [&[open]]:visible [&[open]]:pointer-events-auto"}
      [:div {:class "greed-modal-overlay absolute inset-0 bg-black/50 backdrop-blur-sm" :_ close}]
      (into [:div {:class "greed-modal-card relative z-10"}] body)]))

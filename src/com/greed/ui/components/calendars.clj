@@ -42,13 +42,13 @@
                  :hx-target  "#calendar-events"
                  :hx-swap    "outerHTML"
                  :class      "flex flex-shrink-0"}
-       [:input {:type "hidden" :name "event-id" :value (str id)}]
-        [:button {:type    "submit"
-                  :title   "Remove event"
-                  :aria-label "Remove event"
-                  :data-confirm "Remove this event?"
-                  :class   "flex items-center justify-center w-6 h-6 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-all active:scale-95 active:text-red-600 active:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"}
-         (svgs/close {:class "w-4 h-4"})])]))
+                [:input {:type "hidden" :name "event-id" :value (str id)}]
+                [:button {:type    "submit"
+                          :title   "Remove event"
+                          :aria-label "Remove event"
+                          :data-confirm "Remove this event?"
+                          :class   "flex items-center justify-center w-6 h-6 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-all active:scale-95 active:text-red-600 active:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"}
+                 (svgs/close {:class "w-4 h-4"})])]))
 
 (defn- todo-row [{:event/keys [title date done] :xt/keys [id]}]
   (let [done? (boolean done)]
@@ -57,15 +57,15 @@
                  :hx-target "#todos-panel"
                  :hx-swap   "outerHTML"
                  :class     "flex flex-shrink-0"}
-       [:input {:type "hidden" :name "event-id" :value (str id)}]
-       [:button {:type       "submit"
-                 :title      (if done? "Mark as not done" "Mark as done")
-                 :aria-label (if done? "Mark as not done" "Mark as done")
-                 :class      (str "flex items-center justify-center w-5 h-5 rounded-md border transition-all active:scale-95 "
-                                  (if done?
-                                    "border-transparent bg-emerald-500 text-white"
-                                    "border-zinc-300 bg-white hover:bg-emerald-50 hover:border-emerald-400"))}
-        (when done? (svgs/check {:class "w-3 h-3"}))])
+                [:input {:type "hidden" :name "event-id" :value (str id)}]
+                [:button {:type       "submit"
+                          :title      (if done? "Mark as not done" "Mark as done")
+                          :aria-label (if done? "Mark as not done" "Mark as done")
+                          :class      (str "flex items-center justify-center w-5 h-5 rounded-md border transition-all active:scale-95 "
+                                           (if done?
+                                             "border-transparent bg-emerald-500 text-white"
+                                             "border-zinc-300 bg-white hover:bg-emerald-50 hover:border-emerald-400"))}
+                 (when done? (svgs/check {:class "w-3 h-3"}))])
      [:div {:class "min-w-0 flex-1"}
       [:p {:class (str "text-sm font-medium truncate "
                        (if done? "text-zinc-400" "text-zinc-800"))}
@@ -77,13 +77,13 @@
                  :hx-target "#todos-panel"
                  :hx-swap   "outerHTML"
                  :class     "flex flex-shrink-0"}
-       [:input {:type "hidden" :name "event-id" :value (str id)}]
-       [:button {:type       "submit"
-                 :title      "Remove todo"
-                 :aria-label "Remove todo"
-                 :data-confirm "Remove this todo?"
-                 :class      "flex items-center justify-center w-6 h-6 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-all active:scale-95 active:text-red-600 active:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"}
-        (svgs/close {:class "w-4 h-4"})])]))
+                [:input {:type "hidden" :name "event-id" :value (str id)}]
+                [:button {:type       "submit"
+                          :title      "Remove todo"
+                          :aria-label "Remove todo"
+                          :data-confirm "Remove this todo?"
+                          :class      "flex items-center justify-center w-6 h-6 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-all active:scale-95 active:text-red-600 active:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"}
+                 (svgs/close {:class "w-4 h-4"})])]))
 
 (defn- scheduled-event? [{:event/keys [type date]}]
   (and date (not= (or type :general) :todo)))
@@ -115,18 +115,18 @@
                   :hx-target "#todos-panel"
                   :hx-swap   "outerHTML"
                   :class     "space-y-2.5"}
-        [:input {:type        "text"
-                 :name        "title"
-                 :required    true
-                 :placeholder "What needs doing?"
-                 :class       (shared/base-input-class)}]
-        [:input {:type        "date"
-                 :name        "date"
-                 :aria-label  "Due date (optional)"
-                 :placeholder "Due date"
-                 :class       (shared/base-input-class)}]
-        (shared/btn :variant :primary :size :md :type "submit" :class "w-full"
-                    "Add todo"))]
+                 [:input {:type        "text"
+                          :name        "title"
+                          :required    true
+                          :placeholder "What needs doing?"
+                          :class       (shared/base-input-class)}]
+                 [:input {:type        "date"
+                          :name        "date"
+                          :aria-label  "Due date (optional)"
+                          :placeholder "Due date"
+                          :class       (shared/base-input-class)}]
+                 (shared/btn :variant :primary :size :md :type "submit" :class "w-full"
+                             "Add todo"))]
      (if (seq todos)
        [:div {:class "divide-y divide-zinc-100"}
         (map todo-row todos)]
@@ -160,22 +160,22 @@
                   :hx-target  "#calendar-events"
                   :hx-swap    "outerHTML"
                   :class      "space-y-2.5"}
-        [:input {:type        "text"
-                 :name        "title"
-                 :required    true
-                 :placeholder "Event title"
-                 :class       (shared/base-input-class)}]
-        [:div {:class "grid grid-cols-2 gap-2"}
-         [:select {:name  "type"
-                   :class (shared/base-input-class)}
-          [:option {:value "bill"} "Bill"]
-          [:option {:value "income"} "Payment in"]]
-         [:input {:type     "date"
-                  :name     "date"
-                  :required true
-                  :class    (shared/base-input-class)}]]
-        (shared/btn :variant :primary :size :md :type "submit" :class "w-full"
-                    "Save event"))]
+                 [:input {:type        "text"
+                          :name        "title"
+                          :required    true
+                          :placeholder "Event title"
+                          :class       (shared/base-input-class)}]
+                 [:div {:class "grid grid-cols-2 gap-2"}
+                  [:select {:name  "type"
+                            :class (shared/base-input-class)}
+                   [:option {:value "bill"} "Bill"]
+                   [:option {:value "income"} "Payment in"]]
+                  [:input {:type     "date"
+                           :name     "date"
+                           :required true
+                           :class    (shared/base-input-class)}]]
+                 (shared/btn :variant :primary :size :md :type "submit" :class "w-full"
+                             "Save event"))]
      (if (seq scheduled)
        [:div {:class "divide-y divide-zinc-100"}
         (map event-row scheduled)]
@@ -266,15 +266,7 @@
             [:div {:class (str "w-7 h-7 flex items-center justify-center rounded-full "
                                "text-sm font-medium transition-colors " num-cls)}
              d]
-              (when (seq dots)
-                [:div {:class "flex items-center gap-0.5 mt-1"}
-                 (for [dot dots]
-                   [:div {:class (str "w-1.5 h-1.5 rounded-full " dot)}])])
-              ]
-             )
-            )
-           ]
-          ]
-         ]
-         )
-         )
+            (when (seq dots)
+              [:div {:class "flex items-center gap-0.5 mt-1"}
+               (for [dot dots]
+                 [:div {:class (str "w-1.5 h-1.5 rounded-full " dot)}])])]))]]]))

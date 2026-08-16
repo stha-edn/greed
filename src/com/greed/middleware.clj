@@ -45,9 +45,9 @@
        "font-src 'self' https://fonts.gstatic.com; "
        "img-src 'self' data: https://www.google.com https://www.gstatic.com "
        "https://www.googletagmanager.com; "
-        "connect-src 'self' https://cdn.jsdelivr.net https://unpkg.com "
-        "https://www.google.com https://www.gstatic.com https://www.google-analytics.com "
-        "https://region1.google-analytics.com ws://mygreed.co.za wss://mygreed.co.za; "
+       "connect-src 'self' https://cdn.jsdelivr.net https://unpkg.com "
+       "https://www.google.com https://www.gstatic.com https://www.google-analytics.com "
+       "https://region1.google-analytics.com ws://mygreed.co.za wss://mygreed.co.za; "
        "frame-src https://www.google.com https://www.gstatic.com; "
        "base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'none'"))
 

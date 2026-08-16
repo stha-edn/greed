@@ -4,7 +4,6 @@
             [com.greed.ui.components.forms :as forms]
             [com.greed.ui.components.headers :as headers]))
 
-
 (defn page [ctx]
   (ui/app
    ctx

@@ -2,7 +2,6 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]))
 
-
 (defn read-edn-resource
   "Read an EDN file from the resources directory.
    File should be in one of the paths specified in deps.edn:
@@ -49,6 +48,4 @@
     (->> (get-tax-config)
          :tax-brackets
          (filter #(<= (:threshold %) annual-income))
-         last))
-
-  )
+         last)))

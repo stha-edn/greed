@@ -1,14 +1,13 @@
 (ns com.greed.utilities.core
   (:require [clojure.string :as string]))
 
-
 (defn ->int
   "Converts a string to an integer.
    Parameters:
    - s: String to convert
    Returns integer value"
   [s]
-   (try
+  (try
     (Integer/parseInt s)
     (catch NumberFormatException _
       nil)))
@@ -37,9 +36,9 @@
    Returns formatted currency string"
   [amount]
   (let [formatter (doto (java.text.NumberFormat/getInstance)
-                  (.setMinimumFractionDigits 2)
-                  (.setMaximumFractionDigits 2))]
-  (str "R" (.format formatter amount))))
+                    (.setMinimumFractionDigits 2)
+                    (.setMaximumFractionDigits 2))]
+    (str "R" (.format formatter amount))))
 
 (defn amount->rands
   "Converts amount in cents to Rand.
@@ -102,7 +101,6 @@
   [seed]
   (format "%04d" (mod (Math/abs (hash seed)) 10000)))
 
-
 (defn ->keyword
   "Converts a string to a keyword.
    Parameters:
@@ -140,7 +138,6 @@
     (catch IllegalArgumentException _
       nil)))
 
-
 (defn ordinal [n]
   (let [n (int n)
         suffix (cond
@@ -157,6 +154,4 @@
 
   (->keyword "Mastercard")
 
-  (->string :standard-bank)
-
-  )
+  (->string :standard-bank))

@@ -118,15 +118,15 @@
   (tools/panel
    (tools/panel-heading "Tax Breakdown")
    (tools/breakdown-section "Income"
-     (tools/row "Monthly Gross Income" (utilities/amount->rands income))
-     (tools/bold-row "Annual Gross Income" (utilities/amount->rands annual-income)))
+                            (tools/row "Monthly Gross Income" (utilities/amount->rands income))
+                            (tools/bold-row "Annual Gross Income" (utilities/amount->rands annual-income)))
    (tools/breakdown-section "Tax"
-     (tools/row "Gross Tax" (utilities/amount->rands gross-tax))
-     (tools/row "Rebates" (str "(" (utilities/amount->rands rebates) ")"))
-     (tools/bold-row "Net Annual Tax" (utilities/amount->rands net-tax)))
+                            (tools/row "Gross Tax" (utilities/amount->rands gross-tax))
+                            (tools/row "Rebates" (str "(" (utilities/amount->rands rebates) ")"))
+                            (tools/bold-row "Net Annual Tax" (utilities/amount->rands net-tax)))
    (tools/breakdown-section "Take-home Pay"
-     (tools/row "Annual Net Income" (utilities/amount->rands net-income))
-     (tools/bold-row "Monthly Net Income" (utilities/amount->rands net-monthly) "text-emerald-600"))))
+                            (tools/row "Annual Net Income" (utilities/amount->rands net-income))
+                            (tools/bold-row "Monthly Net Income" (utilities/amount->rands net-monthly) "text-emerald-600"))))
 
 (defn- result-region [params]
   (let [income        (->n (:income params))
@@ -136,7 +136,7 @@
         age           (tier->age tier)
         annual-income (utilities/income->annual-income income)
         {:keys [gross-tax rebates net-tax effective-rate marginal-rate net-income]}
-                      (tax/calculate-income-tax annual-income age)
+        (tax/calculate-income-tax annual-income age)
         net-monthly   (utilities/annual-income->monthly-income net-income)
         tax-share     (min 100.0 (max 0.0 (double effective-rate)))
         take-share    (max 0.0 (- 100.0 tax-share))

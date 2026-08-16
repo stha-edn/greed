@@ -4,7 +4,6 @@
             [clojure.tools.logging :as logger]
             [com.greed.data.core :as data]))
 
-
 (defn existing-user? [users user]
   (some? (first (filter #(= (:user/email %) (:email user)) users))))
 

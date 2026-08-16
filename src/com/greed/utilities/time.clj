@@ -3,7 +3,6 @@
            [java.time.format DateTimeFormatter]
            [java.time.temporal ChronoUnit]))
 
-
 (defn days-until [today d]
   (long (.between ChronoUnit/DAYS today d)))
 
@@ -82,6 +81,4 @@
 
   (next-payday (LocalDate/now) 15)
 
-  (first-day-of-week 2026 8)
-
-  )
+  (first-day-of-week 2026 8))

@@ -8,7 +8,6 @@
             [com.greed.ui.components.alerts :as alerts]
             [com.greed.ui.components.headers :as headers]))
 
-
 (def finance-tax-prompt-interval-ms
   "How often the finance & tax prompt may appear, in milliseconds."
   (* 24 60 60 1000))

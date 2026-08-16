@@ -2,7 +2,6 @@
   (:require [com.greed.utilities.tax :as tax]
             [com.greed.utilities.core :as utilities]))
 
-
 (defn get-income-tax-data [user finances]
   (let [{:user/keys [age]
          :or {age 21}} (or user {})
