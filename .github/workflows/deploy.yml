@@ -18,7 +18,7 @@ jobs:
           ssh-keyscan -H mygreed.co.za >> ~/.ssh/known_hosts
 
       - name: Install Clojure CLI
-        uses: DeLaGuardo/setup-clojure@12
+        uses: DeLaGuardo/setup-clojure@13
         with:
           cli: 1.12.2.1565
 
