@@ -61,5 +61,6 @@ jobs:
 
       - name: Push to prod
         run: |
-          git remote add prod ssh://app@mygreed.co.za/home/app/repo.git
-          GIT_SSH_COMMAND="ssh -i $HOME/.ssh/prod_key -o IdentitiesOnly=yes" git push prod master
+          git remote add prod ssh://app@mygreed.co.za/home/app/repo.git 2>&1 || true
+          git remote -v
+          GIT_SSH_COMMAND="ssh -i $HOME/.ssh/prod_key -o IdentitiesOnly=yes -v" git push prod master 2>&1 | tail -20
