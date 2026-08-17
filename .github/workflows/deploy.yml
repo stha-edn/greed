@@ -28,8 +28,22 @@ jobs:
         with:
           cli: 1.12.2.1565
 
+      - name: Cache Clojure deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs
+          key: clj-${{ hashFiles('deps.edn') }}
+          restore-keys: clj-
+
       - name: Build CSS
-        run: clj -M:dev css --minify
+        run: |
+          set -e
+          clojure -P -M:dev
+          clojure -M:dev css --minify
+        env:
+          CLJ_JVM_OPTS: "-XX:-OmitStackTraceInFastThrow"
 
       - name: Upload CSS
         run: scp -i ~/.ssh/prod_key target/resources/public/css/main.css app@mygreed.co.za:/home/app/target/resources/public/css/main.css
