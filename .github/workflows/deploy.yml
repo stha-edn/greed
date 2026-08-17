@@ -19,9 +19,11 @@ jobs:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/prod_key
+          printenv PROD_SSH_KEY > ~/.ssh/prod_key
           chmod 600 ~/.ssh/prod_key
-          ssh-keyscan -H mygreed.co.za >> ~/.ssh/known_hosts
+          ssh-keyscan mygreed.co.za >> ~/.ssh/known_hosts
+        env:
+          PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
 
       - name: Install Clojure CLI
         uses: DeLaGuardo/setup-clojure@13
@@ -46,7 +48,7 @@ jobs:
           CLJ_JVM_OPTS: "-XX:-OmitStackTraceInFastThrow"
 
       - name: Upload CSS
-        run: scp -i ~/.ssh/prod_key target/resources/public/css/main.css app@mygreed.co.za:/home/app/target/resources/public/css/main.css
+        run: scp -o StrictHostKeyChecking=accept-new -i ~/.ssh/prod_key target/resources/public/css/main.css app@mygreed.co.za:/home/app/target/resources/public/css/main.css
 
       - name: Push to prod
         run: |
