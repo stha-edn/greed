@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -47,20 +49,10 @@ jobs:
         env:
           CLJ_JVM_OPTS: "-XX:-OmitStackTraceInFastThrow"
 
-      - name: Verify CSS output
-        run: ls -la target/resources/public/css/main.css
-
-      - name: Test SSH to prod
-        run: ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/prod_key app@mygreed.co.za "echo SSH_OK && whoami"
-
       - name: Upload CSS
         run: scp -o StrictHostKeyChecking=accept-new -i ~/.ssh/prod_key target/resources/public/css/main.css app@mygreed.co.za:/home/app/target/resources/public/css/main.css
-
-      - name: Verify upload
-        run: ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/prod_key app@mygreed.co.za "ls -la /home/app/target/resources/public/css/main.css"
 
       - name: Push to prod
         run: |
           git remote add prod ssh://app@mygreed.co.za/home/app/repo.git 2>&1 || true
-          git remote -v
-          GIT_SSH_COMMAND="ssh -i $HOME/.ssh/prod_key -o IdentitiesOnly=yes -v" git push prod master 2>&1 | tail -20
+          GIT_SSH_COMMAND="ssh -i $HOME/.ssh/prod_key -o IdentitiesOnly=yes" git push prod master
