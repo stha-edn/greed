@@ -19,7 +19,7 @@ jobs:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          printenv PROD_SSH_KEY > ~/.ssh/prod_key
+          printenv PROD_SSH_KEY | tr -d '\r' | sed -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' > ~/.ssh/prod_key
           chmod 600 ~/.ssh/prod_key
           ssh-keyscan mygreed.co.za >> ~/.ssh/known_hosts
         env:
