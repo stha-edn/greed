@@ -47,11 +47,17 @@ jobs:
         env:
           CLJ_JVM_OPTS: "-XX:-OmitStackTraceInFastThrow"
 
+      - name: Verify CSS output
+        run: ls -la target/resources/public/css/main.css
+
+      - name: Test SSH to prod
+        run: ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/prod_key app@mygreed.co.za "echo SSH_OK && whoami"
+
       - name: Upload CSS
-        run: |
-          ls -la target/resources/public/css/main.css
-          ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/prod_key app@mygreed.co.za "echo SSH_OK && ls -la /home/app/target/resources/public/css/"
-          scp -v -o StrictHostKeyChecking=accept-new -i ~/.ssh/prod_key target/resources/public/css/main.css app@mygreed.co.za:/home/app/target/resources/public/css/main.css
+        run: scp -o StrictHostKeyChecking=accept-new -i ~/.ssh/prod_key target/resources/public/css/main.css app@mygreed.co.za:/home/app/target/resources/public/css/main.css
+
+      - name: Verify upload
+        run: ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/prod_key app@mygreed.co.za "ls -la /home/app/target/resources/public/css/main.css"
 
       - name: Push to prod
         run: |
