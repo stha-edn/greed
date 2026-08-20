@@ -7,12 +7,10 @@
    [:span {:class "w-1.5 h-1.5 bg-emerald-500 rounded-full"}]
    label])
 
-(defn- contact-tile [& {:keys [icon title description href class]}]
+(defn- contact-tile [& {:keys [title description href class]}]
   [:a {:href href
        :class (str "reveal group flex flex-col p-8 bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover hover:ring-zinc-300/70 active:scale-[0.98] " class)}
-   [:div {:class "flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-600/10 transition-transform duration-200 group-hover:scale-105"}
-    icon]
-   [:h3 {:class "mt-5 text-lg font-semibold text-zinc-900 tracking-tight group-hover:text-emerald-600 transition-colors"} title]
+   [:h3 {:class "text-lg font-semibold text-zinc-900 tracking-tight group-hover:text-emerald-600 transition-colors"} title]
    [:p {:class "mt-2 text-sm text-zinc-500 leading-relaxed"} description]
    [:span {:class "inline-flex items-center gap-2 mt-6 text-sm font-semibold text-zinc-900 transition-colors group-hover:text-emerald-600"}
     "Get in touch"
@@ -34,18 +32,15 @@
      ;; Contact channels
      [:div {:class "pb-20 lg:pb-28"}
       [:div {:class "grid grid-cols-1 gap-6 max-w-4xl mx-auto md:grid-cols-3"}
-       (contact-tile :icon (svgs/envelope)
-                     :title "Email us"
+       (contact-tile :title "Email us"
                      :description "support@mygreed.co.za — the fastest way to reach us. We reply personally."
                      :href "mailto:support@mygreed.co.za"
                      :class "reveal-1")
-       (contact-tile :icon (svgs/instagram)
-                     :title "Instagram"
+       (contact-tile :title "Instagram"
                      :description "@greed_za — follow along and send us a message."
                      :href "https://www.instagram.com/greed_za/"
                      :class "reveal-2")
-       (contact-tile :icon (svgs/users)
-                     :title "Meet the team"
+       (contact-tile :title "Meet the team"
                      :description "Prefer a person? See who's building Greed."
                      :href "/team"
                      :class "reveal-3")]]
@@ -65,9 +60,7 @@
                     "Feedback, feature ideas, and bug reports"
                     "Anything else on your mind — just ask."]]
           [:div {:class "flex items-start gap-2.5 text-sm text-zinc-600"}
-           [:span {:class "mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"}
-            [:svg {:class "size-3" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24" :stroke-width "3"}
-             [:path {:stroke-linecap "round" :stroke-linejoin "round" :d "M5 13l4 4L19 7"}]]]
+           [:span {:class "mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-emerald-500"}]
            item])]]]
 
      ;; Closing

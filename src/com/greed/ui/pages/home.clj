@@ -16,23 +16,18 @@
    [:p {:class "text-xl font-bold text-zinc-900"} value]
    [:p {:class "mt-0.5 text-xs text-zinc-400"} label]])
 
-(defn- tool-card [& {:keys [icon badge title description detail cta-label cta-href class]}]
+(defn- tool-card [& {:keys [badge title description detail cta-label cta-href class]}]
   [:a {:href cta-href
        :class (str "reveal group flex flex-col p-8 bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover hover:ring-zinc-300/70 active:scale-[0.98] " class)}
-   [:div {:class "mb-5 flex items-start justify-between"}
-    [:div {:class "flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-600/10 transition-transform duration-200 group-hover:scale-105"}
-     icon]
-    (when badge
-      [:span {:class "rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-600/15"} badge])]
+   (when badge
+     [:span {:class "self-start mb-5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-600/15"} badge])
    [:h3 {:class "text-lg font-semibold text-zinc-900 tracking-tight group-hover:text-emerald-600 transition-colors"} title]
    [:p {:class "mt-2 text-sm text-zinc-500 leading-relaxed"} description]
    (when detail
      [:ul {:class "mt-5 space-y-2.5"}
       (for [item detail]
         [:li {:class "flex items-start gap-2.5 text-sm text-zinc-600"}
-         [:span {:class "mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"}
-          [:svg {:class "size-3" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24" :stroke-width "3"}
-           [:path {:stroke-linecap "round" :stroke-linejoin "round" :d "M5 13l4 4L19 7"}]]]
+         [:span {:class "mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-emerald-500"}]
          item])])
    [:span {:class "inline-flex items-center gap-2 mt-6 text-sm font-semibold text-zinc-900 transition-colors group-hover:text-emerald-600"}
     cta-label
@@ -82,12 +77,10 @@
       (when kind
         [:span {:class (str "h-1 w-1 rounded-full " kind)}])])])
 
-(defn- feature-card [& {:keys [icon title description href visual class]}]
+(defn- feature-card [& {:keys [title description href visual class]}]
   [:a {:href href
        :class (str "reveal group flex flex-col p-6 bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover hover:ring-zinc-300/70 active:scale-[0.98] " class)}
-   [:div {:class "flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-600/10 transition-transform duration-200 group-hover:scale-105"}
-    icon]
-   [:h3 {:class "mt-4 text-base font-semibold text-zinc-900 tracking-tight group-hover:text-emerald-600 transition-colors"} title]
+   [:h3 {:class "text-base font-semibold text-zinc-900 tracking-tight group-hover:text-emerald-600 transition-colors"} title]
    [:p {:class "mt-1 text-sm text-zinc-500 leading-relaxed"} description]
    (when visual
      [:div {:class "mt-5" :aria-hidden "true"} visual])])
@@ -132,7 +125,6 @@
         "No accountant needed. Our calculators use the latest SARS brackets and rebates so you always know where you stand."]]
       [:div {:class "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"}
        (tool-card
-        :icon (svgs/percent-badge)
         :badge "2026/27 Year"
         :title "Income Tax Calculator"
         :description "Enter your monthly salary and age to instantly see your gross tax, rebates, effective rate, and take-home pay — no sign-up required."
@@ -144,7 +136,6 @@
         :cta-href (if signed-in? "/app/tax/income-tax-calculator" "/signin")
         :class "reveal-1")
        (tool-card
-        :icon (svgs/document-text)
         :badge "2026 Year of Assessment"
         :title "Tax Returns Simulator (ITR12)"
         :description "Simulate your full SARS tax return with all common deductions. See whether you are owed a refund or have tax to pay before you file."
@@ -157,7 +148,6 @@
         :cta-href (if signed-in? "/app/tax/tax-returns" "/signin")
         :class "reveal-2")
        (tool-card
-        :icon (svgs/gift)
         :badge "2026/27 Year"
         :title "Bonus Tax Calculator"
         :description "See how much PAYE comes off a bonus or 13th cheque, and what actually lands in your account — taxed correctly at your marginal rate."
@@ -179,28 +169,24 @@
        "Create a free account to track your whole financial picture — your salary and medical aid flow in automatically."]]
      [:div {:class "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"}
       (feature-card
-       :icon (svgs/credit-card)
        :title "Finances"
        :description "Income, expenses and savings in one budget — so every rand has a job."
        :href app-href
        :visual (finances-visual)
        :class "reveal-1")
       (feature-card
-       :icon (svgs/target)
        :title "Goals"
        :description "Set a target like an emergency fund and watch each one fill up."
        :href app-href
        :visual (goals-visual)
        :class "reveal-2")
       (feature-card
-       :icon (svgs/chart-bar)
        :title "Insights"
        :description "See your savings rate and exactly where every rand goes each month."
        :href app-href
        :visual (insights-visual)
        :class "reveal-3")
       (feature-card
-       :icon (svgs/calendar)
        :title "Calendar"
        :description "Mark paydays, bills and incoming payments so nothing slips through."
        :href app-href

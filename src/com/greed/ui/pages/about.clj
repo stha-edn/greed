@@ -1,17 +1,14 @@
 (ns com.greed.ui.pages.about
-  (:require [com.greed.ui.components.shared :as shared]
-            [com.greed.ui.components.svgs :as svgs]))
+  (:require [com.greed.ui.components.shared :as shared]))
 
 (defn- badge [label]
   [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-4 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full"}
    [:span {:class "w-1.5 h-1.5 bg-emerald-500 rounded-full"}]
    label])
 
-(defn- value-card [icon title description class]
+(defn- value-card [title description class]
   [:div {:class (str "reveal p-8 bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 hover:ring-zinc-300/70 " class)}
-   [:div {:class "flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-600/10"}
-    icon]
-   [:h3 {:class "mt-5 text-lg font-semibold text-zinc-900 tracking-tight"} title]
+   [:h3 {:class "text-lg font-semibold text-zinc-900 tracking-tight"} title]
    [:p {:class "mt-2 text-sm text-zinc-500 leading-relaxed"} description]])
 
 (defn page [{:keys [session]}]
@@ -34,13 +31,13 @@
        [:h2 {:class "text-3xl font-bold text-zinc-900 tracking-tight text-balance lg:text-4xl"}
         "Your money, " [:span {:class "text-emerald-600"} "made manageable."]]]
       [:div {:class "grid grid-cols-1 gap-6 max-w-4xl mx-auto md:grid-cols-3"}
-       (value-card (svgs/banknotes) "Understand what you earn."
+       (value-card "Understand what you earn."
                    "See your real take-home pay and tax for the right SARS assessment year — before you plan anything else."
                    "reveal-1")
-       (value-card (svgs/calendar) "Plan before payday."
+       (value-card "Plan before payday."
                    "Give every rand a job — commitments, savings and goals — before the first debit order moves."
                    "reveal-2")
-       (value-card (svgs/target) "See what's next."
+       (value-card "See what's next."
                    "Spot shortfalls early, track your tax readiness and watch real progress toward the goals that matter to you."
                    "reveal-3")]]
 
@@ -59,9 +56,7 @@
      [:div {:class "reveal pb-20 lg:pb-28"}
       [:div {:class "max-w-3xl mx-auto"}
        [:div {:class "px-8 py-16 bg-white ring-1 ring-zinc-200/70 rounded-3xl shadow-card text-center lg:px-16"}
-        [:div {:class "mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-600/10"}
-         (svgs/shield-check)]
-        [:h2 {:class "mt-5 text-3xl font-bold text-zinc-900 tracking-tight text-balance lg:text-4xl"}
+        [:h2 {:class "text-3xl font-bold text-zinc-900 tracking-tight text-balance lg:text-4xl"}
          "Your financial life stays yours."]
         [:p {:class "max-w-2xl mx-auto mt-4 text-zinc-500 leading-relaxed"}
          "Keeping your data secure is our priority. Your information is stored safely and access is protected, so your money and your details stay private. We will never sell your data — and if you would like to know more about how we protect it, just ask."]]]]
