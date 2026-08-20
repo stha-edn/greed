@@ -73,11 +73,11 @@
         [:div {:class "rounded-xl bg-zinc-50 p-5 ring-1 ring-zinc-200/50"}
          [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider"} "Where your money goes"]
          [:div {:class "mt-3 flex h-2.5 w-full overflow-hidden rounded-full bg-zinc-200/70"}
-          [:div {:class "h-full rounded-l-full bg-rose-400 greed-bar-grow"
+          [:div {:class "h-full rounded-full bg-rose-400 greed-bar-grow"
                  :style {:width (str (min 100.0 (max 0.0 expenses-share)) "%")}}]
-          [:div {:class "h-full bg-emerald-500"
+          [:div {:class "h-full rounded-full bg-indigo-500 greed-bar-grow"
                  :style {:width (str (min 100.0 (max 0.0 savings-share)) "%")}}]
-          [:div {:class "h-full rounded-r-full bg-emerald-300"
+          [:div {:class "h-full rounded-full bg-emerald-300 greed-bar-grow"
                  :style {:width (str (min 100.0 (max 0.0 leftover-share)) "%")}}]]
          (when (and pd prev-pd)
            [:div {:class "mt-4 border-t border-zinc-100 pt-4"}
@@ -652,7 +652,7 @@
         sav-pct    (utilities/pct-share savings income)
         rem-pct    (utilities/pct-share (max 0 leftover) income)
         segs       (cond-> [{:frac exp-pct :cls "text-rose-400"}
-                            {:frac sav-pct :cls "text-emerald-500"}]
+                            {:frac sav-pct :cls "text-indigo-400"}]
                      (not overspend?) (conj {:frac rem-pct :cls "text-zinc-300"}))]
     (chart-card
      "Where your money goes"
@@ -683,7 +683,7 @@
                   " over your income this month.")])
           [:div {:class "space-y-3"}
            (legend-row "bg-rose-400" "Expenses" expenses (utilities/pct-label exp-pct))
-           (legend-row "bg-emerald-500" "Savings" savings (utilities/pct-label sav-pct))
+           (legend-row "bg-indigo-400" "Savings" savings (utilities/pct-label sav-pct))
            (if overspend?
              (legend-row "bg-zinc-300" "Overspend" (Math/abs (long leftover)) "—" "text-rose-600")
              (legend-row "bg-zinc-300" "Left to plan" (max 0 leftover) (utilities/pct-label rem-pct)))]]]]))))
@@ -854,8 +854,8 @@
             [:p {:class (str "text-xl font-bold leading-none tracking-tight tabular-nums "
                              (if overspend? "text-rose-600" "text-zinc-900"))}
              (str "Day " elapsed)]
-             [:p {:class "mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400"}
-              (str "of " period-len)]]])]
+            [:p {:class "mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400"}
+             (str "of " period-len)]]])]
        [:div {:class "flex-1"}]
        (hero-stats-row
         (hero-substat "Savings rate" (utilities/pct-label savings-rate))

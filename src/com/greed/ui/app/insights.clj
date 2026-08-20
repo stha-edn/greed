@@ -32,20 +32,20 @@
         (if overspend?
           [:div {:class "mb-5 rounded-lg bg-rose-50 px-4 py-2.5 text-xs text-rose-700"}
            (str "Expenses and savings are R " (utilities/amount->rands (Math/abs (long leftover)))
-             " over your income this month.")]
+                " over your income this month.")]
           [:div {:class "overflow-hidden h-3 w-full bg-zinc-100 rounded-full"}
            [:div {:class "h-full w-full overflow-hidden rounded-full greed-bar-grow"}
             [:div {:class "flex h-full w-full"}
              [:div {:class "h-full bg-rose-400" :style {:width (str (int exp-pct) "%")}}]
-             [:div {:class "h-full bg-indigo-400" :style {:width (str (int sav-pct) "%")}}]
+             [:div {:class "h-full bg-indigo-500" :style {:width (str (int sav-pct) "%")}}]
              [:div {:class "h-full bg-zinc-200" :style {:width (str (int rem-pct) "%")}}]]]])
         [:div {:class "space-y-2.5 mt-5"}
          (legend-row "bg-rose-400" "Expenses" expenses (utilities/pct-label exp-pct) nil)
          (legend-row "bg-indigo-400" "Savings" savings (utilities/pct-label sav-pct) nil)
          (legend-row "bg-zinc-300" (if overspend? "Overspend" "Unallocated")
-           (Math/abs (long leftover))
-           (if overspend? "—" (utilities/pct-label rem-pct))
-           (when overspend? "text-rose-600"))]]
+                     (Math/abs (long leftover))
+                     (if overspend? "—" (utilities/pct-label rem-pct))
+                     (when overspend? "text-rose-600"))]]
        [:p {:class "text-center py-6 text-sm text-zinc-400"}
         "Add your "
         [:a {:href "/app/finances" :class "font-medium text-emerald-600 hover:underline"} "income"]

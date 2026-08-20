@@ -34,10 +34,11 @@
   [alert-key]
   (contains? (:alert/errors c/common-config) alert-key))
 
-(defn success
+(defn ^:deprecated success
   "Celebratory confirmation card for a just-completed signin/signup — same
-   entrance/exit and dismiss treatment as `info` (greed-alert-in/-out),
-   shown once right after the redirect to /app via ?success=signin|signup."
+   markup, entrance/exit, and dismiss treatment as `info`'s non-error style
+   (greed-alert-in/-out), shown once right after the redirect to /app via
+   ?success=signin|signup."
   [& {:keys [type]
       :or {type :signin}}]
   [:div
@@ -47,27 +48,23 @@
             "  add .greed-alert-out\n"
             "  wait 200ms\n"
             "  hide #success-alert")
-    :class "flex items-center w-full max-w-sm overflow-hidden rounded-xl bg-white ring-1 ring-emerald-200 shadow-card greed-alert-in"}
+    :class "flex items-center gap-3 w-full rounded-xl bg-emerald-50 ring-1 ring-emerald-200 shadow-card p-4 greed-alert-in"}
    [:div
-    {:class "flex items-center justify-center w-12 bg-emerald-600 text-white"}
-    (svgs/success)]
-   [:div
-    {:class "flex flex-1 items-center justify-between gap-2 px-4 py-3"}
-    [:div
-     {:class "mx-3"}
-     [:p {:class "font-semibold text-lg text-zinc-900"} "Success"]
-     [:p {:class "text-sm text-zinc-500"}
-      (if (= type :signin)
-        "You are signed in!"
-        "Your account was created!")]]
-    [:button
-     {:type "button"
-      :_ (str "on click\n"
-              "  add .greed-alert-out to #success-alert\n"
-              "  wait 200ms\n"
-              "  hide #success-alert")
-      :class "flex-shrink-0 self-start p-1 -m-1 rounded-md text-zinc-400 transition hover:text-zinc-600 hover:bg-zinc-100 active:scale-[0.9]"}
-     (svgs/close)]]])
+    {:class "flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center bg-emerald-100 text-emerald-600"}
+    (svgs/check)]
+   [:div {:class "flex-1 min-w-0"}
+    [:p {:class "text-sm font-medium leading-snug text-emerald-900"}
+     (if (= type :signin)
+       "You are signed in!"
+       "Your account was created!")]]
+   [:button
+    {:type "button"
+     :_ (str "on click\n"
+             "  add .greed-alert-out to #success-alert\n"
+             "  wait 200ms\n"
+             "  hide #success-alert")
+     :class "flex-shrink-0 self-start p-1 -m-1 rounded-md transition active:scale-[0.9] text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100"}
+    (svgs/close)]])
 
 (defn info
   "Dismissible toast, driven by an `:alert` key in `params` (usually the
