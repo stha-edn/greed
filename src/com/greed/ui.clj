@@ -20,13 +20,13 @@
   (apply
    biff/base-html
    (-> ctx
-        (merge #:base{:title settings/app-name
-                      :lang "en-US"
-                      :icon "/img/g.png"
-                      :description (str settings/app-name
-                                        " brings your salary, tax, spending and savings into one clear place,"
-                                        " so you always know what you earn, what SARS takes, and what you keep.")
-                      :image "/img/g.png"})
+       (merge #:base{:title settings/app-name
+                     :lang "en-US"
+                     :icon "/img/greed-mark-green-tight.svg"
+                     :description (str settings/app-name
+                                       " brings your salary, tax, spending and savings into one clear place,"
+                                       " so you always know what you earn, what SARS takes, and what you keep.")
+                     :image "/img/greed-mark-green-tight.svg"})
        (update :base/head (fn [head]
                             (concat
                              (cond-> [[:style "/* Self-hosted Inter (variable, latin subset). Kept inline rather

@@ -13,12 +13,17 @@ module.exports = {
       colors: {
         // Emerald is the product accent. Exposed as `brand` so intent is explicit.
         brand: {
-          50:  "#ecfdf5",
-          100: "#d1fae5",
-          500: "#10b981",
-          600: "#059669",
-          700: "#047857",
-          900: "#064e3b",
+          50: "#EDFBF4",
+          100: "#DBF4E8",
+          200: "#BCE6D3",
+          300: "#92D1B6",
+          400: "#61B191",
+          500: "#378E6F",
+          600: "#0F6B4F", // logo green
+          700: "#00553D",
+          800: "#00422E",
+          900: "#003222",
+          950: "#001C12",
         },
       },
       boxShadow: {

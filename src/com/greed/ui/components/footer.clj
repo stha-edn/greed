@@ -10,9 +10,12 @@
     [:div {:class "grid grid-cols-1 sm:grid-cols-4 gap-8 sm:gap-10"}
      [:div
       [:a {:href "/" :class "inline-block"}
-       [:span {:class "text-3xl font-giza font-bold text-zinc-900 leading-none"} "greed."]]
-       [:p {:class "mt-3 text-sm text-zinc-500 max-w-xs leading-relaxed"}
-        "Salary, tax, spending and savings in one calm place, built for South Africans."]]
+       [:img {:src "/img/greed-wordmark-black-tight.svg"
+              :alt "greed"
+              :width 1106 :height 313
+              :class "block h-[30px] w-auto"}]]
+      [:p {:class "mt-3 text-sm text-zinc-500 max-w-xs leading-relaxed"}
+       "Salary, tax, spending and savings in one calm place, built for South Africans."]]
      [:div {:class "sm:justify-self-center mt-4 sm:mt-0"}
       [:p {:class "text-sm font-semibold text-zinc-900 mb-3"} "Explore"]
       [:nav {:class "flex flex-col gap-2.5"}
@@ -45,7 +48,10 @@
   [:footer {:class "border-t border-zinc-200 bg-white"}
    [:div {:class "container mx-auto px-6 py-6"}
     [:div {:class "flex flex-col items-center justify-between gap-4 sm:flex-row"}
-     [:span {:class "text-lg font-giza font-bold text-zinc-900 leading-none"} "greed."]
+     [:img {:src "/img/greed-wordmark-black-tight.svg"
+            :alt "greed"
+            :width 1106 :height 313
+            :class "h-[18px] w-auto"}]
      [:nav {:class "flex items-center gap-6"}
       (footer-link "/privacy" "Privacy")
       (footer-link "/terms" "Terms")

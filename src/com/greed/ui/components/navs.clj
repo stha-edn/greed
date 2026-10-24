@@ -25,8 +25,12 @@
 (defn nav [{:keys [session]}]
   (let [signed-in? (some? (:uid session))]
     [:nav {:class "relative flex items-center justify-between gap-3 py-4" :_ public-menu-escape-actions}
-     [:a {:href "/" :class "active:scale-[0.97] transition-transform"}
-      [:span {:class "text-2xl sm:text-3xl font-giza font-bold text-zinc-900"} "greed."]]
+     [:a {:href "/" :aria-label "greed home"
+          :class "inline-flex items-center active:scale-[0.97] transition-transform"}
+      [:img {:src "/img/greed-wordmark-green-tight.svg"
+             :alt "greed"
+             :width 1106 :height 313
+             :class "h-6 sm:h-7 w-auto"}]]
      [:div {:class "flex items-center gap-1.5 sm:gap-2"}
       [:a {:href "/about"
            :class "hidden sm:inline-block whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
@@ -103,9 +107,12 @@
   (let [initials (str (or (first firstname) \?) (or (first lastname) \?))]
     [:<>
      [:div {:class "flex items-center h-16 px-5 border-b border-zinc-800 flex-shrink-0"}
-      [:a {:href "/"}
-       [:span {:class "text-2xl font-giza font-bold text-white"} "greed."]
-       [:span {:class "ml-1.5 text-xs font-medium text-emerald-500 align-top mt-1 inline-block"} "beta"]]]
+      [:a {:href "/" :class "inline-flex items-start"}
+       [:img {:src "/img/greed-wordmark-white-tight.svg"
+              :alt "greed"
+              :width 1106 :height 313
+              :class "h-6 w-auto"}]
+       [:span {:class "ml-1.5 text-xs font-medium leading-none text-emerald-500"} "beta"]]]
      [:div {:class "flex flex-col flex-1 px-3 py-5 overflow-y-auto min-h-0"}
       [:nav {:class "space-y-0.5"}
        (for [item primary-links]
