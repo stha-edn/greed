@@ -35,7 +35,7 @@
 (defn home-heading [& {:keys [user date]}]
   [:div {:class "flex items-end justify-between gap-4"}
    [:div
-    [:p {:class "text-sm font-medium text-emerald-600 mb-1"}
+    [:p {:class "text-sm font-medium text-brand-600 mb-1"}
      (str (greeting) ", " (string/capitalize (:user/firstname user)))]]
    (when date
      [:p {:class "hidden sm:block text-sm font-medium text-zinc-500 tabular-nums whitespace-nowrap"} date])])

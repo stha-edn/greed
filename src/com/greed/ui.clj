@@ -22,11 +22,10 @@
    (-> ctx
        (merge #:base{:title settings/app-name
                      :lang "en-US"
-                     :icon "/img/greed-mark-green-tight.svg"
                      :description (str settings/app-name
                                        " brings your salary, tax, spending and savings into one clear place,"
                                        " so you always know what you earn, what SARS takes, and what you keep.")
-                     :image "/img/greed-mark-green-tight.svg"})
+                     :image (str (or (:biff/base-url ctx) "https://mygreed.co.za") "/icon-512.png")})
        (update :base/head (fn [head]
                             (concat
                              (cond-> [[:style "/* Self-hosted Inter (variable, latin subset). Kept inline rather
@@ -35,6 +34,12 @@ CSS rebuild. */"
                                        "@font-face { font-family: 'Inter'; src: url('/font/InterVariable.woff2') format('woff2');"
                                        "font-weight: 100 900; font-style: normal; font-display: swap; }"
                                        "@supports (height: 100dvh) { html .min-h-screen { min-height: 100dvh; } }"]
+                                      ;; Favicons and PWA manifest (from docs/brand/icons/head-snippet.html).
+                                      [:link {:rel "icon" :href "/favicon.ico" :sizes "any"}]
+                                      [:link {:rel "icon" :href "/favicon.svg" :type "image/svg+xml"}]
+                                      [:link {:rel "apple-touch-icon" :href "/apple-touch-icon.png"}]
+                                      [:link {:rel "manifest" :href "/site.webmanifest"}]
+                                      [:meta {:name "theme-color" :content "#0F6B4F"}]
                                       [:link {:rel "stylesheet" :href (static-path "/css/main.css")}]
                                       [:script {:src (static-path "/js/main.js")}]
                                       [:script {:src "https://unpkg.com/htmx.org@2.0.10/dist/htmx.min.js"}]
@@ -73,9 +78,11 @@ CSS rebuild. */"
    :body (rum/render-static-markup
           (page ctx [:div {:class "flex items-center justify-center min-h-screen"}
                      [:div {:class "text-center p-8"}
+                      [:img {:src "/img/greed-symbol-green-tight.svg" :alt "greed"
+                             :width 192 :height 192 :class "mx-auto mb-6 block h-12 w-12"}]
                       [:h1 {:class "text-2xl font-semibold text-zinc-900 mb-2"}
                        (if (= status 404) "Page not found" "Something went wrong")]
                       [:p {:class "text-zinc-500 mb-4"}
                        (if (= status 404) "The page you are looking for does not exist." "An unexpected error occurred.")]
-                      [:a {:href "/" :class "text-emerald-600 hover:underline"} "Go home"]]]))})
+                      [:a {:href "/" :class "text-brand-600 hover:underline"} "Go home"]]]))})
 

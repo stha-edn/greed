@@ -29,12 +29,12 @@
   [:div {:class "container mx-auto px-6"}
    [:div {:class "py-16 lg:py-24"}
     [:div {:class "text-center mb-14"}
-     [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-6 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full"}
-      [:span {:class "w-1.5 h-1.5 bg-emerald-500 rounded-full"}]
+     [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-6 text-xs font-semibold text-brand-700 bg-brand-50 border border-brand-100 rounded-full"}
+      [:span {:class "w-1.5 h-1.5 bg-brand-500 rounded-full"}]
       "The people behind greed"]
      [:h1 {:class "text-4xl font-bold text-zinc-900 leading-[1.08] tracking-tight text-balance lg:text-5xl"}
       "Meet our "
-      [:span {:class "text-emerald-600"} "team."]]
+      [:span {:class "text-brand-600"} "team."]]
      [:p {:class "max-w-xl mx-auto mt-4 text-lg text-zinc-500"}
       "A small team on a mission to make personal finance simple, transparent, and empowering for every South African."]]
     [:div {:class "flex justify-center"}

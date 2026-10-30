@@ -48,7 +48,7 @@
            (when overspend? "text-rose-600"))]]
        [:p {:class "text-center py-6 text-sm text-zinc-500"}
         "Add your "
-        [:a {:href "/app/finances" :class "font-medium text-emerald-600 hover:underline"} "income"]
+        [:a {:href "/app/finances" :class "font-medium text-brand-600 hover:underline"} "income"]
         " in Finances to see this breakdown."])]))
 
 (defn- expense-breakdown-card [expense-items total-expenses]
@@ -73,13 +73,13 @@
              (utilities/pct-label p)]]]))]
      [:p {:class "text-center py-6 text-sm text-zinc-500"}
       "No expenses yet. Add them in "
-      [:a {:href "/app/finances" :class "font-medium text-emerald-600 hover:underline"} "Finances"]
+      [:a {:href "/app/finances" :class "font-medium text-brand-600 hover:underline"} "Finances"]
       "."])])
 
 (defn- empty-state []
   [:div {:class "py-14 px-6 text-center bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card"}
-   [:div {:class "mx-auto mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50"}
-    [:span {:class "text-emerald-500"} (svgs/wallet)]]
+   [:div {:class "mx-auto mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-brand-50"}
+    [:span {:class "text-brand-500"} (svgs/wallet)]]
    [:p {:class "text-sm font-medium text-zinc-600"} "No budget yet"]
    [:p {:class "mt-1 text-xs text-zinc-500"} "Add your income and expenses to see where your money goes."]
    (shared/btn :variant :primary :size :md :class "mt-5" :href "/app/finances" "Add your budget")])

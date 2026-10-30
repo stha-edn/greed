@@ -26,15 +26,15 @@
   [& {:keys [eyebrow badge headline suffix status tone substats body]}]
   (let [tone (or tone "text-zinc-900")]
     [:div {:class "relative overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200/70 shadow-card-md"}
-     [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"}]
-     [:div {:class "absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl"}]
+     [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/40 to-transparent"}]
+     [:div {:class "absolute -top-24 -right-24 h-72 w-72 rounded-full bg-brand-400/10 blur-3xl"}]
      [:div {:class "relative px-6 py-6 sm:px-8 sm:py-7"}
       [:div {:class "flex items-center gap-2.5"}
-       [:span {:class "h-1.5 w-1.5 rounded-full bg-emerald-500"}]
-       [:p {:class "text-[11px] sm:text-xs font-semibold text-emerald-600 uppercase tracking-[0.18em]"} eyebrow]
+       [:span {:class "h-1.5 w-1.5 rounded-full bg-brand-500"}]
+       [:p {:class "text-[11px] sm:text-xs font-semibold text-brand-600 uppercase tracking-[0.18em]"} eyebrow]
        [:div {:class "flex-1"}]
        (when badge
-         [:span {:class "flex-shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-600/15"} badge])]
+         [:span {:class "flex-shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 ring-1 ring-brand-600/15"} badge])]
       [:div {:class "mt-5 flex items-baseline gap-2.5 sm:mt-6"}
        [:p {:class (str "text-4xl sm:text-5xl font-bold leading-none tracking-[-0.04em] tabular-nums " tone)}
         headline]
@@ -132,13 +132,13 @@
   [:a {:href link
        :class "group flex flex-col rounded-2xl bg-white p-6 ring-1 ring-zinc-200/70 shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-card-hover hover:ring-zinc-300/70"}
    [:div {:class "mb-4 flex items-start justify-between"}
-    [:div {:class "flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-600/10 transition-transform duration-200 group-hover:scale-105"}
+    [:div {:class "flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-brand-600/10 transition-transform duration-200 group-hover:scale-105"}
      icon]
     (when badge
-      [:span {:class "text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full"} badge])]
-   [:h3 {:class "text-sm font-semibold text-zinc-900 tracking-tight group-hover:text-emerald-600 transition-colors"} title]
+      [:span {:class "text-xs font-medium text-brand-700 bg-brand-50 px-2.5 py-1 rounded-full"} badge])]
+   [:h3 {:class "text-sm font-semibold text-zinc-900 tracking-tight group-hover:text-brand-600 transition-colors"} title]
    [:p {:class "mt-1 flex-1 text-sm text-zinc-500 leading-relaxed"} description]
-   [:div {:class "mt-4 flex items-center gap-1 text-xs font-medium text-zinc-500 group-hover:text-emerald-600 transition-colors"}
+   [:div {:class "mt-4 flex items-center gap-1 text-xs font-medium text-zinc-500 group-hover:text-brand-600 transition-colors"}
     "Open tool"
     (svgs/->next {:class "size-3.5 -translate-x-0.5 transition-transform group-hover:translate-x-0"})]])
 

@@ -13,7 +13,7 @@
 
 (defn- status-badge [active?]
   (if active?
-    (badge "Active" "bg-emerald-50 text-emerald-700")
+    (badge "Active" "bg-brand-50 text-brand-700")
     (badge "Deactivated" "bg-zinc-100 text-zinc-500")))
 
 (defn- role-badges [roles]
@@ -27,7 +27,7 @@
   [:div
    (shared/form-label id label)
    [:input (cond-> {:id id :name name :type type
-                    :class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    :class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
                     :required (boolean required?)}
              value (assoc :value (str value)))]])
 
@@ -42,7 +42,7 @@
       [:input {:type "hidden" :name "role" :value "admin"}]
       [:p {:class "mt-1 text-xs text-zinc-500"} "You can't change your own role here."]]
      [:select {:name "role"
-               :class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg hover:border-zinc-300 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 active:border-zinc-400"}
+               :class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg hover:border-zinc-300 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:border-zinc-400"}
       [:option (cond-> {:value "user"} (= current-role :user) (assoc :selected true)) "User"]
       [:option (cond-> {:value "admin"} (= current-role :admin) (assoc :selected true)) "Admin"]])])
 

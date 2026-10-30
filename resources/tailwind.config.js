@@ -11,7 +11,7 @@ module.exports = {
         "sans": ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "sans-serif"],
       },
       colors: {
-        // Emerald is the product accent. Exposed as `brand` so intent is explicit.
+        // Brand green (600 = logo green) is the product accent. Use `brand-*`, not `emerald-*`.
         brand: {
           50: "#EDFBF4",
           100: "#DBF4E8",

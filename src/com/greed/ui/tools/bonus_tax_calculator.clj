@@ -49,7 +49,7 @@
       (let [tier (age->tier age)]
         (tools/panel
          (tools/panel-heading "Auto Assessment"
-                              :badge [:span {:class "flex-shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-600/15"}
+                              :badge [:span {:class "flex-shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 ring-1 ring-brand-600/15"}
                                       "2026/27"])
          [:div {:class "px-5 pb-5 sm:px-6"}
           [:p {:class "text-sm text-zinc-500"}
@@ -78,14 +78,14 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
            "Uses the salary saved in Finances and your age in Settings."]]))
       (tools/panel
        [:div {:class "flex flex-col items-center justify-center px-6 py-12 text-center"}
-        [:div {:class "mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50"}
-         [:span {:class "text-emerald-500"} (svgs/wallet)]]
+        [:div {:class "mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-brand-50"}
+         [:span {:class "text-brand-500"} (svgs/wallet)]]
         [:p {:class "text-sm font-medium text-zinc-500"} "No salary data yet"]
         [:p {:class "mt-1 max-w-xs text-xs text-zinc-500"}
          "Add your salary in "
-         [:a {:href "/app/finances/" :class "font-medium text-emerald-600 hover:underline"} "Finances"]
+         [:a {:href "/app/finances/" :class "font-medium text-brand-600 hover:underline"} "Finances"]
          " or your age in "
-         [:a {:href "/app/settings" :class "font-medium text-emerald-600 hover:underline"} "Settings"]
+         [:a {:href "/app/settings" :class "font-medium text-brand-600 hover:underline"} "Settings"]
          " to enable auto assessment."]]))))
 
 (defn- guide []
@@ -117,7 +117,7 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
    [:div {:class "relative mt-1"}
     [:span {:class "absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-500"} "R"]
     [:input {:id id :name id :type "number" :min "0" :step "any"
-              :class (str "block w-full pl-8 pr-3 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 "
+              :class (str "block w-full pl-8 pr-3 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 "
                          (if lg?
                            "py-3 text-lg font-semibold tabular-nums text-zinc-900 placeholder-zinc-400"
                            "py-2 text-sm font-medium text-zinc-700 placeholder-zinc-400"))
@@ -135,13 +135,13 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
     [:input {:type "radio" :name "rebate-tier" :value "75-plus" :id "rebate-tier-3"
              :class "sr-only peer peer/3" :checked (= selected "75-plus")}]
     [:label {:for "rebate-tier-1"
-             :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/1:ring-2 peer-focus-visible/1:ring-emerald-500/50 peer-checked/1:text-zinc-900"}
+             :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/1:ring-2 peer-focus-visible/1:ring-brand-500/50 peer-checked/1:text-zinc-900"}
      "Under 65"]
     [:label {:for "rebate-tier-2"
-              :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/2:ring-2 peer-focus-visible/2:ring-emerald-500/50 peer-checked/2:text-zinc-900"}
+              :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/2:ring-2 peer-focus-visible/2:ring-brand-500/50 peer-checked/2:text-zinc-900"}
      "65-74"]
     [:label {:for "rebate-tier-3"
-             :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/3:ring-2 peer-focus-visible/3:ring-emerald-500/50 peer-checked/3:text-zinc-900"}
+             :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/3:ring-2 peer-focus-visible/3:ring-brand-500/50 peer-checked/3:text-zinc-900"}
      "75+"]
     [:div {:class "pointer-events-none absolute inset-y-1 left-1 w-[calc((100%-1rem)/3)] rounded-lg bg-white shadow-sm ring-1 ring-zinc-900/5 transition-transform duration-300 ease-out peer-checked/1:translate-x-0 peer-checked/2:translate-x-[calc(100%+0.25rem)] peer-checked/3:translate-x-[calc(200%+0.5rem)]"}]]])
 
@@ -175,13 +175,13 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
   [:div {:class "mt-4 rounded-xl bg-zinc-50 p-5 ring-1 ring-zinc-200/50"}
    [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider"} "Where your bonus goes"]
    [:div {:class "mt-3 flex h-2.5 w-full overflow-hidden rounded-full bg-zinc-200/70"}
-    [:div {:class "h-full rounded-l-full bg-emerald-500"
+    [:div {:class "h-full rounded-l-full bg-brand-500"
            :style {:width (str take-share "%")}}]
     [:div {:class "h-full rounded-r-full bg-rose-400"
            :style {:width (str tax-share "%")}}]]
    [:div {:class "mt-3 flex items-center justify-between gap-3 text-sm"}
     [:span {:class "flex items-center gap-2 text-zinc-500"}
-     [:span {:class "h-2 w-2 rounded-full bg-emerald-500"}] "Take-home"]
+     [:span {:class "h-2 w-2 rounded-full bg-brand-500"}] "Take-home"]
     [:span {:class "font-semibold text-zinc-900 tabular-nums"} (utilities/amount->rands net-bonus)]]
    [:div {:class "mt-1.5 flex items-center justify-between gap-3 text-sm"}
     [:span {:class "flex items-center gap-2 text-zinc-500"}
@@ -201,10 +201,10 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
                             (tools/bold-row "Tax on Bonus" (utilities/amount->rands bonus-tax) "text-rose-600"))))
 
 (defn- bank-total [net-salary net-bonus month-total]
-  [:div {:class "mt-4 rounded-xl bg-emerald-50 p-5 ring-1 ring-emerald-600/15"}
+  [:div {:class "mt-4 rounded-xl bg-brand-50 p-5 ring-1 ring-brand-600/15"}
    [:div {:class "flex items-center justify-between gap-3"}
-    [:span {:class "text-sm font-medium text-emerald-900"} "Lands in your bank this month"]
-    [:span {:class "text-lg font-bold tabular-nums text-emerald-700"}
+    [:span {:class "text-sm font-medium text-brand-900"} "Lands in your bank this month"]
+    [:span {:class "text-lg font-bold tabular-nums text-brand-700"}
      (utilities/amount->rands month-total)]]
    [:p {:class "mt-1 text-xs text-zinc-500"}
     (utilities/amount->rands net-salary) " net salary + " (utilities/amount->rands net-bonus) " net bonus"]])
@@ -245,8 +245,8 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
       [:div#bonus-result
        (tools/panel
         [:div {:class "flex flex-col items-center justify-center px-6 py-16 text-center"}
-         [:div {:class "mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50"}
-          [:span {:class "text-emerald-500"} (svgs/gift)]]
+         [:div {:class "mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50"}
+          [:span {:class "text-brand-500"} (svgs/gift)]]
          [:p {:class "text-sm font-medium text-zinc-500"} "Enter a bonus amount to see what you'll take home"]
          [:p {:class "mt-1 max-w-xs text-xs text-zinc-500"} "Pick a quick option above or type a bonus amount, then click Calculate to see your net bonus."]])]
       [:div#bonus-result {:class "space-y-4"}

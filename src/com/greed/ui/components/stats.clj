@@ -46,10 +46,10 @@
       ;; way in (the income list's Add item). Same pattern as the dashboard's
       ;; summary-card empty state.
       [:div {:class "reveal relative overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200/70 shadow-card-md"}
-       [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"}]
+       [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/40 to-transparent"}]
        [:div {:class "relative flex flex-col items-center px-6 py-12 text-center"}
-        [:div {:class "mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50"}
-         [:span {:class "text-emerald-500"} (svgs/wallet)]]
+        [:div {:class "mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-brand-50"}
+         [:span {:class "text-brand-500"} (svgs/wallet)]]
         [:p {:class "text-sm font-medium text-zinc-500"} "No budget yet"]
         [:p {:class "mt-1 text-xs text-zinc-500"} "Add your income, expenses and savings to plan this month."]
         (shared/btn :variant :primary :size :md :class "mt-5"
@@ -62,7 +62,7 @@
         [:div
          (hero-eyebrow (if overspend? "Over budget by" "Left to plan")
                        :badge (when pd
-                                [:span {:class "flex-shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-600/15"}
+                                [:span {:class "flex-shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 ring-1 ring-brand-600/15"}
                                  (str "Payday · " (u.time/format-date pd))]))
          (hero-headline (utilities/whole->rands (Math/abs (double leftover))) "this month")
          (hero-status (if overspend?
@@ -77,7 +77,7 @@
                  :style {:width (str (min 100.0 (max 0.0 expenses-share)) "%")}}]
           [:div {:class "h-full bg-indigo-500"
                  :style {:width (str (min 100.0 (max 0.0 savings-share)) "%")}}]
-          [:div {:class "h-full rounded-r-full bg-emerald-300"
+          [:div {:class "h-full rounded-r-full bg-brand-300"
                  :style {:width (str (min 100.0 (max 0.0 leftover-share)) "%")}}]]
          (when (and pd prev-pd)
            [:div {:class "mt-4 border-t border-zinc-100 pt-4"}
@@ -86,16 +86,16 @@
              [:p {:class "text-xs font-medium text-zinc-500 tabular-nums"}
               (str "Day " elapsed " of " period-len)]]
             [:div {:class "mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200/70"}
-             [:div {:class (str "h-full rounded-full " (if overspend? "bg-rose-400" "bg-emerald-400"))
+             [:div {:class (str "h-full rounded-full " (if overspend? "bg-rose-400" "bg-brand-400"))
                     :style {:width (str (min 100.0 (double (* 100.0 (/ (double elapsed) (double period-len))))) "%")}}]]
             (when spend-per-day
               [:p {:class (str "mt-3 text-sm font-semibold tabular-nums "
-                               (if overspend? "text-rose-600" "text-emerald-600"))}
+                               (if overspend? "text-rose-600" "text-brand-600"))}
                (utilities/amount->rands (Math/round (double spend-per-day)))
                (if overspend? " per day over until payday" " per day to spend until payday")])])]]
        [:div {:class "flex-1"}]
        (hero-stats-row
-        (hero-substat "Income" (utilities/amount->rands income) "text-emerald-600")
+        (hero-substat "Income" (utilities/amount->rands income) "text-brand-600")
         (hero-substat "Expenses" (utilities/amount->rands total-expenses) "text-rose-600")
         (hero-substat "Savings rate" (utilities/pct-label (utilities/pct-share total-savings income))))))))
 
@@ -126,7 +126,7 @@
        (not (pos? income))
        [:p {:class "text-center py-6 text-sm text-zinc-500"}
         "Add your "
-        [:a {:href "/app/finances" :class "font-medium text-emerald-600 hover:underline"} "income"]
+        [:a {:href "/app/finances" :class "font-medium text-brand-600 hover:underline"} "income"]
         " in Finances to see your pace."]
        (nil? pd)
        [:div {:class "text-center py-6"}
@@ -141,19 +141,19 @@
             [:p {:class "text-xs font-medium text-zinc-500 tabular-nums"}
              (str "Day " elapsed " of " period-len)]]
            [:div {:class "mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100"}
-            [:div {:class "h-full rounded-full bg-emerald-400"
+            [:div {:class "h-full rounded-full bg-brand-400"
                    :style {:width (str (min 100.0 (double (* 100.0 (/ (double elapsed) (double period-len))))) "%")}}]]])
         [:div {:class "mt-5 flex items-center justify-between gap-3"}
          [:p {:class "text-sm text-zinc-600"} "Savings rate"]
          [:p {:class (str "text-lg font-semibold tabular-nums "
-                          (cond on-target? "text-emerald-600"
+                          (cond on-target? "text-brand-600"
                                 (pos? rate-num) "text-amber-600"
                                 :else "text-zinc-900"))}
           (utilities/pct-label rate)]]
         (if (pos? savings)
           [:div {:class "mt-3"}
            [:div {:class "overflow-hidden h-1.5 w-full bg-zinc-100 rounded-full"}
-            [:div {:class "h-full rounded-full bg-emerald-400"
+            [:div {:class "h-full rounded-full bg-brand-400"
                    :style {:width (str (min 100.0 (double (* 100.0 (/ (max rate 0.0) 20.0)))) "%")}}]]
            [:p {:class "mt-1.5 text-xs text-zinc-500 leading-relaxed"}
             (if on-target?
@@ -174,10 +174,10 @@
    (when href
      (if external?
        [:a {:href href :target "_blank" :rel "noopener noreferrer"
-            :class "-my-1.5 -mx-2 inline-flex items-center rounded-md px-2 py-2 text-xs font-medium text-emerald-600 transition hover:text-emerald-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/70 focus-visible:ring-offset-2 active:text-emerald-800 active:scale-[0.97]"}
+            :class "-my-1.5 -mx-2 inline-flex items-center rounded-md px-2 py-2 text-xs font-medium text-brand-600 transition hover:text-brand-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/70 focus-visible:ring-offset-2 active:text-brand-800 active:scale-[0.97]"}
         link-label]
        [:a {:href href
-            :class "group -my-1.5 -mx-2 inline-flex items-center gap-1 rounded-md px-2 py-2 text-xs font-medium text-emerald-600 transition hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/70 focus-visible:ring-offset-2 active:text-emerald-800 active:scale-[0.97]"}
+            :class "group -my-1.5 -mx-2 inline-flex items-center gap-1 rounded-md px-2 py-2 text-xs font-medium text-brand-600 transition hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/70 focus-visible:ring-offset-2 active:text-brand-800 active:scale-[0.97]"}
         link-label
         (svgs/->next {:class "size-3.5 -translate-x-0.5 transition-transform group-hover:translate-x-0"})]))])
 
@@ -204,16 +204,16 @@
    {:href href
     :class (str "group relative flex flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200/70 shadow-card p-5 transition duration-150 ease-out hover:ring-zinc-300 hover:shadow-card-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/70 focus-visible:ring-offset-2 "
                 (or reveal ""))}
-   [:div {:class "pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"}]
+   [:div {:class "pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/40 to-transparent"}]
    [:div {:class "flex items-center justify-between"}
     [:div {:class "flex items-center gap-2.5"}
      (when icon
        [:span {:class (str "flex h-9 w-9 items-center justify-center rounded-xl " (or icon-cls "bg-zinc-50 text-zinc-500"))}
         icon])
      [:p {:class "text-[11px] font-semibold text-zinc-500 uppercase tracking-wider"} label]]
-    [:span {:class "flex items-center gap-1 text-xs font-medium text-zinc-500 transition-colors duration-150 ease-out group-hover:text-emerald-600"}
+    [:span {:class "flex items-center gap-1 text-xs font-medium text-zinc-500 transition-colors duration-150 ease-out group-hover:text-brand-600"}
      "View"
-     (svgs/->next {:class "-translate-x-0.5 size-3.5 transition-transform duration-150 ease-out group-hover:translate-x-0 group-hover:text-emerald-600"})]]
+     (svgs/->next {:class "-translate-x-0.5 size-3.5 transition-transform duration-150 ease-out group-hover:translate-x-0 group-hover:text-brand-600"})]]
    [:p {:class (str "mt-4 text-3xl font-bold leading-none tracking-tight tabular-nums " (or value-cls "text-zinc-900"))}
     value]
    (when reading
@@ -227,13 +227,13 @@
         nxt     (get-in brackets [(inc i) :threshold])
         range-s (if nxt (str (utilities/whole->rands from) " - " (utilities/whole->rands (dec nxt))) (str (utilities/whole->rands from) "+"))]
     [:div {:class (str "flex items-center gap-3 px-5 py-3 sm:px-6 "
-                       (when active? "bg-emerald-50/60"))}
+                       (when active? "bg-brand-50/60"))}
      [:div {:class "flex items-center gap-2.5 min-w-0 flex-1"}
-      [:span {:class (str "flex-shrink-0 w-1.5 h-1.5 rounded-full " (if active? "bg-emerald-500" "bg-zinc-300"))}]
+      [:span {:class (str "flex-shrink-0 w-1.5 h-1.5 rounded-full " (if active? "bg-brand-500" "bg-zinc-300"))}]
       [:span {:class (str "text-sm truncate tabular-nums " (if active? "font-semibold text-zinc-900" "text-zinc-600"))} range-s]
       (when active?
-        [:span {:class "flex-shrink-0 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-100 uppercase tracking-wide rounded"} "You"])]
-     [:span {:class (str "flex-shrink-0 text-sm tabular-nums " (if active? "font-bold text-emerald-700" "text-zinc-500"))}
+        [:span {:class "flex-shrink-0 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700 bg-brand-100 uppercase tracking-wide rounded"} "You"])]
+     [:span {:class (str "flex-shrink-0 text-sm tabular-nums " (if active? "font-bold text-brand-700" "text-zinc-500"))}
       (utilities/rate-label (get b :rate 0))]]))
 
 (defn tax-bracket-breakdown
@@ -261,7 +261,7 @@
           [:div {:class "overflow-hidden h-2 w-full bg-zinc-100 rounded-full"}
            [:div {:class "h-full overflow-hidden rounded-full"
                   :style {:width (str (utilities/fmt-d "%.0f" progress) "%")}}
-            [:div {:class "h-full w-full bg-emerald-500 rounded-full greed-bar-grow"}]]]
+            [:div {:class "h-full w-full bg-brand-500 rounded-full greed-bar-grow"}]]]
           [:p {:class "mt-2 text-xs text-zinc-500"}
            [:span {:class "font-semibold text-zinc-700 tabular-nums"} (utilities/whole->rands income-to-next-bracket)]
            (str " until the " next-rate " bracket")]])
@@ -270,7 +270,7 @@
        [:div {:class "flex justify-end border-t border-zinc-100 px-5 py-3 sm:px-6"}
         [:a {:href "https://www.sars.gov.za/tax-rates/income-tax/rates-of-tax-for-individuals/"
              :target "_blank" :rel "noopener noreferrer"
-             :class "text-xs font-medium text-emerald-600 hover:underline"}
+             :class "text-xs font-medium text-brand-600 hover:underline"}
          "Rates from SARS"]]))))
 
 (defn tax-summary
@@ -294,10 +294,10 @@
        :children
        [:div
         [:div {:class "mt-3 flex h-2 w-full overflow-hidden rounded-full bg-zinc-100"}
-         [:div {:class "h-full bg-emerald-500" :style {:width (str (utilities/fmt-d "%.1f" keep-share) "%")}}]
+         [:div {:class "h-full bg-brand-500" :style {:width (str (utilities/fmt-d "%.1f" keep-share) "%")}}]
          [:div {:class "h-full bg-rose-500" :style {:width (str (utilities/fmt-d "%.1f" effective-rate) "%")}}]]
         [:div {:class "mt-4 space-y-3"}
-         (legend-row "bg-emerald-500" "You keep" net-income (utilities/pct-label keep-share) "text-emerald-600")
+         (legend-row "bg-brand-500" "You keep" net-income (utilities/pct-label keep-share) "text-brand-600")
          (legend-row "bg-rose-500" "SARS" net-tax (utilities/pct-label effective-rate) "text-rose-600")]])
       (summary-card
        :label "Tax"
@@ -326,8 +326,8 @@
     (if (not (pos? annual-income))
       (hero-panel
        {:inner-class "flex flex-col items-center px-6 py-12 text-center"}
-       [:div {:class "mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50"}
-        [:span {:class "text-emerald-500"} (svgs/percent-badge)]]
+       [:div {:class "mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-brand-50"}
+        [:span {:class "text-brand-500"} (svgs/percent-badge)]]
        [:p {:class "text-sm font-medium text-zinc-500"} "No salary yet"]
        [:p {:class "mt-1 text-xs text-zinc-500"} "Add your salary in Settings to see your annual tax picture."]
        (shared/btn :variant :primary :size :md :class "mt-5" :href "/app/settings" "Add your salary"))
@@ -336,20 +336,20 @@
        [:div {:class "grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-center"}
         [:div
          (hero-eyebrow "Your tax year"
-                       :badge [:span {:class "flex-shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-600/15"}
+                       :badge [:span {:class "flex-shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 ring-1 ring-brand-600/15"}
                                "2026/27"])
          (hero-headline (utilities/whole->rands net-income) "take-home this year")
          (hero-status status)]
         [:div {:class "rounded-xl bg-zinc-50 p-5 ring-1 ring-zinc-200/50"}
          [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider"} "Where your income goes"]
          [:div {:class "mt-3 flex h-2.5 w-full overflow-hidden rounded-full bg-zinc-200/70"}
-          [:div {:class "h-full rounded-l-full bg-emerald-500 greed-bar-grow"
+          [:div {:class "h-full rounded-l-full bg-brand-500 greed-bar-grow"
                  :style {:width (str take-share "%")}}]
           [:div {:class "h-full rounded-r-full bg-rose-400"
                  :style {:width (str tax-share "%")}}]]
          [:div {:class "mt-3 flex items-center justify-between gap-3 text-sm"}
           [:span {:class "flex items-center gap-2 text-zinc-500"}
-           [:span {:class "h-2 w-2 rounded-full bg-emerald-500"}] "Take-home"]
+           [:span {:class "h-2 w-2 rounded-full bg-brand-500"}] "Take-home"]
           [:span {:class "font-semibold text-zinc-900 tabular-nums"} (utilities/amount->rands net-income)]]
          [:div {:class "mt-1.5 flex items-center justify-between gap-3 text-sm"}
           [:span {:class "flex items-center gap-2 text-zinc-500"}
@@ -379,8 +379,8 @@
      {:class "flex-1"}
      (if (not has-any?)
        [:div {:class "flex h-full flex-col items-center justify-center px-6 py-10 text-center"}
-        [:div {:class "mx-auto mb-3 flex items-center justify-center w-10 h-10 rounded-full bg-emerald-50"}
-         [:span {:class "text-emerald-500"} (svgs/percent-badge)]]
+        [:div {:class "mx-auto mb-3 flex items-center justify-center w-10 h-10 rounded-full bg-brand-50"}
+         [:span {:class "text-brand-500"} (svgs/percent-badge)]]
         [:p {:class "text-sm font-medium text-zinc-500"} "Sharpen your estimate"]
         [:p {:class "mt-0.5 max-w-xs text-xs text-zinc-500"}
          "Add your medical aid and retirement annuity details. Greed applies them to your annual tax picture automatically."]
@@ -388,7 +388,7 @@
        [:div
         [:div {:class "flex items-center justify-between gap-3 px-5 pt-5 sm:px-6"}
          [:h3 {:class "text-sm font-semibold text-zinc-900 tracking-tight"} "Your deductions"]
-         [:span {:class "flex-shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-600/15"} "Applied"]]
+         [:span {:class "flex-shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 ring-1 ring-brand-600/15"} "Applied"]]
         [:p {:class "mt-0.5 px-5 text-xs text-zinc-500 leading-relaxed sm:px-6"}
          "These lower your taxable income, and what SARS keeps."]
         [:div {:class "mt-4 border-t border-zinc-100 divide-y divide-zinc-100"}
@@ -399,16 +399,16 @@
          (when (pos? mtc)
            [:div {:class "flex items-center justify-between gap-3 px-5 py-3 sm:px-6"}
             [:p {:class "text-sm text-zinc-600"} "Medical aid tax credit"]
-            [:p {:class "text-sm font-semibold text-emerald-600 tabular-nums"} (utilities/amount->rands mtc)]])
+            [:p {:class "text-sm font-semibold text-brand-600 tabular-nums"} (utilities/amount->rands mtc)]])
          (when (pos? add-med)
            [:div {:class "flex items-center justify-between gap-3 px-5 py-3 sm:px-6"}
             [:p {:class "text-sm text-zinc-600"} "Additional medical credit (s6B)"]
-            [:p {:class "text-sm font-semibold text-emerald-600 tabular-nums"} (utilities/amount->rands add-med)]])]
+            [:p {:class "text-sm font-semibold text-brand-600 tabular-nums"} (utilities/amount->rands add-med)]])]
         [:div {:class "flex justify-end px-5 py-4 sm:px-6"}
-         [:a {:href "/app/settings" :class "text-xs font-medium text-emerald-600 hover:underline"} "Edit in Settings"]]]))))
+         [:a {:href "/app/settings" :class "text-xs font-medium text-brand-600 hover:underline"} "Edit in Settings"]]]))))
 
 (def ^:private upcoming-type-dot
-  {:bill "bg-rose-400" :income "bg-emerald-400" :todo "bg-violet-400" :general "bg-violet-400"})
+  {:bill "bg-rose-400" :income "bg-brand-400" :todo "bg-violet-400" :general "bg-violet-400"})
 
 (defn upcoming-summary
   "Dashboard widget for the upcoming surface: the next payday and the next
@@ -440,10 +440,10 @@
        [:div {:class "divide-y divide-zinc-100"}
         (when pd
           [:div {:class "flex items-center gap-2.5 py-2.5"}
-           [:span {:class "h-2 w-2 flex-shrink-0 rounded-full bg-emerald-400"}]
+           [:span {:class "h-2 w-2 flex-shrink-0 rounded-full bg-brand-400"}]
            [:div {:class "min-w-0 flex-1"}
             [:p {:class "text-xs text-zinc-500"} "Payday"]]
-           [:span {:class "text-xs font-semibold text-emerald-600 tabular-nums"} (u.time/format-date pd)]])
+           [:span {:class "text-xs font-semibold text-brand-600 tabular-nums"} (u.time/format-date pd)]])
         (for [{:event/keys [title date type]} ahead]
           (let [d (LocalDate/parse date)]
             [:div {:class "flex items-center gap-2.5 py-2.5"}
@@ -492,7 +492,7 @@
               [:span {:class "flex-shrink-0 text-xs text-zinc-500 tabular-nums"}
                (str (utilities/whole->rands (or saved 0)) " / " (utilities/whole->rands (or target 0)))]],
              [:div {:class "mt-1.5 flex h-1.5 w-full overflow-hidden rounded-full bg-zinc-100"}
-              [:div {:class (str "h-full rounded-full " (if complete? "bg-emerald-500" "bg-emerald-400"))
+              [:div {:class (str "h-full rounded-full " (if complete? "bg-brand-500" "bg-brand-400"))
                      :style {:width (str p "%")}}]]]))])
       (summary-card
        :label "Goals"
@@ -539,7 +539,7 @@
       (when (pos? p)
         [:circle {:cx cx :cy cy :r r
                   :fill "none"
-                  :class (or arc-cls "text-emerald-500")
+                  :class (or arc-cls "text-brand-500")
                   :stroke "currentColor"
                   :stroke-width stroke
                   :stroke-linecap "round"
@@ -603,7 +603,7 @@
   [title & {:keys [subtitle href link-label reveal children]}]
   [:div {:class (str "relative flex h-full flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200/70 shadow-card p-6 "
                      (or reveal "reveal"))}
-   [:div {:class "pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"}]
+   [:div {:class "pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/40 to-transparent"}]
    [:div {:class "flex items-start justify-between gap-3"}
     [:div {:class "min-w-0"}
      [:h3 {:class "text-sm font-semibold text-zinc-900 tracking-tight"} title]
@@ -611,7 +611,7 @@
        [:p {:class "mt-0.5 text-xs text-zinc-500 leading-relaxed"} subtitle])]
     (when href
       [:a {:href href
-           :class "group -my-1.5 -mx-2 inline-flex items-center gap-1 rounded-md px-2 py-2 text-xs font-medium text-emerald-600 transition hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/70 focus-visible:ring-offset-2 active:text-emerald-800 active:scale-[0.97]"}
+           :class "group -my-1.5 -mx-2 inline-flex items-center gap-1 rounded-md px-2 py-2 text-xs font-medium text-brand-600 transition hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/70 focus-visible:ring-offset-2 active:text-brand-800 active:scale-[0.97]"}
        link-label
        (svgs/->next {:class "size-3.5 -translate-x-0.5 transition-transform group-hover:translate-x-0"})])]
    [:div {:class "mt-5 flex flex-1 flex-col"} children]])
@@ -621,8 +621,8 @@
    action pointing at the feature that fills the chart."
   [& {:keys [icon title body href btn-label]}]
   [:div {:class "flex h-full flex-col items-center justify-center px-4 py-10 text-center"}
-   [:div {:class "mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50"}
-    [:span {:class "text-emerald-500"} icon]]
+   [:div {:class "mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-brand-50"}
+    [:span {:class "text-brand-500"} icon]]
    [:p {:class "text-sm font-medium text-zinc-500"} title]
    [:p {:class "mt-1 max-w-xs text-xs text-zinc-500 leading-relaxed"} body]
    (shared/btn :variant :outline :size :md :class "mt-5" :href href btn-label)])
@@ -718,12 +718,12 @@
           (ring-progress rate
                          :size 160 :stroke 16
                          :track-cls "text-zinc-100"
-                         :arc-cls (cond on-target? "text-emerald-500"
+                         :arc-cls (cond on-target? "text-brand-500"
                                         (pos? rate-num) "text-amber-500"
                                         :else "text-zinc-300"))
           [:div {:class "absolute inset-0 flex flex-col items-center justify-center text-center"}
            [:p {:class (str "text-3xl font-bold leading-none tracking-tight tabular-nums "
-                            (cond on-target? "text-emerald-600"
+                            (cond on-target? "text-brand-600"
                                   (pos? rate-num) "text-amber-600"
                                   :else "text-zinc-900"))}
             (utilities/pct-label rate)]
@@ -732,7 +732,7 @@
          [:div {:class "mt-5 w-full border-t border-zinc-100 pt-4"}
           (cond
             on-target?
-            [:p {:class "text-xs leading-relaxed text-emerald-600"}
+            [:p {:class "text-xs leading-relaxed text-brand-600"}
              "Past the 20% benchmark: savings are compounding nicely."]
             (pos? rate-num)
             [:p {:class "text-xs leading-relaxed text-zinc-500"}
@@ -752,7 +752,7 @@
 ;; figures split by a hairline rule.
 
 (defn- hero-panel
-  "Shared hero surface: white card with a hairline ring, emerald top glow and a
+  "Shared hero surface: white card with a hairline ring, brand-green top glow and a
    soft corner bloom. An optional leading opts map ({:class ...} for the card,
    :inner-class for the padded content) lets a hero stretch inside an
    equal-height row."
@@ -762,18 +762,18 @@
         children (if opts? (rest args) args)]
     [:div {:class (str "relative overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200/70 shadow-card-md "
                        (:class opts))}
-     [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"}]
-     [:div {:class "absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl"}]
+     [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/40 to-transparent"}]
+     [:div {:class "absolute -top-24 -right-24 h-72 w-72 rounded-full bg-brand-400/10 blur-3xl"}]
      (into [:div {:class (str "relative px-6 py-6 sm:px-8 sm:py-7 " (:inner-class opts))}]
            children)]))
 
 (defn- hero-eyebrow
-  "Uppercase emerald label above the headline. An optional badge (e.g. the
+  "Uppercase brand-green label above the headline. An optional badge (e.g. the
    payday pill) sits right-aligned on the same row."
   [label & {:keys [badge]}]
   [:div {:class "flex items-center gap-2.5"}
-   [:span {:class "h-1.5 w-1.5 rounded-full bg-emerald-500"}]
-   [:p {:class "text-[11px] sm:text-xs font-semibold text-emerald-600 uppercase tracking-[0.18em]"} label]
+   [:span {:class "h-1.5 w-1.5 rounded-full bg-brand-500"}]
+   [:p {:class "text-[11px] sm:text-xs font-semibold text-brand-600 uppercase tracking-[0.18em]"} label]
    [:div {:class "flex-1"}]
    (when badge badge)])
 
@@ -830,8 +830,8 @@
     (if (zero? income)
       (hero-panel
        {:class "h-full" :inner-class "flex flex-col items-center justify-center h-full px-6 py-12 text-center"}
-       [:div {:class "mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50"}
-        [:span {:class "text-emerald-500"} (svgs/wallet)]]
+       [:div {:class "mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-brand-50"}
+        [:span {:class "text-brand-500"} (svgs/wallet)]]
        [:p {:class "text-sm font-medium text-zinc-500"} "No income yet"]
        [:p {:class "mt-1 text-xs text-zinc-500"} "Add your income in Finances to see your month at a glance."]
        (shared/btn :variant :primary :size :md :class "mt-5" :href "/app/finances" "Add your income"))
@@ -850,7 +850,7 @@
            (ring-progress period-pct
                           :size 112 :stroke 10
                           :track-cls "text-zinc-100"
-                          :arc-cls (if overspend? "text-rose-400" "text-emerald-500"))
+                          :arc-cls (if overspend? "text-rose-400" "text-brand-500"))
            [:div {:class "absolute inset-0 flex flex-col items-center justify-center text-center"}
             [:p {:class (str "text-xl font-bold leading-none tracking-tight tabular-nums "
                              (if overspend? "text-rose-600" "text-zinc-900"))}
@@ -860,7 +860,7 @@
        [:div {:class "flex-1"}]
        (hero-stats-row
         (hero-substat "Savings rate" (utilities/pct-label savings-rate))
-        (hero-substat "Income" (utilities/whole->rands income) "text-emerald-600")
+        (hero-substat "Income" (utilities/whole->rands income) "text-brand-600")
         (hero-substat "Payday" (cond (nil? pd) "-"
                                      (zero? pd-until) "Today"
                                      :else (str "in " pd-until "d"))))))))
@@ -874,13 +874,13 @@
         p            (utilities/goal-pct saved-total target-total)
         status       (cond
                        (and (pos? target-total) (>= saved-total target-total))
-                       [:span {:class "text-emerald-600"} "Every goal fully funded. Nice work."]
+                       [:span {:class "text-brand-600"} "Every goal fully funded. Nice work."]
                        (>= p 50) "More than halfway to fully funding your goals."
                        (pos? saved-total) "Keep going. Every contribution gets you closer."
                        :else
                        [:span "Nothing saved yet. "
                         [:a {:href "/app/finances"
-                             :class "font-semibold text-emerald-600 underline underline-offset-2"}
+                             :class "font-semibold text-brand-600 underline underline-offset-2"}
                          "Add savings"]
                         " in Finances to start funding your goals."])]
     (hero-panel
@@ -889,7 +889,7 @@
      (hero-status status)
      (hero-stats-row
       (hero-substat "Active goals" (str (count goals)))
-      (hero-substat "Saved" (utilities/amount->rands saved-total) "text-emerald-600")
+      (hero-substat "Saved" (utilities/amount->rands saved-total) "text-brand-600")
       (hero-substat "Still to save" (utilities/amount->rands remaining))))))
 
 (defn insights-hero
@@ -900,7 +900,7 @@
                    (not (pos? total-income))
                    [:span "Add your "
                     [:a {:href "/app/finances"
-                         :class "font-semibold text-emerald-600 underline underline-offset-2"}
+                         :class "font-semibold text-brand-600 underline underline-offset-2"}
                      "income"]
                     " in Finances to get a read on your savings."]
                    overspend?
@@ -911,7 +911,7 @@
                    :else
                    [:span "Nothing set aside yet. "
                     [:a {:href "/app/finances"
-                         :class "font-semibold text-emerald-600 underline underline-offset-2"}
+                         :class "font-semibold text-brand-600 underline underline-offset-2"}
                      "Add savings"]
                     " in Finances."])]
     (hero-panel
@@ -919,7 +919,7 @@
      (hero-headline (if (pos? total-income) (utilities/pct-label savings-rate) "-") "of income saved")
      (hero-status status :tone (when overspend? "text-rose-600"))
      (hero-stats-row
-      (hero-substat "Income" (utilities/amount->rands total-income) "text-emerald-600")
+      (hero-substat "Income" (utilities/amount->rands total-income) "text-brand-600")
       (hero-substat "Expenses" (utilities/amount->rands total-expenses) "text-rose-600")
       (hero-substat (if overspend? "Overspend" "Unallocated")
                     (utilities/amount->rands (Math/abs (long leftover)))
@@ -949,7 +949,7 @@
                         (nil? pd)
                         [:span "Add a "
                          [:a {:href "/app/finances"
-                              :class "font-semibold text-emerald-600 underline underline-offset-2"}
+                              :class "font-semibold text-brand-600 underline underline-offset-2"}
                           "payday"]
                          " in Finances to anchor your month."]
                         (zero? pd-until)
@@ -974,5 +974,5 @@
      (hero-status status)
      (hero-stats-row
       (hero-substat "Bills" (str bills) "text-rose-600")
-      (hero-substat "Payments in" (str income) "text-emerald-600")
+      (hero-substat "Payments in" (str income) "text-brand-600")
       (hero-substat "Overdue" (str overdue-todos) (when (pos? overdue-todos) "text-rose-600"))))))

@@ -54,7 +54,7 @@
    [:div {:class "relative mt-1"}
     [:span {:class "absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-500"} "R"]
     [:input {:id "income" :name "income" :type "number" :min "0" :step "any"
-              :class "block w-full pl-8 pr-3 py-3 text-lg font-semibold tabular-nums text-zinc-900 placeholder-zinc-400 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+              :class "block w-full pl-8 pr-3 py-3 text-lg font-semibold tabular-nums text-zinc-900 placeholder-zinc-400 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
              :placeholder "0" :value (or value "")}]]])
 
 (defn- tier-field [selected]
@@ -69,13 +69,13 @@
     [:input {:type "radio" :name "rebate-tier" :value "75-plus" :id "rebate-tier-3"
              :class "sr-only peer peer/3" :checked (= selected "75-plus")}]
     [:label {:for "rebate-tier-1"
-             :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/1:ring-2 peer-focus-visible/1:ring-emerald-500/50 peer-checked/1:text-zinc-900"}
+             :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/1:ring-2 peer-focus-visible/1:ring-brand-500/50 peer-checked/1:text-zinc-900"}
      "Under 65"]
     [:label {:for "rebate-tier-2"
-              :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/2:ring-2 peer-focus-visible/2:ring-emerald-500/50 peer-checked/2:text-zinc-900"}
+              :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/2:ring-2 peer-focus-visible/2:ring-brand-500/50 peer-checked/2:text-zinc-900"}
      "65-74"]
     [:label {:for "rebate-tier-3"
-             :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/3:ring-2 peer-focus-visible/3:ring-emerald-500/50 peer-checked/3:text-zinc-900"}
+             :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/3:ring-2 peer-focus-visible/3:ring-brand-500/50 peer-checked/3:text-zinc-900"}
      "75+"]
     [:div {:class "pointer-events-none absolute inset-y-1 left-1 w-[calc((100%-1rem)/3)] rounded-lg bg-white shadow-sm ring-1 ring-zinc-900/5 transition-transform duration-300 ease-out peer-checked/1:translate-x-0 peer-checked/2:translate-x-[calc(100%+0.25rem)] peer-checked/3:translate-x-[calc(200%+0.5rem)]"}]]])
 
@@ -104,13 +104,13 @@ on htmx:afterRequest remove .opacity-50 from #tax-result"}
   [:div {:class "mt-4 rounded-xl bg-zinc-50 p-5 ring-1 ring-zinc-200/50"}
    [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider"} "Where your income goes"]
    [:div {:class "mt-3 flex h-2.5 w-full overflow-hidden rounded-full bg-zinc-200/70"}
-    [:div {:class "h-full rounded-l-full bg-emerald-500"
+    [:div {:class "h-full rounded-l-full bg-brand-500"
            :style {:width (str take-share "%")}}]
     [:div {:class "h-full rounded-r-full bg-rose-400"
            :style {:width (str tax-share "%")}}]]
    [:div {:class "mt-3 flex items-center justify-between gap-3 text-sm"}
     [:span {:class "flex items-center gap-2 text-zinc-500"}
-     [:span {:class "h-2 w-2 rounded-full bg-emerald-500"}] "Take-home"]
+     [:span {:class "h-2 w-2 rounded-full bg-brand-500"}] "Take-home"]
     [:span {:class "font-semibold text-zinc-900 tabular-nums"} (utilities/amount->rands net-income)]]
    [:div {:class "mt-1.5 flex items-center justify-between gap-3 text-sm"}
     [:span {:class "flex items-center gap-2 text-zinc-500"}
@@ -129,7 +129,7 @@ on htmx:afterRequest remove .opacity-50 from #tax-result"}
                             (tools/bold-row "Net Annual Tax" (utilities/amount->rands net-tax)))
    (tools/breakdown-section "Take-home Pay"
                             (tools/row "Annual Net Income" (utilities/amount->rands net-income))
-                            (tools/bold-row "Monthly Net Income" (utilities/amount->rands net-monthly) "text-emerald-600"))))
+                            (tools/bold-row "Monthly Net Income" (utilities/amount->rands net-monthly) "text-brand-600"))))
 
 (defn- result-region [params]
   (let [income        (->n (:income params))
@@ -154,8 +154,8 @@ on htmx:afterRequest remove .opacity-50 from #tax-result"}
       [:div#tax-result
        (tools/panel
         [:div {:class "flex flex-col items-center justify-center px-6 py-16 text-center"}
-         [:div {:class "mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50"}
-          [:span {:class "text-emerald-500"} (svgs/percent-badge)]]
+         [:div {:class "mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50"}
+          [:span {:class "text-brand-500"} (svgs/percent-badge)]]
          [:p {:class "text-sm font-medium text-zinc-500"} "Enter your salary to see your take-home pay"]
          [:p {:class "mt-1 max-w-xs text-xs text-zinc-500"} "Enter your salary and click Calculate to see your take-home pay."]])]
       [:div#tax-result {:class "space-y-4"}

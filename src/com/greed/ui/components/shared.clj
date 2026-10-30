@@ -17,12 +17,12 @@
 
 (defn btn
   "Button or link styled as a button. Variants:
-     :primary      emerald solid
+     :primary      brand green solid
      :dark         zinc-900 solid
      :outline      white / bordered
      :ghost        zinc-100 subtle
      :danger       red solid
-     :emerald-ghost transparent emerald (for dark surfaces)
+     :brand-ghost transparent brand green (for dark surfaces)
    Sizes: :sm, :md, :lg. Pass :href to render an anchor instead.
    Trailing arguments are rendered as the element's content."
   [& args]
@@ -35,12 +35,12 @@
                  :md "px-4 py-2 text-sm"
                  :lg "px-6 py-3 text-sm font-semibold")
         variant-c (case variant
-                    :primary "text-white bg-emerald-600 hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 active:bg-emerald-800"
+                    :primary "text-white bg-brand-600 hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:bg-brand-800"
                     :dark "text-white bg-zinc-900 hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2 active:bg-zinc-800"
                     :outline "text-zinc-700 bg-white border border-zinc-300 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:bg-zinc-100"
                     :ghost "text-zinc-700 bg-zinc-100 hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:bg-zinc-300"
                     :danger "text-white bg-red-500 hover:bg-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 active:bg-red-700"
-                    :emerald-ghost "text-white bg-emerald-500/20 border border-transparent hover:bg-emerald-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 active:bg-emerald-700/30"
+                    :brand-ghost "text-white bg-brand-500/20 border border-transparent hover:bg-brand-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:bg-brand-700/30"
                     (throw (ex-info (str "Unknown button variant: " variant) {})))
         cls (str/join " " [base size-c variant-c class])
         attrs (merge attrs {:class cls})]
@@ -51,7 +51,7 @@
 (defn card
   "Reusable card container. Variants:
      :light   white / zinc-100 border (default)
-     :soft    white-to-emerald gradient with ring (dashboard panels)
+     :soft    white-to-brand-green gradient with ring (dashboard panels)
      :dark    zinc-900 panel (marketing)
    Pass children as trailing arguments."
   [opts & body]
@@ -61,7 +61,7 @@
            {:class (str/join " "
                              [(case variant
                                 :light "bg-white border border-zinc-200/70 rounded-2xl shadow-card"
-                                :soft "bg-gradient-to-br from-white via-white to-emerald-50/80 border border-zinc-200/70 rounded-2xl shadow-card"
+                                :soft "bg-gradient-to-br from-white via-white to-brand-50/80 border border-zinc-200/70 rounded-2xl shadow-card"
                                 :dark "bg-zinc-900 border border-zinc-800 rounded-2xl shadow-card-md")
                               class])}]
           body)))
@@ -77,7 +77,7 @@
   [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider"} content])
 
 (defn base-input-class []
-  "block w-full px-3 py-2 text-sm text-zinc-700 placeholder-zinc-400 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500")
+  "block w-full px-3 py-2 text-sm text-zinc-700 placeholder-zinc-400 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500")
 
 (defn determine-placeholder [id user profile]
   (let [config c/common-config]
@@ -110,7 +110,7 @@
      (if prefix
        [:div {:class "relative flex items-center"}
         [:div {:class "absolute left-3 pointer-events-none select-none text-sm font-medium text-zinc-500"} prefix]
-        [:input {:class "block w-full pl-7 pr-3 py-2 text-sm text-zinc-700 placeholder-zinc-400 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+        [:input {:class "block w-full pl-7 pr-3 py-2 text-sm text-zinc-700 placeholder-zinc-400 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
                  :id id :name id :type type
                  :value (str current-val)
                  :required required?}]]
@@ -132,7 +132,7 @@
    (if prefix
      [:div {:class "relative flex items-center"}
       [:div {:class "absolute left-3 pointer-events-none select-none text-sm font-medium text-zinc-500"} prefix]
-      [:input {:class "block w-full pl-7 pr-3 py-2 text-sm text-zinc-700 placeholder-zinc-400 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+      [:input {:class "block w-full pl-7 pr-3 py-2 text-sm text-zinc-700 placeholder-zinc-400 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
                :id id :name id :type type :value value :required required? :min min}]]
      [:input {:class (base-input-class)
               :id id :name id :type type :value value :required required? :min min}])

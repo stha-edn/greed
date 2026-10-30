@@ -29,8 +29,8 @@
           :class "inline-flex items-center active:scale-[0.97] transition-transform"}
       [:img {:src "/img/greed-wordmark-green-tight.svg"
              :alt "greed"
-             :width 1106 :height 313
-             :class "h-6 sm:h-7 w-auto"}]]
+             :width 648 :height 192
+             :class "h-8 sm:h-9 w-auto"}]]
      [:div {:class "flex items-center gap-1.5 sm:gap-2"}
       [:a {:href "/about"
            :class "hidden sm:inline-block whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
@@ -47,7 +47,7 @@
               :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-zinc-700 border border-zinc-300 rounded-lg hover:border-zinc-500 hover:bg-zinc-50 transition-colors active:scale-[0.97]"}
           "Sign In"]
          [:a {:href "/signup"
-              :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors active:scale-[0.97]"}
+              :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition-colors active:scale-[0.97]"}
           "Sign Up"]])
       ;; Mobile-only entry point to the links that collapse above (About,
       ;; Contact). Keeps every page reachable from the header itself
@@ -82,10 +82,10 @@
        :aria-current (when active? "page")
        :class (str "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 active:opacity-70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500/70"
                    (if active?
-                     " bg-zinc-800/80 text-emerald-400"
+                     " bg-zinc-800/80 text-brand-400"
                      " text-zinc-400 hover:bg-zinc-800/60 hover:text-white"))}
    ;; Active indicator bar
-   [:span {:class (str "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-emerald-400 transition-opacity duration-150 "
+   [:span {:class (str "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-brand-400 transition-opacity duration-150 "
                        (if active? "opacity-100" "opacity-0"))}]
    [:span {:class "w-5 h-5 flex-shrink-0 [&_svg]:w-full [&_svg]:h-full"} icon]
    label])
@@ -110,9 +110,9 @@
       [:a {:href "/" :class "inline-flex items-start"}
        [:img {:src "/img/greed-wordmark-white-tight.svg"
               :alt "greed"
-              :width 1106 :height 313
-              :class "h-6 w-auto"}]
-       [:span {:class "ml-1.5 text-xs font-medium leading-none text-emerald-500"} "beta"]]]
+              :width 648 :height 192
+              :class "h-8 w-auto"}]
+       [:span {:class "ml-1.5 text-xs font-medium leading-none text-brand-400"} "beta"]]]
      [:div {:class "flex flex-col flex-1 px-3 py-5 overflow-y-auto min-h-0"}
       [:nav {:class "space-y-0.5"}
        (for [item primary-links]
@@ -127,7 +127,7 @@
          "Settings"]]
        [:div {:class "flex items-center justify-between px-2 py-2"}
         [:a {:href "/app/profile" :class "flex items-center gap-2.5 min-w-0 group"}
-         [:div {:class "flex-shrink-0 w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-xs font-semibold text-white"}
+         [:div {:class "flex-shrink-0 w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-xs font-semibold text-white"}
           (str initials)]
          [:div {:class "min-w-0"}
           [:p {:class "text-xs font-medium text-zinc-300 truncate group-hover:text-white transition-colors"}
@@ -147,9 +147,9 @@
 (defn- bottom-tab [href label icon active?]
   [:a {:href href
        :aria-current (when active? "page")
-       :class (str "flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors active:opacity-60 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400"
+       :class (str "flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors active:opacity-60 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-400"
                    (if active?
-                     " text-emerald-400"
+                     " text-brand-400"
                      " text-zinc-400 hover:text-white"))}
    [:span {:class "w-6 h-6 flex items-center justify-center [&_svg]:w-full [&_svg]:h-full"} icon]
    label])
@@ -198,16 +198,19 @@
         initials (str (or (first firstname) \?) (or (first lastname) \?))]
     [:div {:_ drawer-escape-actions}
      [:div {:class "md:hidden fixed top-0 left-0 right-0 min-h-14 bg-black z-20 flex items-center justify-between px-4 pt-[env(safe-area-inset-top)]"}
-      [:a {:href "/"}
-       [:span {:class "text-xl font-giza font-bold text-white"} "greed."]
-       [:span {:class "ml-1.5 text-xs font-medium text-emerald-500 align-top mt-1 inline-block"} "beta"]]
+      [:a {:href "/" :class "inline-flex items-start"}
+       [:img {:src "/img/greed-wordmark-white-tight.svg"
+              :alt "greed"
+              :width 648 :height 192
+              :class "h-7 w-auto"}]
+       [:span {:class "ml-1.5 text-xs font-medium leading-none text-brand-400"} "beta"]]
       [:button {:id "mobile-drawer-toggle"
                 :type "button"
                 :aria-label "Open menu"
                 :aria-controls "mobile-drawer"
                 :aria-expanded "false"
                 :_ drawer-toggle-actions
-                :class "p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400"}
+                :class "p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-400"}
        [:svg {:class "w-5 h-5" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
         [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "1.8"
                 :d "M4 6h16M4 12h16M4 18h16"}]]]]
@@ -217,14 +220,17 @@
      [:aside {:id "mobile-drawer"
               :class "fixed top-0 left-0 h-full w-64 bg-black z-40 md:hidden flex flex-col -translate-x-full invisible transition-transform duration-200 ease-out [&[open]]:translate-x-0 [&[open]]:visible"}
       [:div {:class "flex items-center justify-between min-h-14 px-4 border-b border-zinc-800 flex-shrink-0 pt-[env(safe-area-inset-top)]"}
-       [:a {:href "/"}
-        [:span {:class "text-xl font-giza font-bold text-white"} "greed."]
-        [:span {:class "ml-1.5 text-xs font-medium text-emerald-500 align-top mt-1 inline-block"} "beta"]]
+       [:a {:href "/" :class "inline-flex items-start"}
+        [:img {:src "/img/greed-wordmark-white-tight.svg"
+               :alt "greed"
+               :width 648 :height 192
+               :class "h-7 w-auto"}]
+        [:span {:class "ml-1.5 text-xs font-medium leading-none text-brand-400"} "beta"]]
        [:button {:id "mobile-drawer-close"
                  :type "button"
                  :aria-label "Close menu"
                  :_ drawer-close-actions
-                 :class "p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400"}
+                 :class "p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-400"}
         [:svg {:class "w-5 h-5" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
          [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "1.8"
                  :d "M6 18L18 6M6 6l12 12"}]]]]
@@ -242,7 +248,7 @@
           [:span {:class "w-5 h-5 flex-shrink-0 [&_svg]:w-full [&_svg]:h-full"} (svgs/cog)] "Settings"]]
         [:div {:class "flex items-center justify-between px-2 py-2"}
          [:a {:href "/app/profile" :class "flex items-center gap-2.5"}
-          [:div {:class "w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-xs font-semibold text-white"}
+          [:div {:class "w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-xs font-semibold text-white"}
            (str initials)]
           [:p {:class "text-xs font-medium text-zinc-300 truncate"} (str firstname " " lastname)]]
          [:a {:href "/logout" :class "p-1.5 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-md transition-colors"}

@@ -13,7 +13,7 @@
   {:bill "Bill" :income "Payment in" :todo "To do" :general "Event"})
 
 (def ^:private type-dot
-  {:bill "bg-rose-400" :income "bg-emerald-400" :todo "bg-violet-400" :general "bg-violet-400"})
+  {:bill "bg-rose-400" :income "bg-brand-400" :todo "bg-violet-400" :general "bg-violet-400"})
 
 (defn- event-day-types [events year month]
   ;; Returns map of day-of-month -> set of all event types on that day
@@ -64,8 +64,8 @@
                           :aria-label (if done? "Mark as not done" "Mark as done")
                           :class      (str "flex items-center justify-center w-5 h-5 rounded-md border transition active:scale-95 "
                                            (if done?
-                                             "border-transparent bg-emerald-500 text-white"
-                                             "border-zinc-300 bg-white hover:bg-emerald-50 hover:border-emerald-400"))}
+                                             "border-transparent bg-brand-500 text-white"
+                                             "border-zinc-300 bg-white hover:bg-brand-50 hover:border-brand-400"))}
                  (when done? (svgs/check {:class "w-3 h-3"}))])
      [:div {:class "min-w-0 flex-1"}
       [:p {:class (str "text-sm font-medium truncate "
@@ -213,7 +213,7 @@
        [:div {:class "flex items-center gap-3"}
         ;; Legend (hidden on mobile)
         [:div {:class "hidden sm:flex items-center gap-4 mr-1"}
-         (for [[dot-color label] [["bg-emerald-400" "Payday"]
+         (for [[dot-color label] [["bg-brand-400" "Payday"]
                                   ["bg-rose-400"    "Bill"]
                                   ["bg-violet-400"  "To do"]]]
            [:div {:class "flex items-center gap-1.5"}
@@ -226,7 +226,7 @@
                     :hx-target "#calendar-grid"
                     :hx-swap  "outerHTML"
                     :hx-disabled-elt "this"
-                    :class    "px-2.5 h-7 text-xs font-medium text-emerald-600 border border-emerald-200 rounded-lg hover:bg-emerald-50 transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"}
+                    :class    "px-2.5 h-7 text-xs font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"}
            "Today"])
         ;; Navigation
         [:div {:class "flex items-center gap-1"}
@@ -261,7 +261,7 @@
        (for [d (range 1 (inc days-count))]
          (let [is-today  (and (= d today-day) (= month today-month) (= year today-year))
                is-payday (= d payday)
-               ;; Combine payday (emerald) with any event types on this day
+               ;; Combine payday (brand green) with any event types on this day
                all-types (cond-> (get event-days d #{})
                            is-payday (conj :income))
                 ;; One dot per distinct type, in stable order: bill → income → to do

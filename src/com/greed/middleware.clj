@@ -250,10 +250,23 @@
       muuntaja/wrap-format
       (rd/wrap-defaults rd/api-defaults)))
 
+(defn wrap-webmanifest-content-type
+  "Ring does not know the .webmanifest extension and serves it as
+  application/octet-stream. Set the correct type for the PWA manifest."
+  [handler]
+  (fn [{:keys [uri] :as ctx}]
+    (let [resp (handler ctx)]
+      (if (and (map? resp) uri (.endsWith ^String uri ".webmanifest"))
+        (update resp :headers #(-> %
+                                   (dissoc "content-type")
+                                   (assoc "Content-Type" "application/manifest+json")))
+        resp))))
+
 (defn wrap-base-defaults [handler]
   (-> handler
       biff/wrap-https-scheme
       biff/wrap-resource
+      wrap-webmanifest-content-type
       biff/wrap-internal-error
       biff/wrap-ssl
       biff/wrap-log-requests

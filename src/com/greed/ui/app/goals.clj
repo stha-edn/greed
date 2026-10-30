@@ -98,17 +98,17 @@
       [:div {:class "overflow-hidden h-2 w-full bg-zinc-100 rounded-full"}
        [:div {:class "h-full overflow-hidden rounded-full" :style {:width (str p "%")}}
         [:div {:class (str "h-full w-full rounded-full greed-bar-grow "
-                           (if complete? "bg-emerald-500" "bg-emerald-400"))}]]]
+                           (if complete? "bg-brand-500" "bg-brand-400"))}]]]
       [:div {:class "flex items-center justify-between mt-2"}
-       [:span {:class "text-xs font-medium text-emerald-600 tabular-nums"} (str p "% funded")]
+       [:span {:class "text-xs font-medium text-brand-600 tabular-nums"} (str p "% funded")]
        [:span {:class "text-xs text-zinc-500 tabular-nums"}
         (if complete? "Goal reached" (str (utilities/amount->rands remaining) " to go"))]]]
      (shared/modal modal-id (goal-form :goal goal :modal-id modal-id))]))
 
 (defn- empty-state []
   [:div {:class "text-center py-14 px-6 bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card"}
-   [:div {:class "mx-auto mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50"}
-    [:span {:class "text-emerald-500"} (svgs/target)]]
+   [:div {:class "mx-auto mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-brand-50"}
+    [:span {:class "text-brand-500"} (svgs/target)]]
    [:p {:class "text-sm font-medium text-zinc-600"} "No goals yet"]
    [:p {:class "mt-1 text-xs text-zinc-500"} "Set a savings target and track your progress towards it."]
    (shared/btn :variant :primary :size :md :class "mt-5"

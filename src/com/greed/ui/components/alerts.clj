@@ -47,9 +47,9 @@
             "  add .greed-alert-out\n"
             "  wait 200ms\n"
             "  hide #success-alert")
-    :class "flex items-center w-full max-w-sm overflow-hidden rounded-2xl bg-white ring-1 ring-emerald-200 shadow-card greed-alert-in"}
+    :class "flex items-center w-full max-w-sm overflow-hidden rounded-2xl bg-white ring-1 ring-brand-200 shadow-card greed-alert-in"}
    [:div
-    {:class "flex items-center justify-center w-12 bg-emerald-600 text-white"}
+    {:class "flex items-center justify-center w-12 bg-brand-600 text-white"}
     (svgs/success)]
    [:div
     {:class "flex flex-1 items-center justify-between gap-2 px-4 py-3"}
@@ -87,7 +87,7 @@
         error?    (alert-error? alert-key)
         close-btn-class (str "flex-shrink-0 self-start p-1 -m-1 rounded-md transition active:scale-[0.9] "
                              (if error? "text-rose-400 hover:text-rose-700 hover:bg-rose-100"
-                                 "text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100"))]
+                                 "text-brand-500 hover:text-brand-700 hover:bg-brand-100"))]
     (when message
       [:div
        {:id "info-alert"
@@ -98,14 +98,14 @@
                   "  wait 200ms\n"
                   "  hide #info-alert"))
         :class (str "flex items-center gap-3 w-full rounded-xl ring-1 shadow-card p-4 greed-alert-in "
-                    (if error? "bg-rose-50 ring-rose-200" "bg-emerald-50 ring-emerald-200"))}
+                    (if error? "bg-rose-50 ring-rose-200" "bg-brand-50 ring-brand-200"))}
        [:div
         {:class (str "flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center "
-                     (if error? "bg-rose-100 text-rose-600" "bg-emerald-100 text-emerald-600"))}
+                     (if error? "bg-rose-100 text-rose-600" "bg-brand-100 text-brand-600"))}
         (if error? (svgs/close) (svgs/check))]
        [:div {:class "flex-1 min-w-0"}
         [:p {:class (str "text-sm font-medium leading-snug "
-                         (if error? "text-rose-900" "text-emerald-900"))}
+                         (if error? "text-rose-900" "text-brand-900"))}
          message]]
        (if dismiss-href
          (biff/form {:action dismiss-href}
@@ -147,8 +147,8 @@
       "\u00A0"]
      [:div
       {:class "relative inline-block overflow-hidden text-left align-bottom bg-gradient-to-br from-zinc-800 via-zinc-900 to-black ring-1 ring-white/10 rounded-2xl shadow-card-md sm:my-8 sm:align-middle sm:max-w-lg sm:w-full greed-modal-in"}
-      [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"}]
-      [:div {:class "absolute -top-24 -right-24 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl"}]
+      [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/40 to-transparent"}]
+      [:div {:class "absolute -top-24 -right-24 h-64 w-64 rounded-full bg-brand-500/10 blur-3xl"}]
       [:div
        {:class "relative px-6 py-5 sm:p-6"}
        [:div
@@ -170,7 +170,7 @@
         [:div
          {:class "flex items-center gap-3"}
          [:div
-          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-300"}
+          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-brand-500/10 text-brand-300"}
           (svgs/banknotes)]
          [:div
           {:class "min-w-0"}
@@ -179,7 +179,7 @@
         [:div
          {:class "flex items-center gap-3"}
          [:div
-          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-300"}
+          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-brand-500/10 text-brand-300"}
           (svgs/money)]
          [:div
           {:class "min-w-0"}
@@ -188,7 +188,7 @@
         [:div
          {:class "flex items-center gap-3"}
          [:div
-          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-300"}
+          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-brand-500/10 text-brand-300"}
           (svgs/heart)]
          [:div
           {:class "min-w-0"}
@@ -197,7 +197,7 @@
         [:div
          {:class "flex items-center gap-3"}
          [:div
-          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-300"}
+          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-brand-500/10 text-brand-300"}
           (svgs/umbrella)]
          [:div
           {:class "min-w-0"}
@@ -209,9 +209,9 @@
                    [:button
                     {:id "finance-tax-prompt-later-submit"
                      :type "submit"
-                     :class "px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-md transition hover:bg-zinc-50 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"}
+                     :class "px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-md transition hover:bg-zinc-50 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"}
                     "Later"])
         [:a
          {:href "/app/settings"
-          :class "inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-emerald-500/20 border border-transparent rounded-md transition hover:bg-emerald-600/20 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"}
+          :class "inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-brand-500/20 border border-transparent rounded-md transition hover:bg-brand-600/20 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"}
          "Update"]]]]]]])

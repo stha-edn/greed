@@ -65,7 +65,7 @@
    (section
     "Contact"
     [:p "Questions about your data or this policy? Get in touch at "
-     [:a {:href "mailto:support@mygreed.co.za" :class "text-emerald-600 font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 active:text-emerald-700"} "support@mygreed.co.za"]
+     [:a {:href "mailto:support@mygreed.co.za" :class "text-brand-600 font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:text-brand-700"} "support@mygreed.co.za"]
      "."])))
 
 (defn terms-page [_]
@@ -106,5 +106,5 @@
    (section
     "Contact"
     [:p "Questions about these terms? Get in touch at "
-     [:a {:href "mailto:support@mygreed.co.za" :class "text-emerald-600 font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 active:text-emerald-700"} "support@mygreed.co.za"]
+     [:a {:href "mailto:support@mygreed.co.za" :class "text-brand-600 font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:text-brand-700"} "support@mygreed.co.za"]
      "."])))

@@ -10,10 +10,10 @@
     [:div {:class "grid grid-cols-1 sm:grid-cols-4 gap-8 sm:gap-10"}
      [:div
       [:a {:href "/" :class "inline-block"}
-       [:img {:src "/img/greed-wordmark-black-tight.svg"
+       [:img {:src "/img/greed-wordmark-green-tight.svg"
               :alt "greed"
-              :width 1106 :height 313
-              :class "block h-[30px] w-auto"}]]
+              :width 648 :height 192
+              :class "block h-8 w-auto"}]]
       [:p {:class "mt-3 text-sm text-zinc-500 max-w-xs leading-relaxed"}
        "Salary, tax, spending and savings in one calm place, built for South Africans."]]
      [:div {:class "sm:justify-self-center mt-4 sm:mt-0"}
@@ -48,10 +48,10 @@
   [:footer {:class "border-t border-zinc-200 bg-white"}
    [:div {:class "container mx-auto px-6 py-6"}
     [:div {:class "flex flex-col items-center justify-between gap-4 sm:flex-row"}
-     [:img {:src "/img/greed-wordmark-black-tight.svg"
+     [:img {:src "/img/greed-wordmark-green-tight.svg"
             :alt "greed"
-            :width 1106 :height 313
-            :class "h-[18px] w-auto"}]
+            :width 648 :height 192
+            :class "h-6 w-auto"}]
      [:nav {:class "flex items-center gap-6"}
       (footer-link "/privacy" "Privacy")
       (footer-link "/terms" "Terms")

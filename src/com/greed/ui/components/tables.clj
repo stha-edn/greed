@@ -10,7 +10,7 @@
    label, and each surface stays internally consistent in tone."
   [title]
   (case title
-    "income"   {:cls "bg-emerald-50 text-emerald-600" :icon (svgs/trending-up)}
+    "income"   {:cls "bg-brand-50 text-brand-600" :icon (svgs/trending-up)}
     "expenses" {:cls "bg-rose-50 text-rose-600"       :icon (svgs/trending-down)}
     "savings"  {:cls "bg-indigo-50 text-indigo-600"    :icon (svgs/wallet)}
     {:cls "bg-zinc-100 text-zinc-500" :icon (svgs/wallet)}))

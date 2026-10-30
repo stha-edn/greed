@@ -30,8 +30,11 @@
    [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
     [:div {:class "px-8 py-8"}
      [:div {:class "mb-6 text-center"}
-      [:a {:href "/"}
-       [:span {:class "text-3xl font-giza font-bold text-zinc-900 leading-none"} "greed."]]
+      [:a {:href "/" :class "inline-block"}
+       [:img {:src "/img/greed-symbol-green-tight.svg"
+              :alt "greed"
+              :width 192 :height 192
+              :class "block h-10 w-10"}]]
       [:h2 {:class "mt-4 text-lg font-semibold text-zinc-900 tracking-tight"} "Welcome back"]
       [:p {:class "mt-1 text-sm text-zinc-500"} "Sign in to your account"]]
      (biff/form
@@ -42,7 +45,7 @@
       (shared/input :id "email" :type "email" :label "Email address" :required? true)
       (shared/input :id "password" :type "password" :label "Password" :required? true)
       [:div {:class "mt-1 text-right"}
-       [:a {:href "/forgot-password" :class "text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:underline"} "Forgot password?"]]
+       [:a {:href "/forgot-password" :class "text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"} "Forgot password?"]]
       [:div {:class "mt-5"}
        (shared/btn :variant :dark :size :md :type "submit"
                    :class (str "w-full" (when site-key " g-recaptcha"))
@@ -52,15 +55,18 @@
     [:div {:class "px-8 py-4 bg-zinc-50 border-t border-zinc-100 text-center"}
      [:p {:class "text-sm text-zinc-500"}
       "Don't have an account? "
-      [:a {:href "/signup" :class "font-medium text-emerald-600 hover:text-emerald-700 hover:underline"} "Create one"]]]]])
+      [:a {:href "/signup" :class "font-medium text-brand-600 hover:text-brand-700 hover:underline"} "Create one"]]]]])
 
 (defn sign-up [{:keys [site-key] :as ctx}]
   [:div {:class "w-full max-w-sm mx-auto"}
    [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
     [:div {:class "px-8 py-8"}
      [:div {:class "mb-6 text-center"}
-      [:a {:href "/"}
-       [:span {:class "text-3xl font-giza font-bold text-zinc-900 leading-none"} "greed."]]
+      [:a {:href "/" :class "inline-block"}
+       [:img {:src "/img/greed-symbol-green-tight.svg"
+              :alt "greed"
+              :width 192 :height 192
+              :class "block h-10 w-10"}]]
       [:h2 {:class "mt-4 text-lg font-semibold text-zinc-900 tracking-tight"} "Create an account"]
       [:p {:class "mt-1 text-sm text-zinc-500"} "Start managing your finances"]]
      (biff/form
@@ -90,8 +96,11 @@
    [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
     [:div {:class "px-8 py-8"}
      [:div {:class "mb-6 text-center"}
-      [:a {:href "/"}
-       [:span {:class "text-3xl font-giza font-bold text-zinc-900 leading-none"} "greed."]]
+      [:a {:href "/" :class "inline-block"}
+       [:img {:src "/img/greed-symbol-green-tight.svg"
+              :alt "greed"
+              :width 192 :height 192
+              :class "block h-10 w-10"}]]
       [:h2 {:class "mt-4 text-lg font-semibold text-zinc-900 tracking-tight"} "Reset your password"]
       [:p {:class "mt-1 text-sm text-zinc-500"} "Enter your email and we'll send you a reset link."]]
      (biff/form
@@ -116,8 +125,11 @@
      [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
       [:div {:class "px-8 py-8"}
        [:div {:class "mb-6 text-center"}
-        [:a {:href "/"}
-         [:span {:class "text-3xl font-giza font-bold text-zinc-900 leading-none"} "greed."]]
+        [:a {:href "/" :class "inline-block"}
+         [:img {:src "/img/greed-symbol-green-tight.svg"
+                :alt "greed"
+                :width 192 :height 192
+                :class "block h-10 w-10"}]]
         [:h2 {:class "mt-4 text-lg font-semibold text-zinc-900 tracking-tight"} "Choose a new password"]
         [:p {:class "mt-1 text-sm text-zinc-500"} "Your new password will take effect immediately."]]
        (biff/form
@@ -141,8 +153,11 @@
   [:div {:class "w-full max-w-sm mx-auto"}
    [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
     [:div {:class "px-8 py-8 text-center"}
-     [:a {:href "/"}
-      [:span {:class "text-3xl font-giza font-bold text-zinc-900 leading-none"} "greed."]]
+     [:a {:href "/" :class "inline-block"}
+      [:img {:src "/img/greed-symbol-green-tight.svg"
+             :alt "greed"
+             :width 192 :height 192
+             :class "block h-10 w-10"}]]
      [:h2 {:class "mt-4 text-lg font-semibold text-zinc-900 tracking-tight"} "Check your email"]
      [:p {:class "mt-2 text-sm text-zinc-500"}
       "If an account exists for that email, we've sent you a password reset link. "
@@ -157,8 +172,11 @@
   [:div {:class "w-full max-w-sm mx-auto"}
    [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
     [:div {:class "px-8 py-8 text-center"}
-     [:a {:href "/"}
-      [:span {:class "text-3xl font-giza font-bold text-zinc-900 leading-none"} "greed."]]
+     [:a {:href "/" :class "inline-block"}
+      [:img {:src "/img/greed-symbol-green-tight.svg"
+             :alt "greed"
+             :width 192 :height 192
+             :class "block h-10 w-10"}]]
      [:h2 {:class "mt-4 text-lg font-semibold text-zinc-900 tracking-tight"} "Invalid reset link"]
      [:p {:class "mt-2 text-sm text-zinc-500"}
       "This password reset link is invalid or has expired."]
@@ -178,7 +196,7 @@
                  (shared/app-input ctx :id "email" :type "text" :label "Email" :required? true)
                  [:div {:class "mt-4"}
                   [:label {:class "block text-sm font-medium text-zinc-700 mb-1" :for "password"} "Password"]
-                  [:input {:class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 placeholder-zinc-400 transition-colors duration-150"
+                  [:input {:class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 placeholder-zinc-400 transition-colors duration-150"
                            :id "password" :name "password" :type "password"
                            :placeholder "Leave blank to keep your current password"}]
                   [:p {:class "text-xs text-zinc-500 mt-1"} "Only enter a new password if you want to change it."]]]
