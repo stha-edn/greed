@@ -34,14 +34,14 @@
   [:div {:data-ui "" :class "w-full max-w-[380px] rounded-lg border border-zinc-200 bg-white p-6"}
    [:p {:class "text-sm font-medium text-zinc-500"} "Your month"]
    [:p {:class "mt-3 flex items-baseline gap-2"}
-    [:span {:class "text-4xl font-semibold tracking-tight tabular-nums text-zinc-900"} "R23,024"]
+    [:span {:class "text-4xl font-semibold tracking-tight tabular-nums text-zinc-900"} "R9,619"]
     [:span {:class "text-sm text-zinc-500"} "left to plan"]]
    [:div {:class "mt-5 flex h-2 w-full overflow-hidden rounded-full bg-zinc-100"}
-    [:div {:class "h-full bg-zinc-800" :style {:width "35%"}}]
-    [:div {:class "h-full bg-zinc-400" :style {:width "8%"}}]
-    [:div {:class "h-full bg-brand-500" :style {:width "57%"}}]]
+    [:div {:class "h-full bg-zinc-800" :style {:width "49%"}}]
+    [:div {:class "h-full bg-zinc-400" :style {:width "7%"}}]
+    [:div {:class "h-full bg-brand-500" :style {:width "44%"}}]]
    [:div {:class "mt-4 grid grid-cols-3 gap-3 text-sm tabular-nums"}
-    (for [[l v] [["Expenses" "R14,000"] ["Savings" "R3,500"] ["Payday" "25th"]]]
+    (for [[l v] [["Expenses" "R10,500"] ["Savings" "R1,500"] ["Payday" "25th"]]]
       [:div [:p {:class "text-xs text-zinc-500"} l] [:p {:class "mt-0.5 font-semibold text-zinc-900"} v]])]])
 
 (defn action-tile

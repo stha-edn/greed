@@ -3,18 +3,18 @@
             [com.greed.ui.components.illustrations :as ill]
             [com.greed.ui.components.marketing :as m]))
 
-;; Small, true pieces of the app beside each claim (sample salary R52,500).
+;; Small, true pieces of the app beside each claim (sample salary R25,000).
 
 (defn- frag-split []
   [:div {:data-ui "" :class "w-full max-w-[460px] rounded-lg border border-zinc-200 bg-white p-6"}
    [:p {:class "text-sm font-medium text-zinc-500"} "Where your income goes"]
    [:div {:class "mt-4 flex h-2.5 w-full overflow-hidden rounded-full bg-zinc-100"}
-    [:div {:class "h-full bg-brand-600" :style {:width "77%"}}]
-    [:div {:class "h-full bg-zinc-400" :style {:width "23%"}}]]
+    [:div {:class "h-full bg-brand-600" :style {:width "86%"}}]
+    [:div {:class "h-full bg-zinc-400" :style {:width "14%"}}]]
    [:div {:class "mt-4 space-y-2 text-sm tabular-nums"}
-    [:p {:class "flex justify-between"} [:span {:class "flex items-center gap-2 text-zinc-600"} [:span {:class "h-2 w-2 rounded-full bg-brand-600"}] "Take-home"] [:span {:class "font-semibold text-zinc-900"} "R486,293"]]
-    [:p {:class "flex justify-between"} [:span {:class "flex items-center gap-2 text-zinc-600"} [:span {:class "h-2 w-2 rounded-full bg-zinc-400"}] "Tax"] [:span {:class "font-semibold text-zinc-900"} "R143,707"]]]
-   [:p {:class "mt-4 text-sm text-zinc-600"} "Of every R1 you earn, 23c goes to SARS."]])
+    [:p {:class "flex justify-between"} [:span {:class "flex items-center gap-2 text-zinc-600"} [:span {:class "h-2 w-2 rounded-full bg-brand-600"}] "Take-home"] [:span {:class "font-semibold text-zinc-900"} "R259,428"]]
+    [:p {:class "flex justify-between"} [:span {:class "flex items-center gap-2 text-zinc-600"} [:span {:class "h-2 w-2 rounded-full bg-zinc-400"}] "Tax"] [:span {:class "font-semibold text-zinc-900"} "R40,572"]]]
+   [:p {:class "mt-4 text-sm text-zinc-600"} "Of every R1 you earn, 14c goes to SARS."]])
 
 (defn- frag-budget-row []
   [:div {:data-ui "" :class "w-full max-w-[380px] rounded-lg border border-zinc-200 bg-white"}
@@ -22,11 +22,11 @@
     [:p {:class "text-sm font-semibold text-zinc-900"} "Expenses"]
     [:span {:class "rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-700"} "+ Add item"]]
    [:div {:class "flex items-center justify-between bg-zinc-100 px-5 py-3 text-sm"}
-    [:span {:class "text-zinc-800"} "Rent · debit order on the 1st"] [:span {:class "font-semibold tabular-nums"} "R8,000"]]
+    [:span {:class "text-zinc-800"} "Rent · debit order on the 1st"] [:span {:class "font-semibold tabular-nums"} "R7,000"]]
    [:div {:class "flex items-center justify-between px-5 py-3 text-sm"}
-    [:span {:class "text-zinc-800"} "Car payment"] [:span {:class "font-semibold tabular-nums"} "R6,000"]]
+    [:span {:class "text-zinc-800"} "Car payment"] [:span {:class "font-semibold tabular-nums"} "R3,500"]]
    [:div {:class "flex items-center justify-between px-5 py-3 text-sm"}
-    [:span {:class "text-zinc-800"} "R886 a day to spend until payday"]]])
+    [:span {:class "text-zinc-800"} "R370 a day to spend until payday"]]])
 
 (defn- frag-goal []
   [:div {:data-ui "" :class "w-full max-w-[320px] rounded-lg border border-zinc-200 bg-white p-5"}

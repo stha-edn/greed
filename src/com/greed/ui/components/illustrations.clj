@@ -1,7 +1,7 @@
 (ns com.greed.ui.components.illustrations
   "Drawings of greed's own world, in one flat language: white paper, ink
    lines, the brand green for the one thing that matters on each object.
-   Numbers match the home page sample (R52,500 a month).")
+   Numbers match the home page sample (R25,000 a month).")
 
 (def ^:private ink "#18181b")
 (def ^:private muted "#52525b")
@@ -17,7 +17,7 @@
    already reads once a month."
   [& {:keys [class]}]
   [:svg {:viewBox "0 0 360 470" :class class :role "img"
-         :aria-label "Drawing of a November payslip: basic salary R52,500, PAYE R11,976, net pay R40,524."}
+         :aria-label "Drawing of a November payslip: basic salary R25,000, PAYE R3,381, net pay R21,619."}
    ;; paper with a torn top edge
    [:path {:fill "#ffffff" :stroke rule :stroke-width "1"
            :d (str "M10 22 "
@@ -27,23 +27,23 @@
    (t 326 70 "November 2026" :size 14 :fill muted :anchor "end")
    [:line {:x1 34 :y1 92 :x2 326 :y2 92 :stroke rule}]
    (t 34 124 "Basic salary" :fill muted)
-   (t 326 124 "R52,500.00" :weight 600 :anchor "end")
+   (t 326 124 "R25,000.00" :weight 600 :anchor "end")
    (t 34 158 "PAYE (SARS)" :fill muted)
-   (t 326 158 "−R11,976.00" :weight 600 :anchor "end")
+   (t 326 158 "−R3,381.00" :weight 600 :anchor "end")
    (t 34 192 "Pay date" :fill muted)
    (t 326 192 "25 Nov 2026" :weight 600 :anchor "end")
    [:line {:x1 34 :y1 216 :x2 326 :y2 216 :stroke ink :stroke-width "1.5"}]
    (t 34 252 "Net pay" :size 16 :weight 600)
-   (t 326 254 "R40,524.00" :size 24 :weight 700 :fill green :anchor "end")
+   (t 326 254 "R21,619.00" :size 24 :weight 700 :fill green :anchor "end")
    ;; what greed adds: the plan for the net pay
    [:rect {:x 34 :y 290 :width 292 :height 10 :rx 5 :fill "#f4f4f5"}]
-   [:rect {:x 34 :y 290 :width 101 :height 10 :rx 5 :fill ink}]
-   [:rect {:x 135 :y 290 :width 25 :height 10 :fill "#a1a1aa"}]
-   [:rect {:x 160 :y 290 :width 166 :height 10 :rx 5 :fill green}]
-   (t 34 330 "Expenses R14,000" :size 13 :fill muted)
-   (t 34 352 "Savings R3,500" :size 13 :fill muted)
+   [:rect {:x 34 :y 290 :width 142 :height 10 :rx 5 :fill ink}]
+   [:rect {:x 176 :y 290 :width 20 :height 10 :fill "#a1a1aa"}]
+   [:rect {:x 196 :y 290 :width 130 :height 10 :rx 5 :fill green}]
+   (t 34 330 "Expenses R10,500" :size 13 :fill muted)
+   (t 34 352 "Savings R1,500" :size 13 :fill muted)
    (t 326 330 "Left to plan" :size 13 :fill muted :anchor "end")
-   (t 326 352 "R23,024" :size 13 :weight 600 :anchor "end")
+   (t 326 352 "R9,619" :size 13 :weight 600 :anchor "end")
    ;; paid stamp
    [:g {:transform "rotate(-12 262 410)"}
     [:circle {:cx 262 :cy 410 :r 38 :fill "none" :stroke green :stroke-width "2.5"}]

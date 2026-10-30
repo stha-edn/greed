@@ -17,7 +17,7 @@
 
 (def ^:private sample-salary
   "Monthly salary the page opens on. Matches the sample fragments below."
-  52500)
+  25000)
 
 (defn- tax-config-json
   "The SARS tables the server uses (config/tax.edn), handed to the hero's
@@ -111,7 +111,7 @@
 
 ;; ---------------------------------------------------------------------------
 ;; Showcase: lit panel, dark row. Each panel is a cropped piece of the app,
-;; with sample data that adds up (R52,500 salary, see the hero).
+;; with sample data that adds up (R25,000 salary, see the hero).
 
 (defn- panel [{:keys [id name line]} & body]
   [:article {:data-ui "" :data-name name :data-line line :id id
@@ -123,14 +123,14 @@
           :line "One number to plan by: what is left after expenses and savings, and how far you are from payday."}
    [:p {:class "text-sm font-medium text-zinc-500"} "Your month"]
    [:p {:class "mt-3 flex items-baseline gap-2"}
-    [:span {:class "text-4xl font-semibold tracking-tight tabular-nums"} "R23,024"]
+    [:span {:class "text-4xl font-semibold tracking-tight tabular-nums"} "R9,619"]
     [:span {:class "text-sm text-zinc-500"} "left to plan"]]
    [:p {:class "mt-1 text-sm text-zinc-500"} "On track: spending is under income so far."]
    [:div {:class "mt-5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100"}
     [:div {:class "h-full rounded-full bg-brand-600" :style {:width "19%"}}]]
    [:p {:class "mt-2 text-sm text-zinc-500"} "Day 6 of 32 · payday in 26 days"]
    [:div {:class "mt-5 grid grid-cols-3 gap-3 border-t border-zinc-100 pt-4"} ; taste-skill-ignore: rule inside a data-ui fragment
-    (for [[l v] [["Savings rate" "9%"] ["Income" "R40,524"] ["Payday" "25th"]]]
+    (for [[l v] [["Savings rate" "7%"] ["Income" "R21,619"] ["Payday" "25th"]]]
       [:div [:p {:class "text-xs text-zinc-500"} l] [:p {:class "mt-1 text-sm font-semibold tabular-nums"} v]])]))
 
 (defn- frag-budget []
@@ -140,27 +140,27 @@
     [:p {:class "text-sm font-semibold"} "Expenses"]
     [:span {:class "rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-700"} "+ Add item"]]
    [:div {:class "mt-3 divide-y divide-zinc-100"} ; taste-skill-ignore: rule inside a data-ui fragment
-    (row "Rent" "R8,000")
-    [:div {:class "-mx-2 rounded-md bg-zinc-100 px-2"} (row "Car payment" "R6,000")]
-    (row "TFSA (savings)" "R3,500")]
+    (row "Rent" "R7,000")
+    [:div {:class "-mx-2 rounded-md bg-zinc-100 px-2"} (row "Car payment" "R3,500")]
+    (row "TFSA (savings)" "R1,500")]
    [:div {:class "mt-3 border-t border-zinc-200 pt-3"} ; taste-skill-ignore: rule inside a data-ui fragment
-    (row "Salary after tax" "R40,524")
-    (row "Left to plan" "R23,024" "text-brand-700")]))
+    (row "Salary after tax" "R21,619")
+    (row "Left to plan" "R9,619" "text-brand-700")]))
 
 (defn- frag-bracket []
   (panel {:id "p-bracket" :name "Your tax bracket"
           :line "See your marginal rate, and how far your income is from the next SARS bracket."}
    [:div {:class "flex items-start justify-between"}
     [:p {:class "text-sm font-semibold"} "Your tax bracket"]
-    [:p {:class "text-right"} [:span {:class "block text-2xl font-semibold tabular-nums"} "36%"]
+    [:p {:class "text-right"} [:span {:class "block text-2xl font-semibold tabular-nums"} "26%"]
      [:span {:class "text-xs text-zinc-500"} "Marginal rate"]]]
    [:div {:class "mt-3 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100"}
-    [:div {:class "h-full rounded-full bg-brand-600" :style {:width "60%"}}]]
-   [:p {:class "mt-2 text-sm tabular-nums text-zinc-600"} "R65,800 until the 39% bracket"]
+    [:div {:class "h-full rounded-full bg-brand-600" :style {:width "40%"}}]]
+   [:p {:class "mt-2 text-sm tabular-nums text-zinc-600"} "R83,100 until the 31% bracket"]
    [:div {:class "mt-3 divide-y divide-zinc-100 text-sm tabular-nums"} ; taste-skill-ignore: rule inside a data-ui fragment
-    (for [[r p active?] [["R383,100 – R530,199" "31%" false]
-                         ["R530,200 – R695,799" "36%" true]
-                         ["R695,800 – R886,999" "39%" false]]]
+    (for [[r p active?] [["R0 – R245,099" "18%" false]
+                         ["R245,100 – R383,099" "26%" true]
+                         ["R383,100 – R530,199" "31%" false]]]
       [:div {:class (str "flex justify-between py-2.5 " (when active? "-mx-2 rounded-md bg-zinc-100 px-2 font-semibold"))}
        [:span r] [:span p]])]))
 
@@ -204,11 +204,11 @@
           :line "Know what a bonus or 13th cheque really adds before it lands, taxed at your marginal rate."}
    [:p {:class "text-sm font-semibold"} "13th cheque"]
    [:div {:class "mt-3 divide-y divide-zinc-100"} ; taste-skill-ignore: rule inside a data-ui fragment
-    (row "Bonus" "R52,500")
-    (row "PAYE at 36%" "R18,900")]
+    (row "Bonus" "R25,000")
+    (row "PAYE at 26%" "R6,500")]
    [:div {:class "mt-3 rounded-md bg-zinc-100 px-4 py-3"}
     [:p {:class "text-sm text-zinc-600"} "Lands in your account"]
-    [:p {:class "mt-1 text-2xl font-semibold tabular-nums text-brand-700"} "R33,600"]]))
+    [:p {:class "mt-1 text-2xl font-semibold tabular-nums text-brand-700"} "R18,500"]]))
 
 (defn- showcase []
   [:section {:id "inside" :class "showcase relative bg-zinc-950 py-20 text-white lg:py-28" :aria-labelledby "inside-h"}
