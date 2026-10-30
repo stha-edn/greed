@@ -15,7 +15,7 @@
 
 (defn- info-item [source-code label description]
   [:div {:class "flex gap-3 px-5 py-3 sm:px-6"}
-   [:div {:class "shrink-0 self-start w-24 rounded-md bg-zinc-100 px-2 py-1 text-center text-[11px] font-medium text-zinc-600 font-mono"}
+   [:div {:class "shrink-0 self-start w-24 rounded-md bg-zinc-100 px-2 py-1 text-center text-xs font-medium text-zinc-600 font-mono"}
     source-code]
    [:div {:class "min-w-0"}
     [:p {:class "text-sm font-medium text-zinc-900"} label]
@@ -30,7 +30,7 @@
       "Enter figures from your IRP5 (employee tax certificate) and other documents. The simulator applies SARS 2026 year of assessment tax brackets, rebates, and credits to estimate whether you are owed a refund or have tax to pay."]
      [:p {:class "mt-2 text-sm text-zinc-500 leading-relaxed"}
       "Filing opens annually in July on "
-      [:a {:href "https://www.sars.gov.za" :class "text-brand-600 hover:underline" :target "_blank"} "eFiling"]
+      [:a {:href "https://www.sars.gov.za" :class "text-zinc-900 hover:underline" :target "_blank"} "eFiling"]
       ". Non-provisional taxpayers (salaried employees) must submit by late October."]])
 
    (tools/panel
@@ -73,8 +73,8 @@
     "This simulator is an estimate only and does not account for all deductions (e.g. home office, commission expenses). Consult a registered tax practitioner or SARS for your official assessment.")])
 
 (defn- stat [label value sub]
-  [:div {:class "rounded-xl bg-zinc-50 p-4 ring-1 ring-zinc-200/50"}
-   [:p {:class "text-[11px] font-medium text-zinc-500 uppercase tracking-wider"} label]
+  [:div {:class "rounded-md bg-zinc-50 p-4 ring-1 ring-zinc-200/50"}
+   [:p {:class "text-xs font-medium text-zinc-500"} label]
    [:p {:class "mt-1 text-lg font-bold text-zinc-900 tabular-nums"} value]
    (when sub [:p {:class "mt-0.5 text-xs text-zinc-500"} sub])])
 
@@ -103,7 +103,7 @@
             credits-applied? (or (pos? mtc) (pos? ra-ded))]
         (tools/panel
          (tools/panel-heading "Auto Assessment"
-                              :badge [:span {:class "flex-shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 ring-1 ring-brand-600/15"}
+                              :badge [:span {:class "flex-shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-900 ring-1 ring-zinc-200"}
                                       "2026 Year of Assessment"])
          [:div {:class "px-5 pb-4 sm:px-6"}
           [:p {:class "text-sm text-zinc-500"}
@@ -113,13 +113,13 @@
           (when credits-applied?
             [:div {:class "flex flex-wrap gap-2 mt-3"}
              (when (pos? ra-ded)
-               [:span {:class "flex-shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 ring-1 ring-brand-600/15"}
+               [:span {:class "flex-shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-900 ring-1 ring-zinc-200"}
                 (str "RA deduction: " (utilities/amount->rands ra-ded))])
              (when (pos? mtc)
-               [:span {:class "flex-shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 ring-1 ring-brand-600/15"}
+               [:span {:class "flex-shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-900 ring-1 ring-zinc-200"}
                 (str "Medical credit: " (utilities/amount->rands mtc))])
              (when (pos? add-med)
-               [:span {:class "flex-shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 ring-1 ring-brand-600/15"}
+               [:span {:class "flex-shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-900 ring-1 ring-zinc-200"}
                 (str "Additional med credit: " (utilities/amount->rands add-med))])])]
          [:div {:class "grid grid-cols-2 gap-3 px-5 pb-5 sm:grid-cols-3 sm:px-6 lg:grid-cols-6"}
           (stat "Gross Annual Income"  (utilities/amount->rands annual-income) nil)
@@ -129,7 +129,7 @@
           (stat "Net Annual Income"    (utilities/amount->rands (- annual-income final-tax)) nil)
           (stat "Net Monthly Income"   (utilities/amount->rands monthly-net)    nil)]
          [:div {:class "border-t border-zinc-100 px-5 py-4 sm:px-6"}
-          [:div {:class "flex flex-wrap items-center justify-between gap-4 rounded-xl bg-zinc-50 p-5 ring-1 ring-zinc-200/50"}
+          [:div {:class "flex flex-wrap items-center justify-between gap-4 rounded-md bg-zinc-50 p-5 ring-1 ring-zinc-200/50"}
            [:div
             [:p {:class "text-sm text-zinc-600"}
              "Your employer should withhold approximately "
@@ -141,14 +141,14 @@
                " Add your medical aid and RA details in Settings for a more accurate estimate.")]]]]))
       (tools/panel
        [:div {:class "flex flex-col items-center justify-center px-6 py-12 text-center"}
-        [:div {:class "mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-brand-50"}
-         [:span {:class "text-brand-500"} (svgs/wallet)]]
+        [:div {:class "mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100"}
+         [:span {:class "text-zinc-500"} (svgs/wallet)]]
         [:p {:class "text-sm font-medium text-zinc-500"} "No salary data yet"]
         [:p {:class "mt-1 max-w-xs text-xs text-zinc-500"}
          "Add your salary in "
-         [:a {:href "/app/finances/" :class "font-medium text-brand-600 hover:underline"} "Finances"]
+         [:a {:href "/app/finances/" :class "font-medium text-zinc-900 hover:underline"} "Finances"]
          " or "
-         [:a {:href "/app/settings" :class "font-medium text-brand-600 hover:underline"} "Settings"]
+         [:a {:href "/app/settings" :class "font-medium text-zinc-900 hover:underline"} "Settings"]
          " to enable auto assessment."]]))))
 
 (defn- field [id label type & [hint required? value]]
@@ -196,7 +196,7 @@ on htmx:afterRequest remove .opacity-50 from #tax-result"}
                          (field "travel-allowance" "Travel Allowance p/a (R)" "number" "Source code 3701" false (:travel-allowance params))
                          (logbook-select (:logbook params)))
      [:div {:class "mt-6 flex justify-end"}
-      (shared/btn :variant :primary :size :md :class "px-8" :type "submit"
+      (shared/btn :variant :dark :size :md :class "px-8" :type "submit"
                   "Simulate Return")])]))
 
 (defn- result-region [params]
@@ -226,8 +226,8 @@ on htmx:afterRequest remove .opacity-50 from #tax-result"}
       [:div#tax-result
        (tools/panel
         [:div {:class "flex flex-col items-center justify-center px-6 py-16 text-center"}
-         [:div {:class "mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50"}
-          [:span {:class "text-brand-500"} (svgs/wallet)]]
+         [:div {:class "mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100"}
+          [:span {:class "text-zinc-500"} (svgs/wallet)]]
          [:p {:class "text-sm font-medium text-zinc-500"} "Enter your IRP5 details to estimate your return"]
          [:p {:class "mt-1 max-w-xs text-xs text-zinc-500"} "Fill in the form and click Simulate Return to see your refund or amount owed."]])]
       [:div#tax-result {:class "space-y-4"}
@@ -236,7 +236,7 @@ on htmx:afterRequest remove .opacity-50 from #tax-result"}
         :badge "2026 year"
         :headline (utilities/whole->rands difference)
         :suffix (if refund? "refund" "owed to SARS")
-        :tone (if refund? "text-brand-600" "text-rose-600")
+        :tone (if refund? "text-zinc-900" "text-rose-600")
          :status (if refund?
                    (str "You paid " (utilities/amount->rands paye-paid) " in PAYE against "
                         (utilities/amount->rands final-tax) " of tax. SARS owes you this back.")
@@ -266,10 +266,10 @@ on htmx:afterRequest remove .opacity-50 from #tax-result"}
                                  (tools/row "PAYE Paid" (utilities/amount->rands paye-paid))
                                  (tools/row "Net Tax Payable" (utilities/amount->rands final-tax)))
         [:div {:class (str "flex items-center justify-between gap-3 px-5 py-4 sm:px-6 "
-                           (if refund? "bg-brand-50/60" "bg-rose-50/60"))}
-         [:span {:class (str "text-sm font-semibold " (if refund? "text-brand-800" "text-rose-800"))}
+                           (if refund? "bg-zinc-50" "bg-rose-50/60"))}
+         [:span {:class (str "text-sm font-semibold " (if refund? "text-zinc-900" "text-rose-800"))}
           (if refund? "Estimated Refund" "Estimated Amount Owed")]
-         [:span {:class (str "text-lg font-bold tabular-nums " (if refund? "text-brand-700" "text-rose-700"))}
+         [:span {:class (str "text-lg font-bold tabular-nums " (if refund? "text-zinc-900" "text-rose-700"))}
           (utilities/amount->rands difference)]]
         [:div {:class "px-5 py-4 sm:px-6"}
          [:p {:class "text-xs text-zinc-500"}

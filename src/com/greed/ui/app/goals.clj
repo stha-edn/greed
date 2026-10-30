@@ -33,7 +33,7 @@
   [& {:keys [goal modal-id]}]
   (let [{:goal/keys [title target saved target-date] :xt/keys [id]} goal
         editing? (some? goal)]
-    [:div {:class "w-full max-w-md p-6 bg-white rounded-2xl shadow-card-md"}
+    [:div {:class "w-full max-w-md p-6 bg-white rounded-lg"}
      [:div {:class "flex items-center justify-between mb-4"}
       [:h3 {:class "text-base font-semibold text-zinc-900"}
        (if editing? "Edit goal" "New savings goal")]
@@ -59,7 +59,7 @@
                  :class "px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors active:text-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
                  :_ (shared/close-actions modal-id)}
         "Cancel"]
-       (shared/btn :variant :primary :size :md :type "submit" :class "px-5"
+       (shared/btn :variant :dark :size :md :type "submit" :class "px-5"
                    (if editing? "Save changes" "Create goal"))])]))
 
 (defn- goal-card [goal]
@@ -69,13 +69,19 @@
         target    (or target 0)
         p         (utilities/goal-pct saved target)
         remaining (max 0 (- target saved))
-        complete? (>= saved target)]
-    [:div {:class "p-5 bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card transition duration-200 hover:shadow-card-hover"}
+        complete? (>= saved target)
+        overdue?  (and target-date (not complete?)
+                       (try (.isBefore (LocalDate/parse target-date) (LocalDate/now))
+                            (catch Exception _ false)))]
+    [:div {:class "p-5 bg-white ring-1 ring-zinc-200/70 rounded-lg transition duration-200"}
      [:div {:class "flex items-start justify-between gap-3"}
       [:div {:class "min-w-0"}
        [:h3 {:class "text-sm font-semibold text-zinc-900 truncate"} title]
        (when target-date
-         [:p {:class "mt-0.5 text-xs text-zinc-500"} (str "By " (format-target-date target-date))])]
+         [:p {:class "mt-0.5 text-xs text-zinc-500"}
+          (str "By " (format-target-date target-date))
+          (when overdue?
+            [:span {:class "ml-2 rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700"} "Overdue"])])]
       [:div {:class "flex flex-shrink-0 items-center gap-1"}
        [:button {:type "button" :title "Edit"
                  :class "p-1.5 text-zinc-500 rounded-md transition hover:text-zinc-700 hover:bg-zinc-100 active:scale-95 active:text-zinc-700 active:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
@@ -100,18 +106,18 @@
         [:div {:class (str "h-full w-full rounded-full greed-bar-grow "
                            (if complete? "bg-brand-500" "bg-brand-400"))}]]]
       [:div {:class "flex items-center justify-between mt-2"}
-       [:span {:class "text-xs font-medium text-brand-600 tabular-nums"} (str p "% funded")]
+       [:span {:class "text-xs font-medium text-zinc-900 tabular-nums"} (str p "% funded")]
        [:span {:class "text-xs text-zinc-500 tabular-nums"}
         (if complete? "Goal reached" (str (utilities/amount->rands remaining) " to go"))]]]
      (shared/modal modal-id (goal-form :goal goal :modal-id modal-id))]))
 
 (defn- empty-state []
-  [:div {:class "text-center py-14 px-6 bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card"}
-   [:div {:class "mx-auto mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-brand-50"}
-    [:span {:class "text-brand-500"} (svgs/target)]]
+  [:div {:class "text-center py-14 px-6 bg-white ring-1 ring-zinc-200/70 rounded-lg"}
+   [:div {:class "mx-auto mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100"}
+    [:span {:class "text-zinc-500"} (svgs/target)]]
    [:p {:class "text-sm font-medium text-zinc-600"} "No goals yet"]
    [:p {:class "mt-1 text-xs text-zinc-500"} "Set a savings target and track your progress towards it."]
-   (shared/btn :variant :primary :size :md :class "mt-5"
+   (shared/btn :variant :dark :size :md :class "mt-5"
                :attrs {"_" (shared/open-actions "goal-add-modal")}
                "Create your first goal")])
 
@@ -125,14 +131,14 @@
       [:div {:class "flex items-start justify-between gap-4"}
        (headers/pages-heading ["Goals"])
        [:div {:class "mt-1 flex-shrink-0"}
-        (shared/btn :variant :primary :size :md
+        (shared/btn :variant :dark :size :md
                     :attrs {"_" (shared/open-actions "goal-add-modal")}
                     (svgs/plus {:class "w-4 h-4"})
                     "Add goal")]]
       (if (seq goals)
         [:<>
          (stats/goals-hero goals)
-         [:div {:class "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"}
+         [:div {:class "grid grid-cols-1 gap-4 md:grid-cols-2"}
           (map goal-card goals)]]
         (empty-state))
       (shared/modal "goal-add-modal" (goal-form :goal nil :modal-id "goal-add-modal"))])))

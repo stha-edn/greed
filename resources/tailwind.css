@@ -33,10 +33,6 @@
 
 .marketing-bg {
   background-color: #ffffff;
-  background-image:
-    radial-gradient(48rem 34rem at 16% -6%, rgb(16 185 129 / 0.07), transparent 68%),
-    radial-gradient(40rem 28rem at 92% 4%, rgb(24 24 27 / 0.03), transparent 68%),
-    radial-gradient(36rem 24rem at 10% 96%, rgb(16 185 129 / 0.04), transparent 68%);
 }
 
 @media (prefers-contrast: more) {
@@ -56,7 +52,7 @@
   from { opacity: 1; transform: translateY(0); }
   to   { opacity: 0; transform: translateY(-8px); }
 }
-.greed-alert-out { animation: greed-alert-out 200ms ease-in both; }
+.greed-alert-out { animation: greed-alert-out 200ms cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Dashboard modal entrance: dim scrim + card, materializing rather than
    just appearing (see materials-&-depth: "materialize, don't just fade"). */
@@ -107,13 +103,7 @@
    (materials & depth) rather than an opaque bar. Falls back to a solid
    background when the platform can't do backdrop blur, or when the user
    has asked for less transparency. */
-.site-header { background-color: rgb(255 255 255 / 0.8); backdrop-filter: blur(16px) saturate(160%); }
-@supports not (backdrop-filter: blur(1px)) {
-  .site-header { background-color: rgb(255 255 255 / 0.98); }
-}
-@media (prefers-reduced-transparency: reduce) {
-  .site-header { background-color: white; backdrop-filter: none; }
-}
+.site-header { background-color: #ffffff; }
 
 /* Dark scrims (confirm dialog, shared modal, finance-tax prompt) are also
    translucent chrome — same fallback as .site-header above: go solid and

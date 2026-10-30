@@ -54,14 +54,14 @@
    [:div {:class "relative mt-1"}
     [:span {:class "absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-500"} "R"]
     [:input {:id "income" :name "income" :type "number" :min "0" :step "any"
-              :class "block w-full pl-8 pr-3 py-3 text-lg font-semibold tabular-nums text-zinc-900 placeholder-zinc-400 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              :class "block w-full pl-8 pr-3 py-3 text-lg font-semibold tabular-nums text-zinc-900 placeholder-zinc-400 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400"
              :placeholder "0" :value (or value "")}]]])
 
 (defn- tier-field [selected]
   [:div
    [:label {:class "block text-sm font-medium text-zinc-700 mb-1"} "Your rebate tier"]
    [:p {:class "text-xs text-zinc-500 mb-2"} "Age 65+ and 75+ earn extra annual rebates."]
-   [:div {:class "relative grid grid-cols-3 gap-1 rounded-xl bg-zinc-100 p-1"}
+   [:div {:class "relative grid grid-cols-3 gap-1 rounded-md bg-zinc-100 p-1"}
     [:input {:type "radio" :name "rebate-tier" :value "under-65" :id "rebate-tier-1"
              :class "sr-only peer peer/1" :checked (= selected "under-65")}]
     [:input {:type "radio" :name "rebate-tier" :value "65-74" :id "rebate-tier-2"
@@ -77,7 +77,7 @@
     [:label {:for "rebate-tier-3"
              :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/3:ring-2 peer-focus-visible/3:ring-brand-500/50 peer-checked/3:text-zinc-900"}
      "75+"]
-    [:div {:class "pointer-events-none absolute inset-y-1 left-1 w-[calc((100%-1rem)/3)] rounded-lg bg-white shadow-sm ring-1 ring-zinc-900/5 transition-transform duration-300 ease-out peer-checked/1:translate-x-0 peer-checked/2:translate-x-[calc(100%+0.25rem)] peer-checked/3:translate-x-[calc(200%+0.5rem)]"}]]])
+    [:div {:class "pointer-events-none absolute inset-y-1 left-1 w-[calc((100%-1rem)/3)] rounded-lg bg-white ring-1 ring-zinc-900/5 transition-transform duration-300 ease-out peer-checked/1:translate-x-0 peer-checked/2:translate-x-[calc(100%+0.25rem)] peer-checked/3:translate-x-[calc(200%+0.5rem)]"}]]])
 
 (defn- form-card [params]
   (let [selected (or (:rebate-tier params)
@@ -98,15 +98,15 @@ on htmx:afterRequest remove .opacity-50 from #tax-result"}
         (salary-field (:income params))
         (tier-field selected)]
        [:div {:class "mt-6 flex items-center justify-end"}
-        (shared/btn :variant :primary :size :md :class "px-8" :type "submit" "Calculate")])])))
+        (shared/btn :variant :dark :size :md :class "px-8" :type "submit" "Calculate")])])))
 
 (defn- income-split [take-share tax-share net-income net-tax]
-  [:div {:class "mt-4 rounded-xl bg-zinc-50 p-5 ring-1 ring-zinc-200/50"}
-   [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider"} "Where your income goes"]
+  [:div {:class "mt-4 rounded-md bg-zinc-50 p-5 ring-1 ring-zinc-200/50"}
+   [:p {:class "text-xs font-medium text-zinc-500"} "Where your income goes"]
    [:div {:class "mt-3 flex h-2.5 w-full overflow-hidden rounded-full bg-zinc-200/70"}
     [:div {:class "h-full rounded-l-full bg-brand-500"
            :style {:width (str take-share "%")}}]
-    [:div {:class "h-full rounded-r-full bg-rose-400"
+    [:div {:class "h-full rounded-r-full bg-zinc-400"
            :style {:width (str tax-share "%")}}]]
    [:div {:class "mt-3 flex items-center justify-between gap-3 text-sm"}
     [:span {:class "flex items-center gap-2 text-zinc-500"}
@@ -114,8 +114,8 @@ on htmx:afterRequest remove .opacity-50 from #tax-result"}
     [:span {:class "font-semibold text-zinc-900 tabular-nums"} (utilities/amount->rands net-income)]]
    [:div {:class "mt-1.5 flex items-center justify-between gap-3 text-sm"}
     [:span {:class "flex items-center gap-2 text-zinc-500"}
-     [:span {:class "h-2 w-2 rounded-full bg-rose-400"}] "Tax"]
-    [:span {:class "font-semibold text-rose-600 tabular-nums"} (utilities/amount->rands net-tax)]]])
+     [:span {:class "h-2 w-2 rounded-full bg-zinc-400"}] "Tax"]
+    [:span {:class "font-semibold text-zinc-900 tabular-nums"} (utilities/amount->rands net-tax)]]])
 
 (defn- breakdown-panel [income annual-income gross-tax rebates net-tax net-monthly net-income]
   (tools/panel
@@ -129,7 +129,7 @@ on htmx:afterRequest remove .opacity-50 from #tax-result"}
                             (tools/bold-row "Net Annual Tax" (utilities/amount->rands net-tax)))
    (tools/breakdown-section "Take-home Pay"
                             (tools/row "Annual Net Income" (utilities/amount->rands net-income))
-                            (tools/bold-row "Monthly Net Income" (utilities/amount->rands net-monthly) "text-brand-600"))))
+                            (tools/bold-row "Monthly Net Income" (utilities/amount->rands net-monthly) "text-zinc-900"))))
 
 (defn- result-region [params]
   (let [income        (->n (:income params))
@@ -154,8 +154,8 @@ on htmx:afterRequest remove .opacity-50 from #tax-result"}
       [:div#tax-result
        (tools/panel
         [:div {:class "flex flex-col items-center justify-center px-6 py-16 text-center"}
-         [:div {:class "mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50"}
-          [:span {:class "text-brand-500"} (svgs/percent-badge)]]
+         [:div {:class "mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100"}
+          [:span {:class "text-zinc-500"} (svgs/percent-badge)]]
          [:p {:class "text-sm font-medium text-zinc-500"} "Enter your salary to see your take-home pay"]
          [:p {:class "mt-1 max-w-xs text-xs text-zinc-500"} "Enter your salary and click Calculate to see your take-home pay."]])]
       [:div#tax-result {:class "space-y-4"}
@@ -166,7 +166,7 @@ on htmx:afterRequest remove .opacity-50 from #tax-result"}
         :suffix "per month"
         :status status
         :body (income-split take-share tax-share net-income net-tax)
-        :substats [(tools/hero-substat "Effective rate" (utilities/pct-label effective-rate) "text-rose-600")
+        :substats [(tools/hero-substat "Effective rate" (utilities/pct-label effective-rate))
                    (tools/hero-substat "Marginal rate" (utilities/pct-label marginal-rate))
                    (tools/hero-substat "Annual take-home" (utilities/amount->rands net-income))])
        (breakdown-panel income annual-income gross-tax rebates net-tax net-monthly net-income)])))

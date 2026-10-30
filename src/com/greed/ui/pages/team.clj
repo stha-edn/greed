@@ -1,53 +1,37 @@
-(ns com.greed.ui.pages.team)
+(ns com.greed.ui.pages.team
+  (:require [com.biffweb :as biff]
+            [com.greed.ui.components.marketing :as m]))
 
-(defn- social-link [aria-label href icon-path]
-  [:a {:href href :aria-label aria-label
-       :target "_blank" :rel "noopener noreferrer"
-       :class "text-zinc-500 transition-colors hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 active:text-zinc-600 active:scale-90 inline-flex"}
-   [:svg {:xmlns "http://www.w3.org/2000/svg" :class "w-4 h-4" :viewBox "0 0 512 512"}
-    [:path {:fill "currentColor" :d icon-path}]]])
-
-(defn- social-icons [{:keys [linkedin instagram]}]
-  [:div {:class "flex items-center justify-center gap-3 mt-4"}
-   (social-link "LinkedIn" (or linkedin "#")
-                "M444.17,32H70.28C49.85,32,32,46.7,32,66.89V441.61C32,461.91,49.85,480,70.28,480H444.06C464.6,480,480,461.79,480,441.61V66.89C480.12,46.7,464.6,32,444.17,32ZM170.87,405.43H106.69V205.88h64.18ZM141,175.54h-.46c-20.54,0-33.84-15.29-33.84-34.43,0-19.49,13.65-34.42,34.65-34.42s33.85,14.82,34.31,34.42C175.65,160.25,162.35,175.54,141,175.54ZM405.43,405.43H341.25V296.32c0-26.14-9.34-44-32.56-44-17.74,0-28.24,12-32.91,23.69-1.75,4.2-2.22,9.92-2.22,15.76V405.43H209.38V205.88h64.18v27.77c9.34-13.3,23.93-32.44,57.88-32.44,42.13,0,74,27.77,74,87.64Z")
-   (social-link "Instagram" (or instagram "#")
-                "M349.33,69.33a93.62,93.62,0,0,1,93.34,93.34V349.33a93.62,93.62,0,0,1-93.34,93.34H162.67a93.62,93.62,0,0,1-93.34-93.34V162.67a93.62,93.62,0,0,1,93.34-93.34H349.33m0-37.33H162.67C90.8,32,32,90.8,32,162.67V349.33C32,421.2,90.8,480,162.67,480H349.33C421.2,480,480,421.2,480,349.33V162.67C480,90.8,421.2,32,349.33,32Z M377.33,162.67a28,28,0,1,1,28-28A27.94,27.94,0,0,1,377.33,162.67Z M256,181.33A74.67,74.67,0,1,1,181.33,256,74.75,74.75,0,0,1,256,181.33M256,144A112,112,0,1,0,368,256,112,112,0,0,0,256,144Z")])
-
-(defn- team-member [{:keys [img name role linkedin instagram class]}]
-  [:div {:class (str "reveal overflow-hidden bg-white border border-zinc-200/70 rounded-2xl shadow-card transition duration-200 hover:shadow-card-hover hover:-translate-y-0.5 " class)}
-   [:div {:class "px-8 pt-8 pb-2"}
-    [:img {:src img
-           :alt name
-           :class "object-cover w-32 h-32 mx-auto border-4 border-white rounded-full shadow-card-md"}]]
-   [:div {:class "text-center px-8 pb-8"}
-    [:h3 {:class "mt-4 text-lg font-semibold text-zinc-900"} name]
-    [:p {:class "mt-0.5 text-sm text-zinc-500"} role]
-    (social-icons {:linkedin linkedin :instagram instagram})]])
+(defn- person [{:keys [img name role linkedin instagram pos d]}]
+  [:figure {:class "enter" :style {"--d" d}}
+   [:img {:src img :alt name :width 600 :height 600 :loading "lazy"
+          :class (str "aspect-square w-full rounded-lg bg-zinc-200 object-cover " pos)}]
+   [:figcaption {:class "mt-5"}
+    [:h2 {:class "text-2xl font-semibold tracking-[-0.02em] text-zinc-900"} name]
+    [:p {:class "mt-1 text-[17px] text-zinc-700"} role]
+    [:p {:class "mt-3 flex gap-5 text-base"}
+     [:a {:href linkedin :target "_blank" :rel "noopener noreferrer" :class m/link-ink} "LinkedIn"]
+     [:a {:href instagram :target "_blank" :rel "noopener noreferrer" :class m/link-ink} "Instagram"]]]])
 
 (defn page []
-  [:div {:class "container mx-auto px-6"}
-   [:div {:class "py-16 lg:py-24"}
-    [:div {:class "text-center mb-14"}
-     [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-6 text-xs font-semibold text-brand-700 bg-brand-50 border border-brand-100 rounded-full"}
-      [:span {:class "w-1.5 h-1.5 bg-brand-500 rounded-full"}]
-      "The people behind greed"]
-     [:h1 {:class "text-4xl font-bold text-zinc-900 leading-[1.08] tracking-tight text-balance lg:text-5xl"}
-      "Meet our "
-      [:span {:class "text-brand-600"} "team."]]
-     [:p {:class "max-w-xl mx-auto mt-4 text-lg text-zinc-500"}
-      "A small team on a mission to make personal finance simple, transparent, and empowering for every South African."]]
-    [:div {:class "flex justify-center"}
-     [:div {:class "grid grid-cols-1 gap-12 w-full max-w-2xl sm:grid-cols-2"}
-      (team-member {:img "/img/IMG_3777.webp"
-                    :name "Sithabiso Makhathini"
-                    :role "Founder & CEO"
-                    :instagram "https://www.instagram.com/stha.edn/"
-                    :linkedin "https://www.linkedin.com/in/makhathinisithabiso/"
-                    :class "reveal-1"})
-      (team-member {:img "/img/nkululeko-mnyandu.jpg"
-                    :name "Nkululeko Mnyandu"
-                    :role "Co-founder"
-                    :instagram "https://www.instagram.com/nsizwenhle_mpangazitha"
-                    :linkedin "https://www.linkedin.com/in/nkululeko-mnyandu-208654181/"
-                    :class "reveal-2"})]]]])
+  [:div
+   [:style (biff/unsafe m/enter-css)]
+   [:div {:class "bg-stone-100"}
+    [:div {:class "container mx-auto grid grid-cols-1 gap-12 px-6 pb-20 pt-14 sm:pt-20 lg:grid-cols-12 lg:gap-10 lg:pb-28 lg:pt-24"}
+     [:div {:class "lg:col-span-5"}
+      [:h1 {:class "enter max-w-[12ch] font-semibold text-zinc-900 [font-size:clamp(44px,6vw,92px)] leading-[1.0] tracking-[-0.045em]"}
+       "Meet the team."]
+      [:p {:class "enter mt-8 max-w-[40ch] text-xl leading-relaxed text-zinc-700" :style {"--d" "80ms"}}
+       "Two South Africans making personal finance simple, transparent and calm, for every salaried person who wants to know where their money goes."]
+      [:p {:class "enter mt-8 text-[17px] text-zinc-800" :style {"--d" "120ms"}}
+       "Want to talk to us? " [:a {:href "/contact" :class m/link-ink} "Get in touch"] "."]]
+     [:section {:class "grid grid-cols-1 gap-10 sm:grid-cols-2 lg:col-span-7 lg:col-start-6" :aria-label "Team"}
+      (person {:img "/img/IMG_3777.webp" :name "Sithabiso Makhathini" :role "Founder & CEO"
+               :linkedin "https://www.linkedin.com/in/makhathinisithabiso/"
+               :instagram "https://www.instagram.com/stha.edn/"
+               :pos "object-center" :d "60ms"})
+      (person {:img "/img/nkululeko-mnyandu.jpg" :name "Nkululeko Mnyandu" :role "Co-founder"
+               :linkedin "https://www.linkedin.com/in/nkululeko-mnyandu-208654181/"
+               :instagram "https://www.instagram.com/nsizwenhle_mpangazitha"
+               :pos "object-[50%_20%]" :d "120ms"})]]]
+   [:script (biff/unsafe m/enter-js)]])

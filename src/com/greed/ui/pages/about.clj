@@ -1,84 +1,114 @@
 (ns com.greed.ui.pages.about
-  (:require [com.greed.ui.components.shared :as shared]
-            [com.greed.ui.components.svgs :as svgs]))
+  (:require [com.biffweb :as biff]
+            [com.greed.ui.components.illustrations :as ill]
+            [com.greed.ui.components.marketing :as m]))
 
-(defn- badge [label]
-  [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-4 text-xs font-semibold text-brand-700 bg-brand-50 border border-brand-100 rounded-full"}
-   [:span {:class "w-1.5 h-1.5 bg-brand-500 rounded-full"}]
-   label])
+;; Small, true pieces of the app beside each claim (sample salary R52,500).
 
-(defn- value-card [icon title description class]
-  [:div {:class (str "reveal p-8 bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card transition duration-200 hover:shadow-card-hover hover:-translate-y-0.5 hover:ring-zinc-300/70 " class)}
-   [:div {:class "flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-brand-600/10"}
-    icon]
-   [:h3 {:class "mt-5 text-lg font-semibold text-zinc-900 tracking-tight"} title]
-   [:p {:class "mt-2 text-sm text-zinc-500 leading-relaxed"} description]])
+(defn- frag-split []
+  [:div {:data-ui "" :class "w-full max-w-[460px] rounded-lg border border-zinc-200 bg-white p-6"}
+   [:p {:class "text-sm font-medium text-zinc-500"} "Where your income goes"]
+   [:div {:class "mt-4 flex h-2.5 w-full overflow-hidden rounded-full bg-zinc-100"}
+    [:div {:class "h-full bg-brand-600" :style {:width "77%"}}]
+    [:div {:class "h-full bg-zinc-400" :style {:width "23%"}}]]
+   [:div {:class "mt-4 space-y-2 text-sm tabular-nums"}
+    [:p {:class "flex justify-between"} [:span {:class "flex items-center gap-2 text-zinc-600"} [:span {:class "h-2 w-2 rounded-full bg-brand-600"}] "Take-home"] [:span {:class "font-semibold text-zinc-900"} "R486,293"]]
+    [:p {:class "flex justify-between"} [:span {:class "flex items-center gap-2 text-zinc-600"} [:span {:class "h-2 w-2 rounded-full bg-zinc-400"}] "Tax"] [:span {:class "font-semibold text-zinc-900"} "R143,707"]]]
+   [:p {:class "mt-4 text-sm text-zinc-600"} "Of every R1 you earn, 23c goes to SARS."]])
+
+(defn- frag-budget-row []
+  [:div {:data-ui "" :class "w-full max-w-[380px] rounded-lg border border-zinc-200 bg-white"}
+   [:div {:class "flex items-center justify-between px-5 py-4"}
+    [:p {:class "text-sm font-semibold text-zinc-900"} "Expenses"]
+    [:span {:class "rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-700"} "+ Add item"]]
+   [:div {:class "flex items-center justify-between bg-zinc-100 px-5 py-3 text-sm"}
+    [:span {:class "text-zinc-800"} "Rent · debit order on the 1st"] [:span {:class "font-semibold tabular-nums"} "R8,000"]]
+   [:div {:class "flex items-center justify-between px-5 py-3 text-sm"}
+    [:span {:class "text-zinc-800"} "Car payment"] [:span {:class "font-semibold tabular-nums"} "R6,000"]]
+   [:div {:class "flex items-center justify-between px-5 py-3 text-sm"}
+    [:span {:class "text-zinc-800"} "R886 a day to spend until payday"]]])
+
+(defn- frag-goal []
+  [:div {:data-ui "" :class "w-full max-w-[320px] rounded-lg border border-zinc-200 bg-white p-5"}
+   [:div {:class "flex items-center justify-between gap-3"}
+    [:p {:class "text-sm font-semibold text-zinc-900"} "Emergency fund"]
+    [:span {:class "rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700"} "By 1 Mar 2027"]]
+   [:p {:class "mt-4 flex items-baseline justify-between tabular-nums"}
+    [:span {:class "text-2xl font-semibold text-zinc-900"} "R6,000"] [:span {:class "text-sm text-zinc-500"} "of R10,000"]]
+   [:div {:class "mt-2 h-2 w-full overflow-hidden rounded-full bg-zinc-100"}
+    [:div {:class "h-full rounded-full bg-brand-600" :style {:width "60%"}}]]
+   [:p {:class "mt-2 text-sm text-zinc-600"} "60% funded · R1,000 a month keeps you on track"]])
+
+(defn- claim-row [{:keys [title body d]} fragment & {:keys [flip?]}]
+  [:div {:class "grid grid-cols-1 items-center gap-8 py-10 lg:grid-cols-12 lg:gap-10 lg:py-14"}
+   [:div {:class (str "enter lg:col-span-5 " (when flip? "lg:order-2 lg:col-start-8"))}
+    [:h3 {:class "text-[32px] font-semibold leading-[1.15] tracking-[-0.03em] text-zinc-900"} title]
+    [:p {:class "mt-4 max-w-[44ch] text-[17px] leading-relaxed text-zinc-800"} body]]
+   [:div {:class (str "enter flex lg:col-span-6 " (if flip? "lg:order-1 lg:col-start-1 lg:justify-start" "lg:col-start-7 lg:justify-end"))
+          :style {"--d" (or d "80ms")}}
+    fragment]])
 
 (defn page [{:keys [session]}]
   (let [signed-in? (some? (:uid session))]
-    [:div {:class "container mx-auto px-6"}
+    [:div
+     [:style (biff/unsafe m/enter-css)]
 
-     ;; Hero
-     [:div {:class "py-16 lg:py-24"}
-      [:div {:class "text-center max-w-2xl mx-auto"}
-       [:h1 {:class "text-4xl font-bold text-zinc-900 leading-[1.08] tracking-tight text-balance lg:text-5xl"}
-        "Your money, " [:span {:class "text-brand-600"} "in one clear plan."]]
-       [:p {:class "mt-6 text-lg text-zinc-500 leading-relaxed"}
-        "Greed is a personal finance wellbeing platform built for South Africa. For you. We bring your salary, tax, spending, savings and goals into one place, so you always know where you stand. No jargon, no judgment."]]]
+     ;; First screen: the claim beside the artefact it is about
+     [:div {:class "bg-stone-100"}
+      [:div {:class "container mx-auto grid grid-cols-1 items-center gap-12 px-6 pb-20 pt-14 sm:pt-20 lg:grid-cols-12 lg:pb-28 lg:pt-24"}
+       [:div {:class "lg:col-span-7"}
+        [:h1 {:class "enter max-w-[14ch] [text-wrap:balance] font-semibold text-zinc-900 [font-size:clamp(44px,6vw,92px)] leading-[1.0] tracking-[-0.045em]"}
+         "Your money, in one clear plan."]
+        [:p {:class "enter mt-8 max-w-[46ch] text-xl leading-relaxed text-zinc-700" :style {"--d" "80ms"}}
+         "greed is personal finance built for South Africa. It starts where your payslip ends, and turns your salary, tax, spending and goals into one plan. No jargon, no judgement."]]
+       [:div {:class "enter flex justify-center lg:col-span-5 lg:justify-end" :style {"--d" "140ms"}}
+        (ill/payslip :class "w-full max-w-[380px] rotate-[2deg]")]]]
 
-     ;; What you get
-     [:div {:class "pb-20 lg:pb-28"}
-      [:div {:class "reveal text-center mb-10"}
-       (badge "What you get")
-       [:h2 {:class "text-3xl font-bold text-zinc-900 tracking-tight text-balance lg:text-4xl"}
-        "Your money, " [:span {:class "text-brand-600"} "made manageable."]]]
-      [:div {:class "grid grid-cols-1 gap-6 max-w-4xl mx-auto md:grid-cols-3"}
-       (value-card (svgs/banknotes) "Understand what you earn."
-                   "See your real take-home pay and tax for the right SARS assessment year, before you plan anything else."
-                   "reveal-1")
-       (value-card (svgs/calendar) "Plan before payday."
-                   "Give every rand a job (commitments, savings and goals) before the first debit order moves."
-                   "reveal-2")
-       (value-card (svgs/target) "See what's next."
-                   "Spot shortfalls early, track your tax readiness and watch real progress toward the goals that matter to you."
-                   "reveal-3")]]
+     ;; What you get: each claim with its proof from the app
+     [:section {:id "get" :class "container mx-auto px-6 py-20 lg:py-32" :aria-labelledby "get-h"}
+      [:h2 {:id "get-h" :class "enter text-[28px] font-semibold tracking-[-0.02em] text-zinc-900"} "What you get"]
+      (claim-row {:title "Understand what you earn."
+                  :body "See your real take-home pay and tax for the right SARS year of assessment, before you plan anything else."}
+                 (frag-split))
+      (claim-row {:title "Plan before payday."
+                  :body "Give every rand a job, from commitments to savings and goals, before the first debit order goes off."}
+                 (frag-budget-row) :flip? true)
+      (claim-row {:title "See what is next."
+                  :body "Spot shortfalls early, track your tax readiness and watch real progress towards the goals that matter to you."}
+                 (frag-goal))]
 
-     ;; Why the name
-     [:div {:class "pb-20 lg:pb-28"}
-      [:div {:class "reveal text-center max-w-2xl mx-auto"}
-       [:div
-        (badge "Why the name")
-        [:h2 {:class "text-3xl font-bold text-zinc-900 tracking-tight text-balance lg:text-4xl"}
-         "Greed means refusing to settle for "
-         [:span {:class "text-brand-600"} "financial confusion."]]
-        [:p {:class "mt-6 text-lg text-zinc-500 leading-relaxed"}
-         "For us, Greed doesn't mean taking without limits. It means wanting more: more security, more ownership, more choice, disciplined by a plan you can actually see."]]]]
+     ;; Why the name: the logo's own idea, drawn large
+     [:section {:id "name" :class "bg-zinc-950 text-white" :aria-labelledby "name-h"}
+      [:div {:class "container mx-auto grid grid-cols-1 items-start gap-12 px-6 py-20 lg:grid-cols-12 lg:gap-10 lg:py-32"}
+       [:div {:class "enter lg:col-span-5"}
+        [:img {:src "/img/greed-symbol-white-tight.svg" :alt "" :aria-hidden "true" :width 192 :height 192 :loading "lazy"
+               :class "block aspect-square w-1/2 max-w-[420px] lg:w-full"}]]
+       ;; The statement starts level with the symbol's cut, 38.2% down.
+       [:div {:class "enter lg:col-span-6 lg:col-start-7 lg:pt-[124px]" :style {"--d" "80ms"}}
+        [:h2 {:id "name-h" :class "text-base font-medium text-zinc-300"} "Why the name"]
+        [:p {:class "mt-4 max-w-[20ch] text-[36px] font-medium leading-[1.15] tracking-[-0.02em] text-white"}
+         "greed means refusing to settle for financial confusion."]
+        [:p {:class "mt-6 max-w-[48ch] text-[17px] leading-relaxed text-zinc-300"}
+         "It does not mean taking without limits. It means wanting more: more security, more ownership, more choice, disciplined by a plan you can see. The mark says it too: one level line, cut where enough is."]]]]
 
-     ;; Security
-     [:div {:class "reveal pb-20 lg:pb-28"}
-      [:div {:class "max-w-3xl mx-auto"}
-       [:div {:class "px-8 py-16 bg-white ring-1 ring-zinc-200/70 rounded-3xl shadow-card text-center lg:px-16"}
-        [:div {:class "mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-brand-600/10"}
-         (svgs/shield-check)]
-        [:h2 {:class "mt-5 text-3xl font-bold text-zinc-900 tracking-tight text-balance lg:text-4xl"}
-         "Your financial life stays yours."]
-        [:p {:class "max-w-2xl mx-auto mt-4 text-zinc-500 leading-relaxed"}
-         "Keeping your data secure is our priority. Your information is stored safely and access is protected, so your money and your details stay private. We will never sell your data. And if you would like to know more about how we protect it, just ask."]]]]
+     ;; Privacy: on the stone tone, beside the shape of a vault door
+     [:section {:id "privacy" :class "bg-stone-100" :aria-labelledby "privacy-h"}
+      [:div {:class "container mx-auto grid grid-cols-1 gap-8 px-6 py-20 lg:grid-cols-12 lg:gap-10 lg:py-28"}
+       [:h2 {:id "privacy-h" :class "enter text-[32px] font-semibold leading-[1.15] tracking-[-0.03em] text-zinc-900 lg:col-span-5"}
+        "Your financial life stays yours."]
+       [:div {:class "enter lg:col-span-6 lg:col-start-7" :style {"--d" "80ms"}}
+        [:p {:class "max-w-[52ch] text-[17px] leading-relaxed text-zinc-800"}
+         "Keeping your data secure is our priority. Your information is stored safely and access is protected, so your money and your details stay private."]
+        [:p {:class "mt-6 text-[24px] font-semibold tracking-[-0.02em] text-zinc-900"} "We will never sell your data."]
+        [:p {:class "mt-6 max-w-[52ch] text-[17px] leading-relaxed text-zinc-800"}
+         "Read our " [:a {:href "/privacy" :class m/link-ink} "privacy policy"]
+         ", or " [:a {:href "/contact" :class m/link-ink} "ask us"] " how we protect it."]]]]
 
-     ;; Closing
-     [:div {:class "reveal pb-24 lg:pb-32"}
-      [:div {:class "relative overflow-hidden px-8 py-16 bg-zinc-900 rounded-3xl lg:px-16"}
-       [:div {:class "absolute -top-32 -right-24 w-96 h-96 rounded-full bg-brand-500/20 blur-3xl"}]
-       [:div {:class "absolute -bottom-32 -left-24 w-96 h-96 rounded-full bg-brand-500/10 blur-3xl"}]
-       [:div {:class "relative text-center"}
-        [:h2 {:class "text-3xl font-bold text-white tracking-tight text-balance lg:text-4xl"}
-         "Built by people who " [:span {:class "text-brand-500"} "refuse to settle."]]
-        [:p {:class "max-w-xl mx-auto mt-4 text-lg text-zinc-500"}
-         "Greed was started by a small South African team who got tired of guessing their way through tax, budgets and payday. We built the tool we wished we had: one that keeps your money clear, honest and yours."]
-        [:div {:class "flex flex-wrap justify-center gap-3 mt-8"}
-         [:a {:href "/team"
-              :class "inline-block px-8 py-3.5 text-sm font-semibold text-brand-700 bg-white rounded-xl transition-colors hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:bg-brand-100 active:scale-[0.97]"}
-          "Meet the team"]
-        (shared/btn :variant :brand-ghost :size :lg
-                    :href (if signed-in? "/app" "/signup")
-                    "Get started for free")]]]]]))
+     [:div
+      (m/action-tile
+       {:id "close" :ground "bg-white"
+        :heading "Built by people who refuse to settle"
+        :line "A small South African team, tired of guessing through tax, budgets and payday, built the tool they wished they had."
+        :primary {:href (if signed-in? "/app" "/signup") :label (if signed-in? "Go to dashboard" "Create your free account")}
+        :secondary {:href "/team" :label "Meet the team"}})]
+     [:script (biff/unsafe m/enter-js)]]))

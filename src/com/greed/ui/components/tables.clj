@@ -4,17 +4,6 @@
             [com.greed.ui.components.forms :as forms]
             [com.greed.utilities.core :as utilities]))
 
-(defn- category-chip
-  "Icon + tint pairing for a budget category's header chip. Icon-first
-   grouping (materials & depth): the category reads by its glyph before its
-   label, and each surface stays internally consistent in tone."
-  [title]
-  (case title
-    "income"   {:cls "bg-brand-50 text-brand-600" :icon (svgs/trending-up)}
-    "expenses" {:cls "bg-rose-50 text-rose-600"       :icon (svgs/trending-down)}
-    "savings"  {:cls "bg-indigo-50 text-indigo-600"    :icon (svgs/wallet)}
-    {:cls "bg-zinc-100 text-zinc-500" :icon (svgs/wallet)}))
-
 (defn- budget-row [& {:keys [item protected-titles]}]
   (let [{:budget-item/keys [title amount]
          :or {title "Title" amount 0}} item
@@ -24,7 +13,7 @@
      [:div {:class "min-w-0 flex-1"}
       [:p {:class "truncate text-sm font-medium text-zinc-800"} title]
       (when protected?
-        [:span {:class "mt-0.5 inline-flex items-center text-[10px] font-medium text-zinc-500 uppercase tracking-wide"
+        [:span {:class "mt-0.5 inline-flex items-center text-xs font-medium text-zinc-500"
                 :title "Managed automatically. Edit in Settings"}
          "Auto"])]
      [:p {:class "flex-shrink-0 text-sm font-semibold text-zinc-900 tabular-nums"}
@@ -50,17 +39,14 @@
 
 (defn budget-table [{:keys [title items protected-titles]
                      :or {protected-titles #{}}}]
-  (let [{:keys [cls icon]} (category-chip title)
-        label (case title
+  (let [label (case title
                 "income"   "Income"
                 "expenses" "Expenses"
                 "savings"  "Savings"
                 title)
         count (count items)]
-    [:div {:class "flex flex-col rounded-2xl bg-white ring-1 ring-zinc-200/70 shadow-card overflow-hidden transition-shadow duration-200 hover:shadow-card-hover"}
+    [:div {:class "flex flex-col rounded-lg bg-white ring-1 ring-zinc-200/70 overflow-hidden transition-shadow duration-200"}
      [:div {:class "flex items-center gap-3 px-5 py-4"}
-      [:div {:class (str "flex flex-shrink-0 items-center justify-center w-9 h-9 rounded-xl " cls)}
-       [:span {:class "w-5 h-5 [&_svg]:w-full [&_svg]:h-full"} icon]]
       [:div {:class "min-w-0 flex-1"}
        [:p {:class "text-sm font-semibold text-zinc-900"} label]
        [:p {:class "text-xs text-zinc-500"} (str count (if (= 1 count) " item" " items"))]]
@@ -73,8 +59,6 @@
         (for [item items]
           (budget-row :item item :protected-titles protected-titles))]
        [:div {:class "flex flex-col items-center justify-center px-5 py-10 text-center"}
-        [:div {:class "mb-3 flex items-center justify-center w-10 h-10 rounded-full bg-zinc-50"}
-         [:span {:class "text-zinc-300"} icon]]
         [:p {:class "text-sm font-medium text-zinc-500"} "Nothing here yet"]
         [:p {:class "mt-0.5 text-xs text-zinc-500"} (str "Add your first " title " item")]])
      (for [item items]

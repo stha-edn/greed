@@ -3,23 +3,6 @@
             [com.greed.ui.components.svgs :as svgs]
             [com.greed.utilities.core :as utilities]))
 
-(defn note-from-greed []
-  [:div {:class "relative overflow-hidden max-w-md p-8 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black rounded-2xl ring-1 ring-white/10 shadow-card-md"}
-   [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent"}]
-   [:div {:class "absolute -top-24 -right-24 h-64 w-64 rounded-full bg-brand-500/10 blur-3xl"}]
-   [:div {:class "absolute -top-16 -left-16 h-56 w-56 rounded-full bg-white/[0.06] blur-3xl"}]
-   [:div {:class "relative"}
-    [:div {:class "flex items-center gap-2"}
-     [:span {:class "w-1.5 h-1.5 rounded-full bg-brand-400"}]
-     [:p {:class "text-xs font-semibold uppercase tracking-[0.18em] text-brand-400"} "A note from Greed"]]
-    [:p {:class "mt-5 text-base font-medium text-zinc-100 leading-relaxed"}
-     "Money is private, and so is your ambition. Greed exists to take every part of your financial life off the messy back of your mind and put it in one clear place: salary, tax, spending, savings and the dates that matter."]
-    [:p {:class "mt-4 text-sm text-zinc-500 leading-relaxed"}
-     "No judgment, no jargon, no instant-wealth promises. Just a system that lets you feel what you earn and build control, one decision at a time."]
-    [:div {:class "flex items-center gap-4 mt-8"}
-     [:div {:class "h-px w-10 bg-brand-500"}]
-     [:img {:src "/img/greed-symbol-white-tight.svg" :alt "greed" :width 192 :height 192 :class "block h-7 w-7"}]]]])
-
 (defn bank-card [& {:keys [budget-items finances net-monthly-income]}]
   (let [{:keys [total-income total-expenses]} (c.data/get-budget-data budget-items)
         {:finances/keys [bank user-id account-type]} finances
@@ -35,36 +18,32 @@
                        (+ net-monthly-income (max 0 other-income))
                        (or total-income 0))
         balance      (- income total-expenses)]
-    [:div {:class "relative flex w-full max-w-sm aspect-[1.586/1] flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-brand-50/60 via-white to-white p-6 ring-1 ring-brand-500/15 shadow-card-md lg:from-zinc-800 lg:via-zinc-900 lg:to-black lg:shadow-card-hover lg:ring-white/10"}
-     [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/40 to-transparent"}]
-     [:div {:class "hidden absolute inset-x-6 top-px h-px bg-gradient-to-r from-transparent via-white/25 to-transparent lg:block"}]
-     [:div {:class "absolute -top-24 -right-20 h-64 w-64 rounded-full bg-brand-400/10 blur-3xl lg:bg-brand-500/20"}]
-     [:div {:class "hidden absolute -top-16 -left-16 h-56 w-56 rounded-full bg-white/[0.06] blur-3xl lg:block"}]
+    [:div {:class "relative flex w-full max-w-sm aspect-[1.586/1] flex-col overflow-hidden rounded-lg bg-white p-6 ring-1 ring-zinc-200 lg:bg-zinc-900 lg:ring-white/10"}
      [:div {:class "relative"}
       [:div {:class "flex items-start justify-between"}
-       [:span {:class "text-zinc-500 lg:rounded-[5px] lg:bg-gradient-to-br lg:from-brand-300/25 lg:via-brand-500/15 lg:to-brand-800/20 lg:p-1 lg:text-brand-200/90 lg:ring-1 lg:ring-white/10"} (svgs/card-chip)]
+       [:span {:class "text-zinc-500 lg:rounded-[5px] lg:bg-zinc-800 lg:p-1 lg:text-zinc-300 lg:ring-1 lg:ring-white/10"} (svgs/card-chip)]
        [:span {:class "text-zinc-500 lg:text-zinc-300"} (svgs/contactless)]]
       [:div {:class "mt-4"}
        (if bank
          [:<>
-          [:p {:class "text-xs font-semibold uppercase tracking-widest text-zinc-500 lg:text-zinc-300"} (utilities/->string bank)]
+          [:p {:class "text-xs font-medium text-zinc-500 lg:text-zinc-300"} (utilities/->string bank)]
           [:p {:class "mt-0.5 text-xs text-zinc-500 lg:text-zinc-500"} (or account-type "Debit Card")]]
          [:a {:href "/app/settings"
-              :class "inline-flex items-center gap-1 rounded-sm text-xs font-medium text-brand-600 transition hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500/70 active:scale-[0.97] lg:text-zinc-400 lg:hover:text-zinc-200"}
+              :class "inline-flex items-center gap-1 rounded-sm text-xs font-medium text-zinc-900 transition hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400 active:scale-[0.97] lg:text-zinc-400 lg:hover:text-zinc-200"}
           "Add your bank"
           (svgs/->next {:class "size-3"})])]]
      [:div {:class "relative mt-auto"}
       [:div {:class "flex items-center gap-2"}
        (for [_ (range 3)]
-         [:span {:class "text-sm tracking-[0.2em] text-zinc-300 lg:text-zinc-500"} "••••"])
-       [:span {:class "text-sm font-mono tracking-[0.2em] text-zinc-500 lg:text-zinc-300"} last-four]
+         [:span {:class "text-sm text-zinc-300 lg:text-zinc-500"} "••••"])
+       [:span {:class "text-sm font-mono text-zinc-500 lg:text-zinc-300"} last-four]
        ;; Brand mark in the card-network spot: green on the light card, white on the dark (lg) card.
        [:img {:src "/img/greed-symbol-green-tight.svg" :alt "" :aria-hidden "true"
               :width 192 :height 192 :class "ml-auto h-6 w-6 lg:hidden"}]
        [:img {:src "/img/greed-symbol-white-tight.svg" :alt "" :aria-hidden "true"
               :width 192 :height 192 :class "ml-auto hidden h-6 w-6 lg:block"}]]
       [:div {:class "mt-4 flex items-baseline justify-between gap-4"}
-       [:p {:class "text-xs uppercase tracking-wider text-zinc-500 lg:text-zinc-500"} "Balance"]
+       [:p {:class "text-xs text-zinc-500 lg:text-zinc-500"} "Balance"]
        [:p {:class (str "text-2xl font-bold tracking-tight tabular-nums lg:text-3xl "
                         (if (neg? balance) "text-rose-600 lg:text-rose-400" "text-zinc-900 lg:text-white"))}
         (utilities/amount->rands balance)]]]]))

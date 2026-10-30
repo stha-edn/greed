@@ -23,7 +23,7 @@
   (let [exp-pct (or (utilities/pct-share expenses income) 0)
         sav-pct (or (utilities/pct-share savings income) 0)
         rem-pct (or (utilities/pct-share leftover income) 0)]
-    [:div {:class "p-6 bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card"}
+    [:div {:class "p-6 bg-white ring-1 ring-zinc-200/70 rounded-lg"}
      [:h3 {:class "text-sm font-semibold text-zinc-900 tracking-tight"} "Where your income goes"]
      [:p {:class "mt-0.5 mb-5 text-xs text-zinc-500 leading-relaxed"}
       "How each Rand of income is split across spending, savings, and what's left over."]
@@ -36,23 +36,23 @@
           [:div {:class "overflow-hidden h-3 w-full bg-zinc-100 rounded-full"}
            [:div {:class "h-full w-full overflow-hidden rounded-full greed-bar-grow"}
             [:div {:class "flex h-full w-full"}
-             [:div {:class "h-full bg-rose-400" :style {:width (str (int exp-pct) "%")}}]
-             [:div {:class "h-full bg-indigo-400" :style {:width (str (int sav-pct) "%")}}]
+             [:div {:class "h-full bg-zinc-700" :style {:width (str (int exp-pct) "%")}}]
+             [:div {:class "h-full bg-brand-600" :style {:width (str (int sav-pct) "%")}}]
              [:div {:class "h-full bg-zinc-200" :style {:width (str (int rem-pct) "%")}}]]]])
         [:div {:class "space-y-2.5 mt-5"}
-         (legend-row "bg-rose-400" "Expenses" expenses (utilities/pct-label exp-pct) nil)
-         (legend-row "bg-indigo-400" "Savings" savings (utilities/pct-label sav-pct) nil)
+         (legend-row "bg-zinc-700" "Expenses" expenses (utilities/pct-label exp-pct) nil)
+         (legend-row "bg-brand-600" "Savings" savings (utilities/pct-label sav-pct) nil)
          (legend-row "bg-zinc-300" (if overspend? "Overspend" "Unallocated")
            (Math/abs (long leftover))
            (if overspend? "-" (utilities/pct-label rem-pct))
            (when overspend? "text-rose-600"))]]
        [:p {:class "text-center py-6 text-sm text-zinc-500"}
         "Add your "
-        [:a {:href "/app/finances" :class "font-medium text-brand-600 hover:underline"} "income"]
+        [:a {:href "/app/finances" :class "font-medium text-zinc-900 hover:underline"} "income"]
         " in Finances to see this breakdown."])]))
 
 (defn- expense-breakdown-card [expense-items total-expenses]
-  [:div {:class "p-6 bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card"}
+  [:div {:class "p-6 bg-white ring-1 ring-zinc-200/70 rounded-lg"}
    [:h3 {:class "text-sm font-semibold text-zinc-900 tracking-tight"} "Expense breakdown"]
    [:p {:class "mt-0.5 mb-5 text-xs text-zinc-500 leading-relaxed"}
     "Each expense as a share of your total monthly spending."]
@@ -67,22 +67,22 @@
              (utilities/amount->rands amount)]]
            [:div {:class "mt-2 flex items-center gap-3"}
             [:div {:class "flex-1 overflow-hidden h-1.5 bg-zinc-100 rounded-full"}
-             [:div {:class "h-full w-full rounded-full greed-bar-grow bg-rose-400"
+             [:div {:class "h-full w-full rounded-full greed-bar-grow bg-zinc-400"
                     :style {:width (str (int p) "%")}}]]
-            [:span {:class "flex-shrink-0 w-10 text-right text-xs font-medium text-rose-500 tabular-nums"}
+            [:span {:class "flex-shrink-0 w-10 text-right text-xs font-medium text-zinc-500 tabular-nums"}
              (utilities/pct-label p)]]]))]
      [:p {:class "text-center py-6 text-sm text-zinc-500"}
       "No expenses yet. Add them in "
-      [:a {:href "/app/finances" :class "font-medium text-brand-600 hover:underline"} "Finances"]
+      [:a {:href "/app/finances" :class "font-medium text-zinc-900 hover:underline"} "Finances"]
       "."])])
 
 (defn- empty-state []
-  [:div {:class "py-14 px-6 text-center bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card"}
-   [:div {:class "mx-auto mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-brand-50"}
-    [:span {:class "text-brand-500"} (svgs/wallet)]]
+  [:div {:class "py-14 px-6 text-center bg-white ring-1 ring-zinc-200/70 rounded-lg"}
+   [:div {:class "mx-auto mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100"}
+    [:span {:class "text-zinc-500"} (svgs/wallet)]]
    [:p {:class "text-sm font-medium text-zinc-600"} "No budget yet"]
    [:p {:class "mt-1 text-xs text-zinc-500"} "Add your income and expenses to see where your money goes."]
-   (shared/btn :variant :primary :size :md :class "mt-5" :href "/app/finances" "Add your budget")])
+   (shared/btn :variant :dark :size :md :class "mt-5" :href "/app/finances" "Add your budget")])
 
 (defn page [{:keys [session] :as ctx}]
   (let [user-id      (:uid session)

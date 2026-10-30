@@ -6,7 +6,7 @@
   "Tool-page surface in the dashboard panel chrome: white, hairline ring.
    Sections inside provide their own padding, like the other app panels."
   [& body]
-  (into [:div {:class "bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card overflow-hidden"}]
+  (into [:div {:class "bg-white ring-1 ring-zinc-200/70 rounded-lg overflow-hidden"}]
         body))
 
 (defn panel-heading
@@ -25,18 +25,15 @@
    three supporting figures."
   [& {:keys [eyebrow badge headline suffix status tone substats body]}]
   (let [tone (or tone "text-zinc-900")]
-    [:div {:class "relative overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200/70 shadow-card-md"}
-     [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/40 to-transparent"}]
-     [:div {:class "absolute -top-24 -right-24 h-72 w-72 rounded-full bg-brand-400/10 blur-3xl"}]
+    [:div {:class "relative overflow-hidden rounded-lg bg-white ring-1 ring-zinc-200/70"}
      [:div {:class "relative px-6 py-6 sm:px-8 sm:py-7"}
       [:div {:class "flex items-center gap-2.5"}
-       [:span {:class "h-1.5 w-1.5 rounded-full bg-brand-500"}]
-       [:p {:class "text-[11px] sm:text-xs font-semibold text-brand-600 uppercase tracking-[0.18em]"} eyebrow]
+       [:p {:class "text-sm font-medium text-zinc-500"} eyebrow]
        [:div {:class "flex-1"}]
        (when badge
-         [:span {:class "flex-shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 ring-1 ring-brand-600/15"} badge])]
+         [:span {:class "flex-shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-900 ring-1 ring-zinc-200"} badge])]
       [:div {:class "mt-5 flex items-baseline gap-2.5 sm:mt-6"}
-       [:p {:class (str "text-4xl sm:text-5xl font-bold leading-none tracking-[-0.04em] tabular-nums " tone)}
+       [:p {:class (str "text-3xl sm:text-4xl font-semibold leading-none tracking-[-0.03em] tabular-nums " tone)}
         headline]
        [:span {:class "text-sm font-medium text-zinc-500"} suffix]]
       [:p {:class "mt-3 text-sm text-zinc-500"} status]
@@ -45,10 +42,10 @@
             substats)]]))
 
 (defn hero-substat
-  "One supporting figure: tiny uppercase label over a medium value."
+  "One supporting figure: small grey label over a medium value."
   [label value & [value-cls]]
   [:div {:class "min-w-0"}
-   [:p {:class "text-[11px] font-medium text-zinc-500 uppercase tracking-wider whitespace-nowrap"} label]
+   [:p {:class "text-xs font-medium text-zinc-500 whitespace-nowrap"} label]
    [:p {:class (str "mt-1 text-sm font-semibold whitespace-nowrap tabular-nums sm:text-lg "
                     (or value-cls "text-zinc-900"))} value]])
 
@@ -64,15 +61,15 @@
 
 (defn breakdown-section [label & rows]
   [:div {:class "border-t border-zinc-100"}
-   [:p {:class "px-5 pt-4 pb-1 text-[11px] font-medium text-zinc-500 uppercase tracking-wider sm:px-6"} label]
+   [:p {:class "px-5 pt-4 pb-1 text-xs font-medium text-zinc-500 sm:px-6"} label]
    [:div {:class "divide-y divide-zinc-100"} rows]])
 
 (defn form-section
-  "Groups related form fields under a small uppercase label, so a long form
+  "Groups related form fields under a small grey label, so a long form
    reads as related clusters instead of one undifferentiated grid."
   [label & fields]
   [:div {:class "border-t border-zinc-100 pt-5 mt-5 first:mt-0 first:border-t-0 first:pt-0"}
-   [:p {:class "mb-3 text-[11px] font-medium text-zinc-500 uppercase tracking-wider"} label]
+   [:p {:class "mb-3 text-xs font-medium text-zinc-500"} label]
    (into [:div {:class "grid grid-cols-1 gap-5 sm:grid-cols-2"}] fields)])
 
 (defn glossary-item [term & description]
@@ -83,7 +80,7 @@
 (defn notice
   "Soft amber caveat panel used under the guides."
   [& content]
-  [:div {:class "rounded-xl bg-amber-50 p-5 ring-1 ring-amber-600/15"}
+  [:div {:class "rounded-md bg-amber-50 p-5 ring-1 ring-amber-600/15"}
    (into [:p {:class "text-sm leading-relaxed text-amber-900"}] content)])
 
 (def ^:private guide-toggle-actions
@@ -130,15 +127,13 @@
 
 (defn- tool-card [& {:keys [title description link badge icon]}]
   [:a {:href link
-       :class "group flex flex-col rounded-2xl bg-white p-6 ring-1 ring-zinc-200/70 shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-card-hover hover:ring-zinc-300/70"}
-   [:div {:class "mb-4 flex items-start justify-between"}
-    [:div {:class "flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-brand-600/10 transition-transform duration-200 group-hover:scale-105"}
-     icon]
+       :class "group flex flex-col rounded-lg bg-white p-6 ring-1 ring-zinc-200/70 transition duration-200 hover:-translate-y-0.5 hover:ring-zinc-300/70"}
+   [:div {:class "mb-3 flex items-start justify-end empty:hidden"}
     (when badge
-      [:span {:class "text-xs font-medium text-brand-700 bg-brand-50 px-2.5 py-1 rounded-full"} badge])]
-   [:h3 {:class "text-sm font-semibold text-zinc-900 tracking-tight group-hover:text-brand-600 transition-colors"} title]
+      [:span {:class "text-xs font-medium text-zinc-900 bg-zinc-100 px-2.5 py-1 rounded-full"} badge])]
+   [:h3 {:class "text-sm font-semibold text-zinc-900 tracking-tight group-hover:text-zinc-900 transition-colors"} title]
    [:p {:class "mt-1 flex-1 text-sm text-zinc-500 leading-relaxed"} description]
-   [:div {:class "mt-4 flex items-center gap-1 text-xs font-medium text-zinc-500 group-hover:text-brand-600 transition-colors"}
+   [:div {:class "mt-4 flex items-center gap-1 text-xs font-medium text-zinc-500 group-hover:text-zinc-900 transition-colors"}
     "Open tool"
     (svgs/->next {:class "size-3.5 -translate-x-0.5 transition-transform group-hover:translate-x-0"})]])
 

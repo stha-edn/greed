@@ -13,7 +13,7 @@
   {:bill "Bill" :income "Payment in" :todo "To do" :general "Event"})
 
 (def ^:private type-dot
-  {:bill "bg-rose-400" :income "bg-brand-400" :todo "bg-violet-400" :general "bg-violet-400"})
+  {:bill "bg-zinc-700" :income "bg-brand-600" :todo "bg-zinc-400" :general "bg-zinc-400"})
 
 (defn- event-day-types [events year month]
   ;; Returns map of day-of-month -> set of all event types on that day
@@ -31,7 +31,7 @@
 
 (defn- event-row [{:event/keys [title date type] :xt/keys [id]}]
   (let [type    (or type :general)
-        dot-cls (get type-dot type "bg-violet-400")]
+        dot-cls (get type-dot type "bg-zinc-400")]
     [:div {:class "relative flex items-center gap-3 px-5 py-3 border-b border-zinc-100 last:border-0 hover:bg-zinc-50 transition-colors"}
      [:div {:class (str "flex-shrink-0 w-2 h-2 rounded-full " dot-cls)}]
      [:div {:class "min-w-0 flex-1"}
@@ -65,7 +65,7 @@
                           :class      (str "flex items-center justify-center w-5 h-5 rounded-md border transition active:scale-95 "
                                            (if done?
                                              "border-transparent bg-brand-500 text-white"
-                                             "border-zinc-300 bg-white hover:bg-brand-50 hover:border-brand-400"))}
+                                             "border-zinc-300 bg-white hover:bg-zinc-50 hover:border-zinc-400"))}
                  (when done? (svgs/check {:class "w-3 h-3"}))])
      [:div {:class "min-w-0 flex-1"}
       [:p {:class (str "text-sm font-medium truncate "
@@ -97,10 +97,10 @@
                    (sort-by (fn [{:event/keys [done title]}]
                               [(boolean done) title])))
         open  (count (filter #(not (:event/done %)) todos))]
-    [:div#todos-panel {:class "bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card overflow-hidden"}
+    [:div#todos-panel {:class "bg-white ring-1 ring-zinc-200/70 rounded-lg overflow-hidden"}
      [:div {:class "flex items-center justify-between px-5 py-4 border-b border-zinc-100"}
       [:div
-       [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider"} "To do"]
+       [:p {:class "text-xs font-medium text-zinc-500"} "To do"]
        [:p {:class "text-xs text-zinc-500 mt-0.5"}
         (if (seq todos) (str open " open") "Nothing to do")]]
       [:button {:class "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-600 border border-zinc-300 rounded-lg hover:bg-zinc-50 hover:border-zinc-400 transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
@@ -128,7 +128,7 @@
                           :aria-label  "Due date (optional)"
                           :placeholder "Due date"
                           :class       (shared/base-input-class)}]
-                 (shared/btn :variant :primary :size :md :type "submit" :class "w-full"
+                 (shared/btn :variant :dark :size :md :type "submit" :class "w-full"
                              "Add todo"))]
      (if (seq todos)
        [:div {:class "divide-y divide-zinc-100"}
@@ -143,10 +143,10 @@
   (let [scheduled (->> events
                        (filter scheduled-event?)
                        (sort-by :event/date))]
-    [:div#calendar-events {:class "bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card overflow-hidden"}
+    [:div#calendar-events {:class "bg-white ring-1 ring-zinc-200/70 rounded-lg overflow-hidden"}
      [:div {:class "flex items-center justify-between px-5 py-4 border-b border-zinc-100"}
       [:div
-       [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider"} "Scheduled"]
+       [:p {:class "text-xs font-medium text-zinc-500"} "Scheduled"]
        [:p {:class "text-xs text-zinc-500 mt-0.5"}
         (if (seq scheduled) (str (count scheduled) " scheduled") "Nothing scheduled")]]
       [:button {:class "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-600 border border-zinc-300 rounded-lg hover:bg-zinc-50 hover:border-zinc-400 transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
@@ -178,7 +178,7 @@
                            :name     "date"
                            :required true
                            :class    (shared/base-input-class)}]]
-                 (shared/btn :variant :primary :size :md :type "submit" :class "w-full"
+                 (shared/btn :variant :dark :size :md :type "submit" :class "w-full"
                              "Save event"))]
      (if (seq scheduled)
        [:div {:class "divide-y divide-zinc-100"}
@@ -203,7 +203,7 @@
     [:div#calendar-grid {:aria-label (str (nth month-names (dec month)) " " year)}
      [:input {:type "hidden" :id "cal-month" :name "cal-month" :value (str month)}]
      [:input {:type "hidden" :id "cal-year"  :name "cal-year"  :value (str year)}]
-     [:div {:class "bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card overflow-hidden"}
+     [:div {:class "bg-white ring-1 ring-zinc-200/70 rounded-lg overflow-hidden"}
       ;; ── Header ──────────────────────────────────────────────────────────────
       [:div {:class "flex items-center justify-between px-5 pt-5 pb-4 border-b border-zinc-100 gap-3"}
        [:div {:class "flex items-baseline gap-2 min-w-0"}
@@ -213,12 +213,12 @@
        [:div {:class "flex items-center gap-3"}
         ;; Legend (hidden on mobile)
         [:div {:class "hidden sm:flex items-center gap-4 mr-1"}
-         (for [[dot-color label] [["bg-brand-400" "Payday"]
-                                  ["bg-rose-400"    "Bill"]
-                                  ["bg-violet-400"  "To do"]]]
+         (for [[dot-color label] [["bg-brand-600" "Payday"]
+                                  ["bg-zinc-700"    "Bill"]
+                                  ["bg-zinc-400"  "To do"]]]
            [:div {:class "flex items-center gap-1.5"}
             [:div {:class (str "w-2 h-2 rounded-full " dot-color)}]
-            [:span {:class "text-[10px] font-semibold uppercase tracking-wider text-zinc-500"} label]])]
+            [:span {:class "text-xs font-medium text-zinc-500"} label]])]
         ;; Jump back to the current month when browsing another one
         (when-not current?
           [:button {:type     "button"
@@ -226,7 +226,7 @@
                     :hx-target "#calendar-grid"
                     :hx-swap  "outerHTML"
                     :hx-disabled-elt "this"
-                    :class    "px-2.5 h-7 text-xs font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"}
+                    :class    "px-2.5 h-7 text-xs font-medium text-zinc-900 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"}
            "Today"])
         ;; Navigation
         [:div {:class "flex items-center gap-1"}
@@ -251,7 +251,7 @@
       ;; ── Day-of-week headers ─────────────────────────────────────────────────
       [:div {:class "flex flex-wrap border-b border-zinc-100"}
        (for [d ["Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"]]
-         [:div {:class "py-2.5 w-[14.28%] text-center text-[10px] font-bold uppercase tracking-wider text-zinc-500"} d])]
+         [:div {:class "py-2.5 w-[14.28%] text-center text-xs font-bold text-zinc-500"} d])]
       ;; ── Day cells ────────────────────────────────────────────────────────────
       [:div {:class "flex flex-wrap"}
        ;; Blank leading cells
@@ -267,7 +267,7 @@
                 ;; One dot per distinct type, in stable order: bill → income → to do
                dots      (filterv some? (map type-dot (filter all-types [:bill :income :todo])))
                num-cls   (if is-today
-                           "bg-zinc-900 text-white shadow-card-md"
+                           "bg-zinc-900 text-white"
                            "text-zinc-700")]
            [:div {:class "border-r border-b border-zinc-100 h-14 sm:h-20 w-[14.28%] flex flex-col items-center pt-2 transition-colors hover:bg-zinc-50"}
             [:div {:class (str "w-7 h-7 flex items-center justify-center rounded-full "

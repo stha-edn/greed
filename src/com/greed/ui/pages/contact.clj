@@ -1,88 +1,61 @@
 (ns com.greed.ui.pages.contact
-  (:require [com.greed.ui.components.shared :as shared]
-            [com.greed.ui.components.svgs :as svgs]))
+  (:require [com.biffweb :as biff]
+            [com.greed.ui.components.illustrations :as ill]
+            [com.greed.ui.components.marketing :as m]))
 
-(defn- badge [label]
-  [:div {:class "inline-flex items-center gap-2 px-3 py-1.5 mb-4 text-xs font-semibold text-brand-700 bg-brand-50 border border-brand-100 rounded-full"}
-   [:span {:class "w-1.5 h-1.5 bg-brand-500 rounded-full"}]
-   label])
-
-(defn- contact-tile [& {:keys [icon title description href class]}]
-  [:a {:href href
-       :class (str "reveal group flex flex-col p-8 bg-white ring-1 ring-zinc-200/70 rounded-2xl shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-card-hover hover:ring-zinc-300/70 active:scale-[0.98] " class)}
-   [:div {:class "flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-brand-600/10 transition-transform duration-200 group-hover:scale-105"}
-    icon]
-   [:h3 {:class "mt-5 text-lg font-semibold text-zinc-900 tracking-tight group-hover:text-brand-600 transition-colors"} title]
-   [:p {:class "mt-2 text-sm text-zinc-500 leading-relaxed"} description]
-   [:span {:class "inline-flex items-center gap-2 mt-6 text-sm font-semibold text-zinc-900 transition-colors group-hover:text-brand-600"}
-    "Get in touch"
-    (svgs/->next {:class "size-3.5 -translate-x-0.5 transition-transform group-hover:translate-x-0"})]])
+(defn- channel [{:keys [name detail href external?]}]
+  [:li
+   [:a (cond-> {:href href
+                :class "group grid grid-cols-1 items-baseline gap-1 rounded-md px-3 py-5 -mx-3 transition-colors duration-150 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-6"}
+         external? (assoc :target "_blank" :rel "noopener noreferrer"))
+    [:span {:class "font-semibold tracking-[-0.03em] text-zinc-900 [font-size:clamp(30px,4vw,60px)] leading-[1.1]"} name]
+    [:span {:class "flex items-center gap-2 text-lg text-zinc-700"}
+     detail
+     [:span {:aria-hidden "true" :class "transition-transform duration-150 ease-out group-hover:translate-x-1"} "→"]]]])
 
 (defn page [{:keys [session]}]
   (let [signed-in? (some? (:uid session))]
-    [:div {:class "container mx-auto px-6"}
+    [:div
+     [:style (biff/unsafe m/enter-css)]
 
-     ;; Hero
-     [:div {:class "py-16 lg:py-24"}
-      [:div {:class "text-center max-w-2xl mx-auto"}
-       [:h1 {:class "text-4xl font-bold text-zinc-900 leading-[1.08] tracking-tight text-balance lg:text-5xl"}
-        "Talk to us " [:span {:class "text-brand-600"} "directly."]]
-       [:p {:class "mt-6 text-lg text-zinc-500 leading-relaxed"}
-        "We're a small team and we read every message ourselves. Ask about your account, your tax, or anything else. We'll help you find the right answer."]]]
+     [:div {:class "container mx-auto grid grid-cols-1 items-center gap-12 px-6 pb-16 pt-14 sm:pt-20 lg:grid-cols-12 lg:pb-24 lg:pt-24"}
+      [:div {:class "lg:col-span-6"}
+       [:h1 {:class "enter max-w-[14ch] font-semibold text-zinc-900 [font-size:clamp(44px,6vw,92px)] leading-[1.0] tracking-[-0.045em]"}
+        "Talk to us directly."]
+       [:p {:class "enter mt-8 max-w-[44ch] text-xl leading-relaxed text-zinc-700" :style {"--d" "80ms"}}
+        "We are a small team and we read every message ourselves. Ask about your account, your tax, or anything else, and we will help you find the right answer."]]
+      [:div {:class "enter flex justify-center lg:col-span-6 lg:justify-end" :style {"--d" "140ms"}}
+       (ill/envelope :class "w-full max-w-[460px] -rotate-[3deg]")]]
 
-     ;; Contact channels
-     [:div {:class "pb-20 lg:pb-28"}
-      [:div {:class "grid grid-cols-1 gap-6 max-w-4xl mx-auto md:grid-cols-3"}
-       (contact-tile :icon (svgs/envelope)
-                     :title "Email us"
-                     :description "support@mygreed.co.za, the fastest way to reach us. We reply personally."
-                     :href "mailto:support@mygreed.co.za"
-                     :class "reveal-1")
-       (contact-tile :icon (svgs/instagram)
-                     :title "Instagram"
-                     :description "@greed_za, follow along and send us a message."
-                     :href "https://www.instagram.com/greed_za/"
-                     :class "reveal-2")
-       (contact-tile :icon (svgs/users)
-                     :title "Meet the team"
-                     :description "Prefer a person? See who's building Greed."
-                     :href "/team"
-                     :class "reveal-3")]]
+     [:section {:id "reach" :class "bg-stone-100" :aria-labelledby "reach-h"}
+      [:div {:class "container mx-auto px-6 py-16 lg:py-24"}
+       [:h2 {:id "reach-h" :class "enter text-[28px] font-semibold tracking-[-0.02em] text-zinc-900"} "Ways to reach us"]
+       [:ul {:class "enter mt-6" :style {"--d" "80ms"}}
+        (channel {:name "Email us" :detail "support@mygreed.co.za" :href "mailto:support@mygreed.co.za"})
+        (channel {:name "Instagram" :detail "@greed_za" :href "https://www.instagram.com/greed_za/" :external? true})
+        (channel {:name "Meet the team" :detail "Who builds greed" :href "/team"})]]]
 
-     ;; What we can help with
-     [:div {:class "reveal pb-20 lg:pb-28"}
-      [:div {:class "max-w-3xl mx-auto"}
-       [:div {:class "text-center mb-10"}
-        (badge "We can help with")
-        [:h2 {:class "text-3xl font-bold text-zinc-900 tracking-tight text-balance lg:text-4xl"}
-         "No question is too small."]]
-       [:div {:class "grid grid-cols-1 gap-3 sm:grid-cols-2"}
-        (for [item ["Your account and sign-in"
-                    "Tax calculations and returns"
-                    "Budgets, goals and the calendar"
-                    "Privacy, your data, or deleting your account"
-                    "Feedback, feature ideas, and bug reports"
-                     "Anything else on your mind? Just ask."]]
-          [:div {:class "flex items-start gap-2.5 text-sm text-zinc-600"}
-           [:span {:class "mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600"}
-            [:svg {:class "size-3" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24" :stroke-width "3"}
-             [:path {:stroke-linecap "round" :stroke-linejoin "round" :d "M5 13l4 4L19 7"}]]]
-           item])]]]
+     [:div {:class "container mx-auto px-6"}
+      [:section {:id "help" :class "grid grid-cols-1 items-center gap-10 py-20 lg:grid-cols-12 lg:py-32" :aria-labelledby "help-h"}
+       [:div {:class "enter lg:col-span-5"}
+        (ill/calendar-sheet :class "w-full max-w-[260px] rotate-[-2deg]")]
+       [:div {:class "enter lg:col-span-6 lg:col-start-7" :style {"--d" "80ms"}}
+        [:h2 {:id "help-h" :class "text-[32px] font-semibold leading-[1.15] tracking-[-0.03em] text-zinc-900"} "No question is too small"]
+        [:p {:class "mt-4 max-w-[46ch] text-[17px] leading-relaxed text-zinc-800"}
+         "Payday questions are welcome any day of the month. People write to us about:"]
+        [:ul {:class "mt-6 grid grid-cols-1 gap-x-10 gap-y-3 text-[17px] leading-relaxed text-zinc-900 sm:grid-cols-2"}
+         (for [item ["Your account and sign-in"
+                     "Tax calculations and returns"
+                     "Budgets, goals and the calendar"
+                     "Privacy, your data, or deleting your account"
+                     "Feedback, feature ideas and bug reports"
+                     "Anything else on your mind"]]
+           [:li {:class "flex gap-3"} [:span {:aria-hidden "true" :class "mt-[0.6em] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-600"}] item])]]]]
 
-     ;; Closing
-     [:div {:class "reveal pb-24 lg:pb-32"}
-      [:div {:class "relative overflow-hidden px-8 py-16 bg-zinc-900 rounded-3xl lg:px-16"}
-       [:div {:class "absolute -top-32 -right-24 w-96 h-96 rounded-full bg-brand-500/20 blur-3xl"}]
-       [:div {:class "absolute -bottom-32 -left-24 w-96 h-96 rounded-full bg-brand-500/10 blur-3xl"}]
-       [:div {:class "relative text-center"}
-        [:h2 {:class "text-3xl font-bold text-white tracking-tight text-balance lg:text-4xl"}
-         "See what your money " [:span {:class "text-brand-500"} "can do."]]
-        [:p {:class "max-w-xl mx-auto mt-4 text-lg text-zinc-500"}
-         "Create a free account and know what you earn, what you owe, and where it's all going."]
-        [:div {:class "flex flex-wrap justify-center gap-3 mt-8"}
-         [:a {:href (if signed-in? "/app" "/signup")
-              :class "inline-block px-8 py-3.5 text-sm font-semibold text-brand-700 bg-white rounded-xl transition-colors hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:bg-brand-100 active:scale-[0.97]"}
-          (if signed-in? "Go to dashboard" "Get started for free")]
-         (shared/btn :variant :brand-ghost :size :lg
-                     :href "mailto:support@mygreed.co.za"
-                     "Email us")]]]]]))
+     (m/action-tile
+      {:id "close"
+       :heading "See what your money can do"
+       :line "Create a free account and know what you earn, what SARS takes, and where the rest goes."
+       :primary {:href (if signed-in? "/app" "/signup") :label (if signed-in? "Go to dashboard" "Create your free account")}
+       :secondary {:href "mailto:support@mygreed.co.za" :label "Email us"}})
+     [:script (biff/unsafe m/enter-js)]]))

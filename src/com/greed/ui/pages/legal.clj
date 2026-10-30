@@ -5,18 +5,18 @@
 (defn- page-header [title intro]
   [:div {:class "py-16 lg:py-20"}
    [:div {:class "max-w-3xl mx-auto"}
-    [:h1 {:class "text-4xl font-bold text-zinc-900 leading-tight tracking-tight lg:text-5xl"} title]
-    [:p {:class "mt-4 text-zinc-500 leading-relaxed"} intro]
-    [:p {:class "mt-3 text-sm text-zinc-500"} "Last updated " [:span {:class "font-medium text-zinc-500"} last-updated]]]])
+    [:h1 {:class "font-semibold text-zinc-900 [font-size:clamp(40px,5vw,64px)] leading-[1.05] tracking-[-0.04em]"} title]
+    [:p {:class "mt-6 max-w-[60ch] text-xl text-zinc-700 leading-relaxed"} intro]
+    [:p {:class "mt-3 text-sm text-zinc-600"} "Last updated " [:span {:class "font-medium text-zinc-900"} last-updated]]]])
 
 (defn- section [title & children]
   [:section {:class "mt-10"}
-   [:h2 {:class "text-xl font-bold text-zinc-900"} title]
-   (for [child children] [:div {:class "mt-3 text-zinc-500 leading-relaxed"} child])])
+   [:h2 {:class "text-2xl font-semibold tracking-[-0.02em] text-zinc-900"} title]
+   (for [child children] [:div {:class "mt-3 text-[17px] text-zinc-800 leading-relaxed"} child])])
 
 (defn- bullet [& items]
   (for [item items]
-    [:li {:class "mt-2 text-zinc-500 leading-relaxed"} item]))
+    [:li {:class "mt-2 text-[17px] text-zinc-800 leading-relaxed"} item]))
 
 (defn- legal-page [& children]
   [:div {:class "container mx-auto px-6 pb-24 lg:pb-32"}
@@ -65,7 +65,7 @@
    (section
     "Contact"
     [:p "Questions about your data or this policy? Get in touch at "
-     [:a {:href "mailto:support@mygreed.co.za" :class "text-brand-600 font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:text-brand-700"} "support@mygreed.co.za"]
+     [:a {:href "mailto:support@mygreed.co.za" :class "font-medium text-zinc-900 underline underline-offset-4 hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 rounded-sm"} "support@mygreed.co.za"]
      "."])))
 
 (defn terms-page [_]
@@ -106,5 +106,5 @@
    (section
     "Contact"
     [:p "Questions about these terms? Get in touch at "
-     [:a {:href "mailto:support@mygreed.co.za" :class "text-brand-600 font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:text-brand-700"} "support@mygreed.co.za"]
+     [:a {:href "mailto:support@mygreed.co.za" :class "font-medium text-zinc-900 underline underline-offset-4 hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 rounded-sm"} "support@mygreed.co.za"]
      "."])))

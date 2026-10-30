@@ -49,7 +49,7 @@
       (let [tier (age->tier age)]
         (tools/panel
          (tools/panel-heading "Auto Assessment"
-                              :badge [:span {:class "flex-shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700 ring-1 ring-brand-600/15"}
+                              :badge [:span {:class "flex-shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-900 ring-1 ring-zinc-200"}
                                       "2026/27"])
          [:div {:class "px-5 pb-5 sm:px-6"}
           [:p {:class "text-sm text-zinc-500"}
@@ -73,19 +73,19 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
                           :type "submit"
                           :attrs {:name "mult" :value (str mult)}
                           [:span {:class "text-base font-semibold text-zinc-900"} title]
-                          [:span {:class "text-[11px] font-medium text-zinc-500"} subtitle]))])
+                          [:span {:class "text-xs font-medium text-zinc-500"} subtitle]))])
           [:p {:class "mt-3 text-xs text-zinc-500"}
            "Uses the salary saved in Finances and your age in Settings."]]))
       (tools/panel
        [:div {:class "flex flex-col items-center justify-center px-6 py-12 text-center"}
-        [:div {:class "mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-brand-50"}
-         [:span {:class "text-brand-500"} (svgs/wallet)]]
+        [:div {:class "mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100"}
+         [:span {:class "text-zinc-500"} (svgs/wallet)]]
         [:p {:class "text-sm font-medium text-zinc-500"} "No salary data yet"]
         [:p {:class "mt-1 max-w-xs text-xs text-zinc-500"}
          "Add your salary in "
-         [:a {:href "/app/finances/" :class "font-medium text-brand-600 hover:underline"} "Finances"]
+         [:a {:href "/app/finances/" :class "font-medium text-zinc-900 hover:underline"} "Finances"]
          " or your age in "
-         [:a {:href "/app/settings" :class "font-medium text-brand-600 hover:underline"} "Settings"]
+         [:a {:href "/app/settings" :class "font-medium text-zinc-900 hover:underline"} "Settings"]
          " to enable auto assessment."]]))))
 
 (defn- guide []
@@ -117,7 +117,7 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
    [:div {:class "relative mt-1"}
     [:span {:class "absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-500"} "R"]
     [:input {:id id :name id :type "number" :min "0" :step "any"
-              :class (str "block w-full pl-8 pr-3 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 "
+              :class (str "block w-full pl-8 pr-3 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 "
                          (if lg?
                            "py-3 text-lg font-semibold tabular-nums text-zinc-900 placeholder-zinc-400"
                            "py-2 text-sm font-medium text-zinc-700 placeholder-zinc-400"))
@@ -127,7 +127,7 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
   [:div
    [:label {:class "block text-sm font-medium text-zinc-700 mb-1"} "Your rebate tier"]
    [:p {:class "text-xs text-zinc-500 mb-2"} "Age 65+ and 75+ earn extra annual rebates."]
-   [:div {:class "relative grid grid-cols-3 gap-1 rounded-xl bg-zinc-100 p-1"}
+   [:div {:class "relative grid grid-cols-3 gap-1 rounded-md bg-zinc-100 p-1"}
     [:input {:type "radio" :name "rebate-tier" :value "under-65" :id "rebate-tier-1"
              :class "sr-only peer peer/1" :checked (= selected "under-65")}]
     [:input {:type "radio" :name "rebate-tier" :value "65-74" :id "rebate-tier-2"
@@ -143,7 +143,7 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
     [:label {:for "rebate-tier-3"
              :class "relative z-10 cursor-pointer rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors active:scale-[0.97] text-zinc-500 hover:text-zinc-700 peer-focus-visible/3:ring-2 peer-focus-visible/3:ring-brand-500/50 peer-checked/3:text-zinc-900"}
      "75+"]
-    [:div {:class "pointer-events-none absolute inset-y-1 left-1 w-[calc((100%-1rem)/3)] rounded-lg bg-white shadow-sm ring-1 ring-zinc-900/5 transition-transform duration-300 ease-out peer-checked/1:translate-x-0 peer-checked/2:translate-x-[calc(100%+0.25rem)] peer-checked/3:translate-x-[calc(200%+0.5rem)]"}]]])
+    [:div {:class "pointer-events-none absolute inset-y-1 left-1 w-[calc((100%-1rem)/3)] rounded-lg bg-white ring-1 ring-zinc-900/5 transition-transform duration-300 ease-out peer-checked/1:translate-x-0 peer-checked/2:translate-x-[calc(100%+0.25rem)] peer-checked/3:translate-x-[calc(200%+0.5rem)]"}]]])
 
 (defn- form-card [params]
   (let [selected (or (:rebate-tier params)
@@ -169,15 +169,15 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
                        :value (:bonus params)})
         (tier-field selected)]
        [:div {:class "mt-6 flex items-center justify-end"}
-        (shared/btn :variant :primary :size :md :class "px-8" :type "submit" "Calculate")])])))
+        (shared/btn :variant :dark :size :md :class "px-8" :type "submit" "Calculate")])])))
 
 (defn- bonus-split [take-share tax-share net-bonus bonus-tax]
-  [:div {:class "mt-4 rounded-xl bg-zinc-50 p-5 ring-1 ring-zinc-200/50"}
-   [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider"} "Where your bonus goes"]
+  [:div {:class "mt-4 rounded-md bg-zinc-50 p-5 ring-1 ring-zinc-200/50"}
+   [:p {:class "text-xs font-medium text-zinc-500"} "Where your bonus goes"]
    [:div {:class "mt-3 flex h-2.5 w-full overflow-hidden rounded-full bg-zinc-200/70"}
     [:div {:class "h-full rounded-l-full bg-brand-500"
            :style {:width (str take-share "%")}}]
-    [:div {:class "h-full rounded-r-full bg-rose-400"
+    [:div {:class "h-full rounded-r-full bg-zinc-400"
            :style {:width (str tax-share "%")}}]]
    [:div {:class "mt-3 flex items-center justify-between gap-3 text-sm"}
     [:span {:class "flex items-center gap-2 text-zinc-500"}
@@ -185,8 +185,8 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
     [:span {:class "font-semibold text-zinc-900 tabular-nums"} (utilities/amount->rands net-bonus)]]
    [:div {:class "mt-1.5 flex items-center justify-between gap-3 text-sm"}
     [:span {:class "flex items-center gap-2 text-zinc-500"}
-     [:span {:class "h-2 w-2 rounded-full bg-rose-400"}] "Tax"]
-    [:span {:class "font-semibold text-rose-600 tabular-nums"} (utilities/amount->rands bonus-tax)]]])
+     [:span {:class "h-2 w-2 rounded-full bg-zinc-400"}] "Tax"]
+    [:span {:class "font-semibold text-zinc-900 tabular-nums"} (utilities/amount->rands bonus-tax)]]])
 
 (defn- breakdown-panel [income annual-salary bonus tax-without tax-with bonus-tax]
   (tools/panel
@@ -198,13 +198,13 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
    (tools/breakdown-section "Tax on Bonus"
                             (tools/row "Annual tax without bonus" (utilities/amount->rands tax-without))
                             (tools/row "Annual tax with bonus" (utilities/amount->rands tax-with))
-                            (tools/bold-row "Tax on Bonus" (utilities/amount->rands bonus-tax) "text-rose-600"))))
+                            (tools/bold-row "Tax on Bonus" (utilities/amount->rands bonus-tax)))))
 
 (defn- bank-total [net-salary net-bonus month-total]
-  [:div {:class "mt-4 rounded-xl bg-brand-50 p-5 ring-1 ring-brand-600/15"}
+  [:div {:class "mt-4 rounded-md bg-zinc-100 p-5 ring-1 ring-zinc-200"}
    [:div {:class "flex items-center justify-between gap-3"}
-    [:span {:class "text-sm font-medium text-brand-900"} "Lands in your bank this month"]
-    [:span {:class "text-lg font-bold tabular-nums text-brand-700"}
+    [:span {:class "text-sm font-medium text-zinc-900"} "Lands in your bank this month"]
+    [:span {:class "text-lg font-bold tabular-nums text-zinc-900"}
      (utilities/amount->rands month-total)]]
    [:p {:class "mt-1 text-xs text-zinc-500"}
     (utilities/amount->rands net-salary) " net salary + " (utilities/amount->rands net-bonus) " net bonus"]])
@@ -245,8 +245,8 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
       [:div#bonus-result
        (tools/panel
         [:div {:class "flex flex-col items-center justify-center px-6 py-16 text-center"}
-         [:div {:class "mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50"}
-          [:span {:class "text-brand-500"} (svgs/gift)]]
+         [:div {:class "mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100"}
+          [:span {:class "text-zinc-500"} (svgs/gift)]]
          [:p {:class "text-sm font-medium text-zinc-500"} "Enter a bonus amount to see what you'll take home"]
          [:p {:class "mt-1 max-w-xs text-xs text-zinc-500"} "Pick a quick option above or type a bonus amount, then click Calculate to see your net bonus."]])]
       [:div#bonus-result {:class "space-y-4"}
@@ -259,8 +259,8 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
         :body [:<> (bonus-split take-share tax-share net-bonus bonus-tax)
                (bank-total net-salary net-bonus month-total)]
         :substats [(tools/hero-substat "Bonus amount" (utilities/amount->rands bonus))
-                   (tools/hero-substat "Tax on bonus" (utilities/amount->rands bonus-tax) "text-rose-600")
-                   (tools/hero-substat "Effective rate" (utilities/pct-label eff-rate) "text-rose-600")])
+                   (tools/hero-substat "Tax on bonus" (utilities/amount->rands bonus-tax))
+                   (tools/hero-substat "Effective rate" (utilities/pct-label eff-rate))])
        (breakdown-panel income annual-salary bonus tax-without tax-with bonus-tax)])))
 
 (defn- page-template [ctx params user finances]

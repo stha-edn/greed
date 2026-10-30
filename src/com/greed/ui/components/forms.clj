@@ -27,7 +27,7 @@
 
 (defn sign-in [{:keys [site-key] :as ctx}]
   [:div {:class "w-full max-w-sm mx-auto"}
-   [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
+   [:div {:class "bg-white rounded-lg border border-zinc-200 overflow-hidden"}
     [:div {:class "px-8 py-8"}
      [:div {:class "mb-6 text-center"}
       [:a {:href "/" :class "inline-block"}
@@ -45,7 +45,7 @@
       (shared/input :id "email" :type "email" :label "Email address" :required? true)
       (shared/input :id "password" :type "password" :label "Password" :required? true)
       [:div {:class "mt-1 text-right"}
-       [:a {:href "/forgot-password" :class "text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"} "Forgot password?"]]
+       [:a {:href "/forgot-password" :class "text-xs font-medium text-zinc-900 underline underline-offset-4 hover:text-zinc-600"} "Forgot password?"]]
       [:div {:class "mt-5"}
        (shared/btn :variant :dark :size :md :type "submit"
                    :class (str "w-full" (when site-key " g-recaptcha"))
@@ -55,11 +55,11 @@
     [:div {:class "px-8 py-4 bg-zinc-50 border-t border-zinc-100 text-center"}
      [:p {:class "text-sm text-zinc-500"}
       "Don't have an account? "
-      [:a {:href "/signup" :class "font-medium text-brand-600 hover:text-brand-700 hover:underline"} "Create one"]]]]])
+      [:a {:href "/signup" :class "font-medium text-zinc-900 underline underline-offset-4 hover:text-zinc-600"} "Create one"]]]]])
 
 (defn sign-up [{:keys [site-key] :as ctx}]
   [:div {:class "w-full max-w-sm mx-auto"}
-   [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
+   [:div {:class "bg-white rounded-lg border border-zinc-200 overflow-hidden"}
     [:div {:class "px-8 py-8"}
      [:div {:class "mb-6 text-center"}
       [:a {:href "/" :class "inline-block"}
@@ -93,7 +93,7 @@
 
 (defn forgot-password [{:keys [site-key] :as ctx}]
   [:div {:class "w-full max-w-sm mx-auto"}
-   [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
+   [:div {:class "bg-white rounded-lg border border-zinc-200 overflow-hidden"}
     [:div {:class "px-8 py-8"}
      [:div {:class "mb-6 text-center"}
       [:a {:href "/" :class "inline-block"}
@@ -122,7 +122,7 @@
 (defn reset-password [{:keys [site-key params] :as ctx}]
   (let [token (:token params)]
     [:div {:class "w-full max-w-sm mx-auto"}
-     [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
+     [:div {:class "bg-white rounded-lg border border-zinc-200 overflow-hidden"}
       [:div {:class "px-8 py-8"}
        [:div {:class "mb-6 text-center"}
         [:a {:href "/" :class "inline-block"}
@@ -151,7 +151,7 @@
 
 (defn password-reset-sent [_ctx]
   [:div {:class "w-full max-w-sm mx-auto"}
-   [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
+   [:div {:class "bg-white rounded-lg border border-zinc-200 overflow-hidden"}
     [:div {:class "px-8 py-8 text-center"}
      [:a {:href "/" :class "inline-block"}
       [:img {:src "/img/greed-symbol-green-tight.svg"
@@ -170,7 +170,7 @@
 
 (defn invalid-link [_ctx]
   [:div {:class "w-full max-w-sm mx-auto"}
-   [:div {:class "bg-white rounded-2xl shadow-card-md border border-zinc-200/70 overflow-hidden"}
+   [:div {:class "bg-white rounded-lg border border-zinc-200 overflow-hidden"}
     [:div {:class "px-8 py-8 text-center"}
      [:a {:href "/" :class "inline-block"}
       [:img {:src "/img/greed-symbol-green-tight.svg"
@@ -196,7 +196,7 @@
                  (shared/app-input ctx :id "email" :type "text" :label "Email" :required? true)
                  [:div {:class "mt-4"}
                   [:label {:class "block text-sm font-medium text-zinc-700 mb-1" :for "password"} "Password"]
-                  [:input {:class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 placeholder-zinc-400 transition-colors duration-150"
+                  [:input {:class "block w-full px-3 py-2 text-sm text-zinc-700 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 placeholder-zinc-400 transition-colors duration-150"
                            :id "password" :name "password" :type "password"
                            :placeholder "Leave blank to keep your current password"}]
                   [:p {:class "text-xs text-zinc-500 mt-1"} "Only enter a new password if you want to change it."]]]
@@ -232,7 +232,7 @@
 
       ;; Banking
                   [:div
-                   [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3"} "Banking"]
+                   [:p {:class "text-xs font-medium text-zinc-500 mb-3"} "Banking"]
                    [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
                     (shared/app-select ctx :id "bank" :label "Bank" :options bank-options :required? true
                                        :hint "Your primary banking institution"
@@ -249,7 +249,7 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
 
       ;; Income
                   [:div {:class "border-t border-zinc-100 pt-5 mt-5"}
-                   [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3"} "Income"]
+                   [:p {:class "text-xs font-medium text-zinc-500 mb-3"} "Income"]
                    [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
                     (shared/app-input ctx :id "salary" :type "number" :label "Monthly Gross Salary" :required? true
                                       :prefix "R" :hint "Your salary before any deductions")
@@ -274,7 +274,7 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
 
       ;; Medical Aid
                   [:div
-                   [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3"} "Medical Aid"]
+                   [:p {:class "text-xs font-medium text-zinc-500 mb-3"} "Medical Aid"]
                    [:p {:class "text-xs text-zinc-500 mb-4 leading-relaxed"}
                     "Leave these at 0 if you are not on medical aid. Credits are applied automatically (R364/month for you + first dependant, R246/month for each additional)."]
                    [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
@@ -287,7 +287,7 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
 
       ;; Retirement
                   [:div {:class "border-t border-zinc-100 pt-5 mt-5"}
-                   [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3"} "Retirement Annuity"]
+                   [:p {:class "text-xs font-medium text-zinc-500 mb-3"} "Retirement Annuity"]
                    [:p {:class "text-xs text-zinc-500 mb-4 leading-relaxed"}
                     "RA contributions reduce your taxable income. The deduction is capped at 27.5% of your income or R350,000, whichever is lower."]
                    [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
@@ -314,7 +314,7 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
         modal-id            (if type (str "budget-add-" (name type) "-modal") "budget-add-modal")
         {:keys [title desc]} (get budget-item-form-copy type
                                   {:title "Add Budget Item" :desc "Add a new item to your budget"})]
-    [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card-md p-6 w-full max-w-sm"}
+    [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-xl p-6 w-full max-w-sm"}
      [:h3 {:class "text-base font-semibold text-zinc-900 tracking-tight"} title]
      [:p {:class "mt-1 text-sm text-zinc-500 mb-4"} desc]
      (biff/form
@@ -328,11 +328,11 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
        (shared/btn :variant :ghost :type "button" :class "flex-1"
                    :attrs {:_ (shared/close-actions modal-id)}
                    "Cancel")
-       (shared/btn :variant :primary :type "submit" :class "flex-1"
+       (shared/btn :variant :dark :type "submit" :class "flex-1"
                    "Add item")])]))
 
 (defn budget-action-form [item]
-  [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-card-md p-6 w-full max-w-sm"}
+  [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-xl p-6 w-full max-w-sm"}
    [:h3 {:class "text-base font-semibold text-zinc-900 tracking-tight"} "Edit Budget Item"]
    [:div {:class "mt-3 p-3 bg-zinc-50 rounded-lg text-sm text-zinc-600 mb-4"}
     [:div {:class "flex justify-between"} [:span {:class "text-zinc-500"} "Title"] (:budget-item/title item)]

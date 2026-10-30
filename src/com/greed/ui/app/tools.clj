@@ -19,7 +19,7 @@
       (headers/pages-heading ["Tax"] "What you earn, what SARS takes, what you keep.")
       (stats/tax-hero income-tax-data)
       (when has-income?
-        [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch"}
-         (stats/tax-bracket-breakdown income-tax-data)
-         (stats/tax-readiness income-tax-data tax-profile)])
+        [:div {:class "space-y-4"}
+         (stats/tax-readiness income-tax-data tax-profile)
+         (stats/tax-bracket-breakdown income-tax-data)])
       (tools/tools)])))

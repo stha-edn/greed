@@ -97,7 +97,7 @@
                   "  add .greed-alert-out\n"
                   "  wait 200ms\n"
                   "  hide #info-alert"))
-        :class (str "flex items-center gap-3 w-full rounded-xl ring-1 shadow-card p-4 greed-alert-in "
+        :class (str "flex items-center gap-3 w-full rounded-md ring-1 p-4 greed-alert-in "
                     (if error? "bg-rose-50 ring-rose-200" "bg-brand-50 ring-brand-200"))}
        [:div
         {:class (str "flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center "
@@ -146,9 +146,7 @@
        :aria-hidden "true"}
       "\u00A0"]
      [:div
-      {:class "relative inline-block overflow-hidden text-left align-bottom bg-gradient-to-br from-zinc-800 via-zinc-900 to-black ring-1 ring-white/10 rounded-2xl shadow-card-md sm:my-8 sm:align-middle sm:max-w-lg sm:w-full greed-modal-in"}
-      [:div {:class "absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/40 to-transparent"}]
-      [:div {:class "absolute -top-24 -right-24 h-64 w-64 rounded-full bg-brand-500/10 blur-3xl"}]
+      {:class "relative inline-block overflow-hidden text-left align-bottom bg-zinc-900 ring-1 ring-white/10 rounded-2xl shadow-card-md sm:my-8 sm:align-middle sm:max-w-lg sm:w-full greed-modal-in"}
       [:div
        {:class "relative px-6 py-5 sm:p-6"}
        [:div
@@ -170,7 +168,7 @@
         [:div
          {:class "flex items-center gap-3"}
          [:div
-          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-brand-500/10 text-brand-300"}
+          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-white/10 text-zinc-300"}
           (svgs/banknotes)]
          [:div
           {:class "min-w-0"}
@@ -179,7 +177,7 @@
         [:div
          {:class "flex items-center gap-3"}
          [:div
-          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-brand-500/10 text-brand-300"}
+          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-white/10 text-zinc-300"}
           (svgs/money)]
          [:div
           {:class "min-w-0"}
@@ -188,7 +186,7 @@
         [:div
          {:class "flex items-center gap-3"}
          [:div
-          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-brand-500/10 text-brand-300"}
+          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-white/10 text-zinc-300"}
           (svgs/heart)]
          [:div
           {:class "min-w-0"}
@@ -197,7 +195,7 @@
         [:div
          {:class "flex items-center gap-3"}
          [:div
-          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-brand-500/10 text-brand-300"}
+          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-white/10 text-zinc-300"}
           (svgs/umbrella)]
          [:div
           {:class "min-w-0"}
@@ -209,9 +207,9 @@
                    [:button
                     {:id "finance-tax-prompt-later-submit"
                      :type "submit"
-                     :class "px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-md transition hover:bg-zinc-50 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"}
+                     :class "px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-md transition hover:bg-zinc-50 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-400"}
                     "Later"])
         [:a
          {:href "/app/settings"
-          :class "inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-brand-500/20 border border-transparent rounded-md transition hover:bg-brand-600/20 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"}
+          :class "inline-flex justify-center px-4 py-2 text-sm font-medium text-zinc-900 bg-white border border-transparent rounded-md transition hover:bg-zinc-200 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"}
          "Update"]]]]]]])

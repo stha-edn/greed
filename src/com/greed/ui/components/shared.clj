@@ -51,7 +51,7 @@
 (defn card
   "Reusable card container. Variants:
      :light   white / zinc-100 border (default)
-     :soft    white-to-brand-green gradient with ring (dashboard panels)
+     :soft    same flat white panel (kept for existing callers)
      :dark    zinc-900 panel (marketing)
    Pass children as trailing arguments."
   [opts & body]
@@ -60,9 +60,9 @@
     (into [:div
            {:class (str/join " "
                              [(case variant
-                                :light "bg-white border border-zinc-200/70 rounded-2xl shadow-card"
-                                :soft "bg-gradient-to-br from-white via-white to-brand-50/80 border border-zinc-200/70 rounded-2xl shadow-card"
-                                :dark "bg-zinc-900 border border-zinc-800 rounded-2xl shadow-card-md")
+                                :light "bg-white border border-zinc-200/70 rounded-lg"
+                                :soft "bg-white border border-zinc-200/70 rounded-lg"
+                                :dark "bg-zinc-900 border border-zinc-800 rounded-lg")
                               class])}]
           body)))
 
@@ -74,7 +74,7 @@
 (defn section-label
   "Uppercase micro heading used to label sections and groups."
   [& content]
-  [:p {:class "text-xs font-semibold text-zinc-500 uppercase tracking-wider"} content])
+  [:p {:class "text-xs font-medium text-zinc-500"} content])
 
 (defn base-input-class []
   "block w-full px-3 py-2 text-sm text-zinc-700 placeholder-zinc-400 bg-white border border-zinc-200 rounded-lg transition-colors duration-150 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500")
