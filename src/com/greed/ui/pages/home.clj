@@ -45,7 +45,7 @@
   "inline-flex items-center justify-center rounded-md bg-brand-600 px-6 py-3 text-base font-semibold text-white transition-[transform,background-color] duration-150 ease-out hover:bg-brand-700 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2")
 
 (def ^:private btn-dark
-  "inline-flex items-center justify-center rounded-md bg-zinc-900 px-6 py-3 text-base font-semibold text-white transition-[transform,background-color] duration-150 ease-out hover:bg-zinc-700 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-100")
+  "inline-flex items-center justify-center rounded-md bg-zinc-900 px-6 py-3 text-base font-semibold text-white transition-[transform,background-color] duration-150 ease-out hover:bg-zinc-700 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2")
 
 (defn- arrow-link [href label]
   [:a {:href href
@@ -61,53 +61,59 @@
 ;; ---------------------------------------------------------------------------
 ;; Hero: the headline is the calculation
 
-(defn- hero [cfg signed-in?]
+(defn- hero [signed-in?]
+  [:section {:class "grid grid-cols-1 items-center gap-14 pb-20 pt-12 sm:pt-16 lg:grid-cols-12 lg:gap-10 lg:pb-24 lg:pt-20"}
+   [:div {:class "lg:col-span-7"}
+    [:h1 {:class "enter max-w-[13ch] [text-wrap:balance] font-semibold text-zinc-900 [font-size:clamp(52px,7.4vw,128px)] leading-[0.95] tracking-[-0.05em]"}
+     "Your money, in one clear plan."]
+    [:p {:class "enter mt-8 max-w-[44ch] text-xl leading-relaxed text-zinc-700" :style {"--d" "80ms"}}
+     "greed is personal finance built for South Africa. It starts where your payslip ends, and turns your salary, tax, spending and goals into one plan. No jargon, no judgement."]
+    [:div {:class "enter mt-10 flex flex-wrap items-center gap-x-6 gap-y-4" :style {"--d" "120ms"}}
+     (if signed-in?
+       [:a {:href "/app" :class btn-dark} "Go to dashboard"]
+       [:a {:href "/signup" :class btn-dark} "Create your free account"])
+     [:a {:href "#keep" :class "text-base font-medium text-zinc-900 underline underline-offset-4 decoration-zinc-400 transition-colors hover:decoration-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 rounded-sm"}
+      "Work out your take-home"]]]
+   [:div {:class "enter relative mx-auto w-full max-w-[420px] lg:col-span-5 lg:mr-0" :style {"--d" "140ms"}}
+    [:div {:class "relative rotate-[3deg]"}
+     (ill/payslip :class "w-full")]]])
+
+(defn- calculator [cfg signed-in?]
   (let [{:keys [keep tax cents]} (monthly-take-home cfg sample-salary 30)]
-    [:section {:id "keep" :class "relative pb-20 pt-14 sm:pt-20 lg:pb-28 lg:pt-24"
+    [:section {:id "keep" :aria-labelledby "keep-h" :class "pb-24 pt-8 text-center lg:pb-32 lg:pt-12"
                :data-tax (tax-config-json cfg)}
-     ;; On large screens: controls in the side columns, the headline in the
-     ;; middle column, so a longer figure can never run under a card.
-     [:div {:class "mx-auto grid max-w-7xl grid-cols-1 justify-items-center gap-6 lg:grid-cols-[260px_minmax(0,1fr)_260px] lg:grid-rows-[auto_auto] lg:items-center lg:gap-x-8 lg:gap-y-6"}
-      ;; Salary chip: left, beside the first line
-      [:div {:data-ui "" :class "enter chip chip-a w-full max-w-[300px] rounded-md border border-zinc-300 bg-white p-5 lg:col-start-1 lg:row-start-1 lg:self-start lg:max-w-none"}
+     ;; The heading is the calculation, centred and as large as the page allows
+     [:h2 {:id "keep-h" :class "enter mx-auto w-full font-semibold text-zinc-900 [font-size:var(--keep-fs,clamp(68px,12vw,208px))] leading-[0.9] tracking-[-0.055em]"}
+      [:span {:class "block whitespace-nowrap"} "You keep"]
+      [:span {:id "keep-out" :class "block whitespace-nowrap tabular-nums" :aria-live "polite"}
+       (utilities/whole->rands keep)]]
+     ;; The controls as one calculator strip under it
+     [:div {:data-ui "" :class "enter mx-auto mt-12 grid max-w-4xl grid-cols-1 divide-y divide-zinc-200 rounded-lg border border-zinc-300 bg-white text-left md:grid-cols-[1.5fr_1fr_1fr] md:divide-x md:divide-y-0" :style {"--d" "80ms"}} ; taste-skill-ignore: dividers inside a data-ui control strip
+      [:div {:class "p-5"}
        [:label {:for "salary" :class "flex items-baseline justify-between gap-3"}
         [:span {:class "text-[15px] font-medium text-zinc-600"} "Monthly salary"]
-        [:output {:id "salary-out" :for "salary" :class "text-xl font-semibold tabular-nums text-zinc-900"}
+        [:output {:id "salary-out" :for "salary" :class "text-2xl font-semibold tabular-nums text-zinc-900"}
          (utilities/whole->rands sample-salary)]]
        [:input {:id "salary" :type "range" :min 5000 :max 200000 :step 500 :value sample-salary
                 :class "salary-range mt-3 w-full"}]]
-      [:h1 {:id "keep-h" :class "enter w-full text-center font-semibold text-zinc-900 [font-size:var(--keep-fs,clamp(72px,10vw,176px))] leading-[0.95] tracking-[-0.05em] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:py-6"
-            :style {"--d" "60ms"}}
-       [:span {:class "block whitespace-nowrap"} "You keep"]
-       [:span {:id "keep-out" :class "block whitespace-nowrap tabular-nums" :aria-live "polite"}
-        (utilities/whole->rands keep)]]
-      ;; SARS chip: left, beside the second line
-      [:div {:data-ui "" :class "enter chip chip-b w-full max-w-[300px] rounded-md border border-zinc-300 bg-white p-5 lg:col-start-1 lg:row-start-2 lg:self-end lg:max-w-none"
-             :style {"--d" "120ms"}}
+      [:div {:class "p-5"}
        [:p {:class "text-[15px] font-medium text-zinc-600"} "SARS takes"]
-       [:p {:class "mt-1 text-xl font-semibold tabular-nums text-zinc-900"}
-        [:span {:id "tax-out"} (utilities/whole->rands tax)] " a month"]
+       [:p {:class "mt-1 text-2xl font-semibold tabular-nums text-zinc-900"}
+        [:span {:id "tax-out"} (utilities/whole->rands tax)] [:span {:class "text-base font-medium text-zinc-600"} " a month"]]
        [:p {:class "mt-0.5 text-sm tabular-nums text-zinc-600"}
         [:span {:id "cents-out"} cents] "c of every R1"]]
-      ;; Age switch: right, beside the second line
-      [:div {:data-ui "" :class "enter chip chip-c w-full max-w-[300px] rounded-md border border-zinc-300 bg-white p-5 lg:col-start-3 lg:row-start-2 lg:self-end lg:max-w-none"
-             :style {"--d" "180ms"}}
-       [:label {:class "flex cursor-pointer items-center justify-between gap-3"}
-        [:span
-         [:span {:class "block text-[15px] font-semibold text-zinc-900"} "65 or older"]
-         [:span {:class "block text-sm text-zinc-600"} "Adds the secondary rebate"]]
-        [:input {:id "older" :type "checkbox" :role "switch" :class "age-switch"}]]]]
-     [:div {:class "enter mx-auto mt-10 max-w-[40ch] text-center lg:mt-16" :style {"--d" "240ms"}}
-      [:p {:class "text-lg leading-relaxed text-zinc-700"}
-       "Your take-home on SARS 2026/27 tables. Drag your salary, then let greed plan the rest with you: budget, goals and payday."]
-      [:div {:class "mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-4"}
-       (if signed-in?
-         [:a {:href "/app" :class btn-dark} "Go to dashboard"]
-         [:a {:href "/signup" :class btn-dark} "Create your free account"])
-       [:a {:href (if signed-in? "/app/tax/income-tax-calculator" "/signin")
-            :class "group inline-flex items-center gap-1.5 rounded-sm text-base font-medium text-zinc-900 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"}
-        "Open the full tax calculator"
-        [:span {:aria-hidden "true" :class "transition-transform duration-150 ease-out group-hover:translate-x-0.5"} "→"]]]]]))
+      [:label {:class "flex cursor-pointer items-center justify-between gap-3 p-5"}
+       [:span
+        [:span {:class "block text-[15px] font-semibold text-zinc-900"} "65 or older"]
+        [:span {:class "block text-sm text-zinc-600"} "Adds the secondary rebate"]]
+       [:input {:id "older" :type "checkbox" :role "switch" :class "age-switch"}]]]
+     [:p {:class "enter mx-auto mt-10 max-w-[44ch] text-xl leading-relaxed text-zinc-700" :style {"--d" "120ms"}}
+      "Your take-home on SARS 2026/27 tables. Drag your salary, then let greed plan the rest with you: budget, goals and payday."]
+     [:div {:class "enter mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-4" :style {"--d" "160ms"}}
+      [:a {:href (if signed-in? "/app/tax/income-tax-calculator" "/signin")
+           :class "group inline-flex items-center gap-1.5 rounded-sm text-base font-medium text-zinc-900 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"}
+       "Open the full tax calculator"
+       [:span {:aria-hidden "true" :class "transition-transform duration-150 ease-out group-hover:translate-x-0.5"} "→"]]]]))
 
 ;; ---------------------------------------------------------------------------
 ;; Showcase: lit panel, dark row. Each panel is a cropped piece of the app,
@@ -279,7 +285,7 @@
 (defn- letter []
   [:section {:id "why" :class "grid grid-cols-1 items-center gap-12 py-24 lg:grid-cols-12 lg:gap-10 lg:py-32" :aria-labelledby "why-h"}
    [:div {:class "enter hidden lg:col-span-5 lg:flex lg:justify-start"}
-    (ill/payslip :class "w-full max-w-[340px] -rotate-[2deg]")]
+    (ill/calendar-sheet :class "w-full max-w-[300px] -rotate-[3deg]")]
    [:div {:class "max-w-[560px] lg:col-span-6 lg:col-start-7"}
     [:div {:class "enter flex items-center gap-3"}
      [:img {:src "/img/IMG_3777.webp" :alt "Sithabiso Makhathini" :width 44 :height 44 :loading "lazy"
@@ -319,7 +325,6 @@
 .age-switch:checked{background:#0F6B4F}
 .age-switch:checked::after{transform:translateX(18px)}
 .age-switch:focus-visible{outline:2px solid #18181b;outline-offset:2px}
-@media (min-width:1024px){.chip-a{rotate:-3deg}.chip-b{rotate:2deg}.chip-c{rotate:-2deg}}
 .shelf{padding-inline:calc(50% - min(43vw,200px))}
 .shelf::-webkit-scrollbar{display:none}
 .shelf .panel{transition:filter .9s ease, transform .9s cubic-bezier(.16,1,.3,1)}
@@ -443,7 +448,7 @@ html.js .enter.in{opacity:1;transform:none}
         cfg (c/get-tax-config)]
     [:div
      [:style (biff/unsafe page-css)]
-     [:div {:class "bg-stone-100"} [:div {:class "container mx-auto px-6"} (hero cfg signed-in?)]]
+     [:div {:class "container mx-auto px-6"} (hero signed-in?) (calculator cfg signed-in?)]
      (showcase)
      [:div {:class "container mx-auto px-6"}
       (command-list signed-in?)]

@@ -79,3 +79,28 @@
    (t 130 74 "November" :size 20 :weight 600 :fill "#ffffff" :anchor "middle")
    (t 130 200 "25" :size 96 :weight 700 :anchor "middle")
    (t 130 246 "Payday" :size 18 :weight 600 :fill green :anchor "middle")])
+
+(defn phone-message
+  "A phone writing to support: the way most people reach us."
+  [& {:keys [class]}]
+  [:svg {:viewBox "0 0 280 540" :class class :role "img"
+         :aria-label "Drawing of a phone writing an email to support@mygreed.co.za about PAYE on a December bonus."}
+   [:rect {:x 4 :y 4 :width 272 :height 532 :rx 40 :fill ink}]
+   [:rect {:x 16 :y 16 :width 248 :height 508 :rx 30 :fill "#ffffff"}]
+   [:rect {:x 104 :y 28 :width 72 :height 20 :rx 10 :fill ink}]
+   (t 36 92 "Cancel" :size 13 :fill muted)
+   (t 140 92 "New message" :size 14 :weight 600 :anchor "middle")
+   [:rect {:x 196 :y 76 :width 52 :height 24 :rx 12 :fill green}]
+   (t 222 92 "Send" :size 12 :weight 600 :fill "#ffffff" :anchor "middle")
+   [:line {:x1 36 :y1 116 :x2 244 :y2 116 :stroke rule}]
+   (t 36 140 "To:" :size 13 :fill muted)
+   (t 62 140 "support@mygreed.co.za" :size 13 :weight 600)
+   [:line {:x1 36 :y1 156 :x2 244 :y2 156 :stroke rule}]
+   (t 36 180 "Subject:" :size 13 :fill muted)
+   (t 94 180 "My December bonus" :size 13 :weight 600)
+   [:line {:x1 36 :y1 196 :x2 244 :y2 196 :stroke rule}]
+   (for [[i line] (map-indexed vector ["Hi greed," "" "My 13th cheque lands in" "December. How much PAYE" "will come off it, and can" "I put the rest towards" "my emergency fund goal?" "" "Thanks!"])]
+     (t 36 (+ 228 (* i 22)) line :size 14))
+   [:rect {:x 36 :y 428 :width 2 :height 18 :fill green}]
+   [:rect {:x 36 :y 470 :width 208 :height 34 :rx 17 :fill "#f4f4f5"}]
+   (t 140 492 "Read by a person, in South Africa" :size 11 :fill muted :anchor "middle")])

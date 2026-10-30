@@ -8,7 +8,7 @@
    [:a (cond-> {:href href
                 :class "group grid grid-cols-1 items-baseline gap-1 rounded-md px-3 py-5 -mx-3 transition-colors duration-150 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-6"}
          external? (assoc :target "_blank" :rel "noopener noreferrer"))
-    [:span {:class "font-semibold tracking-[-0.03em] text-zinc-900 [font-size:clamp(30px,4vw,60px)] leading-[1.1]"} name]
+    [:span {:class "font-semibold tracking-[-0.03em] text-zinc-900 [font-size:clamp(28px,3.4vw,52px)] leading-[1.1]"} name]
     [:span {:class "flex items-center gap-2 text-lg text-zinc-700"}
      detail
      [:span {:aria-hidden "true" :class "transition-transform duration-150 ease-out group-hover:translate-x-1"} "→"]]]])
@@ -28,12 +28,15 @@
        (ill/envelope :class "w-full max-w-[460px] -rotate-[3deg]")]]
 
      [:section {:id "reach" :class "bg-stone-100" :aria-labelledby "reach-h"}
-      [:div {:class "container mx-auto px-6 py-16 lg:py-24"}
-       [:h2 {:id "reach-h" :class "enter text-[28px] font-semibold tracking-[-0.02em] text-zinc-900"} "Ways to reach us"]
-       [:ul {:class "enter mt-6" :style {"--d" "80ms"}}
-        (channel {:name "Email us" :detail "support@mygreed.co.za" :href "mailto:support@mygreed.co.za"})
-        (channel {:name "Instagram" :detail "@greed_za" :href "https://www.instagram.com/greed_za/" :external? true})
-        (channel {:name "Meet the team" :detail "Who builds greed" :href "/team"})]]]
+      [:div {:class "container mx-auto grid grid-cols-1 items-center gap-12 px-6 py-16 lg:grid-cols-12 lg:gap-10 lg:py-24"}
+       [:div {:class "lg:col-span-7"}
+        [:h2 {:id "reach-h" :class "enter text-[28px] font-semibold tracking-[-0.02em] text-zinc-900"} "Ways to reach us"]
+        [:ul {:class "enter mt-6" :style {"--d" "80ms"}}
+         (channel {:name "Email us" :detail "support@mygreed.co.za" :href "mailto:support@mygreed.co.za"})
+         (channel {:name "Instagram" :detail "@greed_za" :href "https://www.instagram.com/greed_za/" :external? true})
+         (channel {:name "Meet the team" :detail "Who builds greed" :href "/team"})]]
+       [:div {:class "enter flex justify-center lg:col-span-4 lg:col-start-9 lg:justify-end" :style {"--d" "140ms"}}
+        (ill/phone-message :class "w-full max-w-[260px] rotate-[4deg]")]]]
 
      [:div {:class "container mx-auto px-6"}
       [:section {:id "help" :class "grid grid-cols-1 items-center gap-10 py-20 lg:grid-cols-12 lg:py-32" :aria-labelledby "help-h"}

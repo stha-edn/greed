@@ -53,16 +53,26 @@
     [:div
      [:style (biff/unsafe m/enter-css)]
 
-     ;; First screen: the claim beside the artefact it is about
+     ;; First screen: who is behind greed and why, as one large statement
      [:div {:class "bg-stone-100"}
-      [:div {:class "container mx-auto grid grid-cols-1 items-center gap-12 px-6 pb-20 pt-14 sm:pt-20 lg:grid-cols-12 lg:pb-28 lg:pt-24"}
-       [:div {:class "lg:col-span-7"}
-        [:h1 {:class "enter max-w-[14ch] [text-wrap:balance] font-semibold text-zinc-900 [font-size:clamp(44px,6vw,92px)] leading-[1.0] tracking-[-0.045em]"}
-         "Your money, in one clear plan."]
-        [:p {:class "enter mt-8 max-w-[46ch] text-xl leading-relaxed text-zinc-700" :style {"--d" "80ms"}}
-         "greed is personal finance built for South Africa. It starts where your payslip ends, and turns your salary, tax, spending and goals into one plan. No jargon, no judgement."]]
-       [:div {:class "enter flex justify-center lg:col-span-5 lg:justify-end" :style {"--d" "140ms"}}
-        (ill/payslip :class "w-full max-w-[380px] rotate-[2deg]")]]]
+      [:div {:class "container mx-auto px-6 pb-16 pt-14 sm:pt-20 lg:pb-24 lg:pt-28"}
+       [:h1 {:class "enter max-w-[18ch] [text-wrap:balance] font-semibold text-zinc-900 [font-size:clamp(48px,7vw,120px)] leading-[0.95] tracking-[-0.05em]" :style {"--d" "60ms"}}
+        "We built the plan we wished we had."]
+       [:div {:class "mt-12 grid grid-cols-1 gap-10 lg:mt-16 lg:grid-cols-12"}
+        [:p {:class "enter max-w-[46ch] text-xl leading-relaxed text-zinc-700 lg:col-span-6" :style {"--d" "120ms"}}
+         "greed was started by a small South African team who got tired of guessing their way through tax, budgets and payday. So we built one calm, private place that shows what you earn, what SARS takes, and what you can do with the rest."]
+        [:dl {:class "enter grid grid-cols-3 gap-6 lg:col-span-5 lg:col-start-8" :style {"--d" "160ms"}}
+         (for [[k v] [["2" "founders, both in South Africa"]
+                      ["R0" "to use, for everyone"]
+                      ["0" "rands made selling your data"]]]
+           [:div
+            [:dt {:class "font-semibold tracking-[-0.03em] text-zinc-900 [font-size:clamp(36px,4vw,56px)] leading-none tabular-nums"} k]
+            [:dd {:class "mt-2 text-base leading-snug text-zinc-700"} v]])]]
+       [:div {:class "enter mt-12 flex flex-wrap items-center gap-x-6 gap-y-4" :style {"--d" "200ms"}}
+        [:a {:href "/team"
+             :class "inline-flex items-center justify-center rounded-md bg-zinc-900 px-6 py-3 text-base font-semibold text-white transition-[transform,background-color] duration-150 ease-out hover:bg-zinc-700 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2"}
+         "Meet the team"]
+        [:a {:href "#get" :class (str "text-base " m/link-ink)} "See what you get"]]]]
 
      ;; What you get: each claim with its proof from the app
      [:section {:id "get" :class "container mx-auto px-6 py-20 lg:py-32" :aria-labelledby "get-h"}
