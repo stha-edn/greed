@@ -17,3 +17,6 @@
 .shadow-cljs/
 /.DS_Store
 /greed-app-key.pem
+
+# Local bank statement samples for building the PDF readers. Never commit.
+.private/

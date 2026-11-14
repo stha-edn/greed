@@ -1,5 +1,6 @@
 (ns com.greed.ui.components.tables
-  (:require [com.greed.ui.components.shared :as shared]
+  (:require [clojure.string :as str]
+            [com.greed.ui.components.shared :as shared]
             [com.greed.ui.components.svgs :as svgs]
             [com.greed.ui.components.forms :as forms]
             [com.greed.utilities.core :as utilities]))
@@ -8,17 +9,19 @@
   (let [{:budget-item/keys [title amount]
          :or {title "Title" amount 0}} item
         action-modal-id (str "budget-action-" (:xt/id item))
-        protected? (contains? (or protected-titles #{}) title)]
+        protected? (contains? (or protected-titles #{}) title)
+        editable?  (or (not protected?) (not= :income (:budget-item/type item)))
+        reference  (:budget-item/reference item)]
     [:li {:class "group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-zinc-50/70"}
      [:div {:class "min-w-0 flex-1"}
       [:p {:class "truncate text-sm font-medium text-zinc-800"} title]
-      (when protected?
-        [:span {:class "mt-0.5 inline-flex items-center text-xs font-medium text-zinc-500"
-                :title "Managed automatically. Edit in Settings"}
-         "Auto"])]
+      (when (or protected? reference)
+        [:p {:class "mt-0.5 truncate text-xs text-zinc-500"}
+         (str/join " · " (remove nil? [(when protected? "Auto")
+                                       (when reference (str "Statement: " reference))]))])]
      [:p {:class "flex-shrink-0 text-sm font-semibold text-zinc-900 tabular-nums"}
       (utilities/amount->rands amount)]
-     (when-not protected?
+     (when editable?
        [:button {:class "inline-flex flex-shrink-0 items-center justify-center w-8 h-8 -mr-1.5 text-zinc-500 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100"
                  :type "button"
                  :aria-label (str "Edit " title)
@@ -34,8 +37,8 @@
   (let [{:budget-item/keys [title]} item
         action-modal-id (str "budget-action-" (:xt/id item))
         protected? (contains? (or protected-titles #{}) title)]
-    (when-not protected?
-      (shared/modal action-modal-id (forms/budget-action-form item)))))
+    (when (or (not protected?) (not= :income (:budget-item/type item)))
+      (shared/modal action-modal-id (forms/budget-action-form item :auto? protected?)))))
 
 (defn budget-table [{:keys [title items protected-titles]
                      :or {protected-titles #{}}}]

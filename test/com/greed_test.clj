@@ -488,10 +488,12 @@
                                       {:xt/id #uuid "00000000-0000-0000-0000-000000000004"
                                        :event/user-id uid}
                                       {:xt/id #uuid "00000000-0000-0000-0000-000000000005"
-                                       :goal/user-id uid}])]
+                                       :goal/user-id uid}
+                                      {:xt/id #uuid "00000000-0000-0000-0000-000000000006"
+                                       :statement-summary/user-id uid}])]
       (let [ctx (get-context node)]
         (testing "deletes the user and all of their data"
-          (is (= 6 (data/delete-user ctx uid)))
+          (is (= 7 (data/delete-user ctx uid)))
           (let [db (xt/db node)]
             (is (nil? (biff/lookup-id db :user/email "frank@example.com")))
             (is (empty? (biff/q db '{:find [id]
@@ -503,7 +505,9 @@
             (is (empty? (biff/q db '{:find [id]
                                      :where [[id :event/user-id uid]]})))
             (is (empty? (biff/q db '{:find [id]
-                                     :where [[id :goal/user-id uid]]})))))
+                                     :where [[id :goal/user-id uid]]})))
+            (is (empty? (biff/q db '{:find [id]
+                                     :where [[id :statement-summary/user-id uid]]})))))
         (testing "returns nil when the user doesn't exist"
           (is (nil? (data/delete-user ctx #uuid "ffffffff-ffff-ffff-ffff-ffffffffffff"))))))))
 
@@ -575,3 +579,47 @@
         ;(is (= n-messages (count (.select (Jsoup/parse html) "#messages > *"))))
         (is (= n-messages (count (re-seq #"init send newMessage to #message-header" html))))
         (is (every? #(str/includes? html (:msg/text %)) messages))))))
+
+
+;; ---------------------------------------------------------------------------
+;; Statement summaries (Spending tab)
+
+(def ^:private sample-summary
+  {:bank :fnb :month "2026-10" :period-start "2026-10-12" :period-end "2026-10-31" :line-count 3
+   :money-in-cents 705000 :salary-cents 0 :refunds-cents 0 :money-out-cents 42300
+   :transfers-in-cents 20000 :transfers-out-cents 0
+   :categories {:fuel 40000 :bank-charges 800 :transport 1500} :fees-cents 800 :fee-count 1
+   :top-merchants [{:name "Engen Kyalami" :category :fuel :cents 40000 :count 1}]
+   :checks-ok true})
+
+(deftest statement-summaries-test
+  (let [uid #uuid "cccccccc-0000-0000-0000-000000000001"]
+    (with-open [node (test-xtdb-node [{:xt/id uid
+                                       :user/email "sum@example.com"
+                                       :user/password (data/hash-password "sum-pass")
+                                       :user/firstname "Sipho"
+                                       :user/lastname "Nkosi"
+                                       :user/age 30
+                                       :user/active true}])]
+      (let [ctx #(assoc (get-context node) :biff/db (xt/db node))
+            save! (fn [& summaries] (let [n (data/save-statement-summaries (ctx) uid summaries)] (xt/sync node) n))]
+        (testing "saves a month"
+          (is (= 1 (save! sample-summary)))
+          (let [[s & more] (data/get-statement-summaries (ctx) uid)]
+            (is (nil? more))
+            (is (= 705000 (:statement-summary/money-in-cents s)))
+            (is (= {:fuel 40000 :bank-charges 800 :transport 1500} (:statement-summary/categories s)))))
+        (testing "the same month again replaces it, not adds to it"
+          (save! (assoc sample-summary :money-in-cents 1))
+          (let [all (data/get-statement-summaries (ctx) uid)]
+            (is (= 1 (count all)))
+            (is (= 1 (:statement-summary/money-in-cents (first all))))))
+        (testing "a shorter piece of the same month does not replace a longer one"
+          (is (= 0 (save! (assoc sample-summary :period-start "2026-10-25" :money-in-cents 2))))
+          (is (= 1 (:statement-summary/money-in-cents (first (data/get-statement-summaries (ctx) uid))))))
+        (testing "other months and banks are kept apart, newest month first"
+          (save! (assoc sample-summary :month "2026-11" :period-start "2026-11-01" :period-end "2026-11-30")
+                 (assoc sample-summary :bank :standard-bank))
+          (is (= [["2026-11" :fnb] ["2026-10" :standard-bank] ["2026-10" :fnb]]
+                 (map (juxt :statement-summary/month :statement-summary/bank)
+                      (data/get-statement-summaries (ctx) uid)))))))))

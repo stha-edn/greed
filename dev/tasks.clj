@@ -1,5 +1,7 @@
 (ns tasks
-  (:require [clojure.string :as str]
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
+            [clojure.test :as t]
             [com.biffweb.tasks :as tasks]))
 
 (defn hello
@@ -27,10 +29,36 @@
         (spit version-config-path updated)
         (println (str ":app/version " current " -> " next))))))
 
+(defn- test-namespaces
+  "Every namespace under test/ whose name ends in -test, from its file path:
+   test/com/greed/summary_test.clj -> com.greed.summary-test."
+  []
+  (->> (file-seq (io/file "test"))
+       (map #(.getPath ^java.io.File %))
+       (filter #(str/ends-with? % "_test.clj"))
+       (map #(-> %
+                 (subs (count "test/") (- (count %) (count ".clj")))
+                 (str/replace "/" ".")
+                 (str/replace "_" "-")
+                 symbol))
+       sort))
+
+(defn run-tests
+  "Runs the tests: every namespace under test/ ending in -test, or only the
+   ones named, e.g. `clj -M:dev test com.greed.summary-test`. Exits with 1
+   when a test fails, so it can be used in a script or CI."
+  [& namespaces]
+  (let [nss (if (seq namespaces) (map symbol namespaces) (test-namespaces))]
+    (apply require nss)
+    (let [{:keys [fail error]} (apply t/run-tests nss)]
+      (shutdown-agents)
+      (System/exit (if (zero? (+ fail error)) 0 1)))))
+
 ;; Tasks should be vars (#'hello instead of hello) so that `clj -M:dev help` can
 ;; print their docstrings.
 (def custom-tasks
   {"hello" #'hello
-   "bump-version" #'bump-version})
+   "bump-version" #'bump-version
+   "test" #'run-tests})
 
 (def tasks (merge tasks/tasks custom-tasks))

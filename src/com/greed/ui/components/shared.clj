@@ -218,12 +218,17 @@
      [:div {:class "greed-modal-overlay absolute inset-0 bg-black/50 backdrop-blur-sm" :_ close}]
      (into [:div {:class "greed-modal-card relative z-10"}] body)]))
 
-(defn modal-input [& {:keys [id type label required?]
+(defn modal-input [& {:keys [id type label required? value placeholder hint]
                       :or {required? false}}]
   [:div {:class "mt-3"}
    (form-label id label)
-   [:input {:class (base-input-class)
-            :type type :name id :id id :required required?}]])
+   [:input (cond-> {:class (base-input-class)
+                    :type type :name id :id id :required required?}
+             value       (assoc :value value)
+             placeholder (assoc :placeholder placeholder)
+             hint        (assoc :aria-describedby (str id "-hint")))]
+   (when hint
+     [:p {:id (str id "-hint") :class "mt-1 text-xs text-zinc-500"} hint])])
 
 (defn modal-select [& {:keys [id label options required?]
                        :or {required? false}}]

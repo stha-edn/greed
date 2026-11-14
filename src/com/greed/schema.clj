@@ -55,7 +55,49 @@
                  [:budget-item/user-id :user/id]
                  [:budget-item/title   :string]
                  [:budget-item/type    :keyword]
-                 [:budget-item/amount  :int]]})
+                 [:budget-item/amount  :int]
+                 ;; Text that appears on bank statement lines for this item,
+                 ;; comma-separated ("discovery life, vitality"). The Spending
+                 ;; tab uses it to tell planned payments from the rest.
+                 [:budget-item/reference {:optional true} :string]]
+
+   ;; Totals from one uploaded bank statement, for the Spending tab. The
+   ;; statement's individual lines are never stored. Amounts are in cents.
+   ;; Money in and out leave out transfers between the user's own accounts,
+   ;; which are kept apart in the transfers fields.
+   :statement-summary/id :uuid
+   :statement-summary [:map {:closed true}
+                       [:xt/id                                   :statement-summary/id]
+                       [:statement-summary/user-id               :user/id]
+                       [:statement-summary/bank                  :keyword]
+                       [:statement-summary/month                 :string] ; "2026-10"
+                       [:statement-summary/period-start          :string]
+                       [:statement-summary/period-end            :string]
+                       [:statement-summary/line-count            :int]
+                       [:statement-summary/money-in-cents        :int]
+                       [:statement-summary/money-out-cents       :int]
+                       [:statement-summary/salary-cents          :int]
+                       [:statement-summary/refunds-cents         :int]
+                       [:statement-summary/transfers-in-cents    :int]
+                       [:statement-summary/transfers-out-cents   :int]
+                       [:statement-summary/categories            [:map-of :keyword :int]]
+                       [:statement-summary/fees-cents            :int]
+                       [:statement-summary/fee-count             :int]
+                       [:statement-summary/top-merchants         [:vector [:map
+                                                                           [:name :string]
+                                                                           [:category :keyword]
+                                                                           [:cents :int]
+                                                                           [:count :int]]]]
+                       [:statement-summary/budgeted-cents {:optional true} :int]
+                       [:statement-summary/budget-matches {:optional true}
+                        [:vector [:map [:item-id :uuid] [:title :string] [:cents :int] [:count :int]]]]
+                       ;; Totals per payee (cleaned statement text, no dates or
+                       ;; numbers), so the budget sync can re-match references.
+                       [:statement-summary/payees {:optional true}
+                        [:vector [:map [:text :string] [:category :keyword] [:spent-cents :int]
+                                  [:refund-cents :int] [:count :int]]]]
+                       [:statement-summary/checks-ok             :boolean]
+                       [:statement-summary/uploaded-at           inst?]]})
 
 (def module
   {:schema schema})

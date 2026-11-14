@@ -57,7 +57,7 @@ All commands run via the Biff task runner:
 | `clj -M:dev restart` | Restart the app |
 | `clj -M:dev css` | Build Tailwind CSS |
 | `clj -M:dev css --minify` | Build minified Tailwind CSS (production) |
-| `clj -M:dev run-tests` | Run tests |
+| `clj -M:dev test` | Run all tests (see [Testing](#testing)) |
 | `clj -M:dev deploy` | Full deploy to production server |
 | `clj -M:dev soft-deploy` | Hot-reload code on the server without restarting |
 | `clj -M:dev prod-dev` | Watch local files and auto-soft-deploy on change |
@@ -66,6 +66,36 @@ All commands run via the Biff task runner:
 | `clj -M:dev bump-version` | Increment app version to trigger user-facing "app updated" banner |
 | `clj -M:dev install-tailwind` | Download the Tailwind standalone binary |
 | `clj -M:dev help` | List all available tasks |
+
+## Testing
+
+Tests live under `test/`; every file ending in `_test.clj` is picked up. The
+`test` task is a custom task in `dev/tasks.clj` (Biff v1.9.0 has none built in).
+
+```bash
+# All tests
+clj -M:dev test
+
+# Only some namespaces
+clj -M:dev test com.greed.summary-test com.greed.statements-test
+```
+
+The task exits with code 1 when a test fails. Tests use an in-memory XTDB node,
+so the dev server can keep running.
+
+From a connected REPL (port 7888), reload and run them instead with:
+
+```clojure
+(require 'clojure.test 'com.greed.summary-test :reload-all)
+(clojure.test/run-tests 'com.greed.summary-test)
+```
+
+### Bank statement samples
+
+The statement readers (`src/com/greed/statements/`) are tested on made-up text
+only. To try real statements locally, put the PDFs in `.private/statements/`,
+which is git-ignored. Never commit a real statement or copy its lines into a
+test.
 
 ## Deployment
 
@@ -138,9 +168,13 @@ src/com/
   password.clj           # Password reset logic
   schema.clj             # Database schema
   data/                  # Data layer
+  statements/            # Bank statement reading for the Spending tab:
+                         #   pdf (PDF -> text), one adapter per bank (fnb,
+                         #   standard_bank), categorise, summary (monthly
+                         #   and per-payee totals, budget matching)
   ui/
     pages/               # Public pages (home, signin, signup, etc.)
-    app/                 # Authenticated app views (dashboard, finances, etc.)
+    app/                 # Authenticated app views (dashboard, finances, spending, etc.)
     components/          # Reusable UI components (nav, cards, tables, etc.)
     tools/               # Tax calculators
 resources/
@@ -150,6 +184,8 @@ resources/
   tailwind.config.js     # Tailwind configuration
   public/                # Static assets (fonts, images, JS)
 dev/
-  tasks.clj              # Custom task overrides
+  tasks.clj              # Custom tasks (test, bump-version)
   repl.clj               # REPL helpers
+test/                    # Tests (*_test.clj), run with `clj -M:dev test`
+.private/                # Local-only files such as sample statements (git-ignored)
 ```

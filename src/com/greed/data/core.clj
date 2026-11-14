@@ -5,7 +5,8 @@
             [clojure.tools.logging :as logger]
             [com.greed.utilities.tax :as tax]
             [com.greed.utilities.core :as utilities]
-            [com.greed.data.validation :as validation]))
+            [com.greed.data.validation :as validation]
+            [com.greed.statements.summary :as summary]))
 
 (defn get-users [{:keys [biff/db]}]
   (q db
@@ -431,23 +432,38 @@
                             :db/op :delete}]))
       (logger/info "Event not found or unauthorized"))))
 
+(def auto-titles
+  "Budget items greed keeps in step with Settings. Only their statement
+   reference can be changed from Finances."
+  #{"Salary" "Medical Aid" "Annual RA Contributions"})
+
+(defn ->reference
+  "A statement reference from a form: trimmed, at most 200 characters, nil
+   when blank."
+  [s]
+  (let [s (str/trim (str s))]
+    (when-not (str/blank? s) (subs s 0 (min 200 (count s))))))
+
 (defn upsert-budget-item [{:keys [params] :as ctx}]
   (let [user-id (get-user-id-from-session ctx)
         budget-item-id (java.util.UUID/randomUUID)]
     (logger/info "Creating budget item...")
     (biff/submit-tx ctx
-                    [{:db/doc-type :budget-item
-                      :xt/id budget-item-id
-                      :budget-item/user-id user-id
-                      :budget-item/title (:title params)
-                      :budget-item/type (utilities/->keyword (:type params))
-                      :budget-item/amount (validation/->valid-amount (:amount params))}])))
+                    [(cond-> {:db/doc-type :budget-item
+                              :xt/id budget-item-id
+                              :budget-item/user-id user-id
+                              :budget-item/title (:title params)
+                              :budget-item/type (utilities/->keyword (:type params))
+                              :budget-item/amount (validation/->valid-amount (:amount params))}
+                       (->reference (:reference params))
+                       (assoc :budget-item/reference (->reference (:reference params))))])))
 
 (defn update-budget-item [{:keys [params] :as ctx}]
   (let [{:keys [budget-item-id]} params
         budget-item-id (utilities/->uuid budget-item-id)
-        {:budget-item/keys [type user-id]
-         :as budget-item} (get-budget-item ctx budget-item-id)]
+        {:budget-item/keys [type user-id title amount]
+         :as budget-item} (get-budget-item ctx budget-item-id)
+        auto? (contains? auto-titles title)]
     (if (and budget-item (owned-by-session? ctx user-id))
       (do
         (logger/info "Updating budget item...")
@@ -455,9 +471,13 @@
                         [{:db/doc-type :budget-item
                           :xt/id budget-item-id
                           :db/op :update
-                          :budget-item/title (:title params)
+                          ;; Items kept in step with Settings keep their title and amount.
+                          :budget-item/title (if (or auto? (str/blank? (:title params))) title (:title params))
                           :budget-item/type type
-                          :budget-item/amount (validation/->valid-amount (:amount params))}]))
+                          :budget-item/amount (if (or auto? (str/blank? (str (:amount params))))
+                                                amount
+                                                (validation/->valid-amount (:amount params)))
+                          :budget-item/reference (or (->reference (:reference params)) :db/dissoc)}]))
       (logger/info "Budget item not found or unauthorized"))))
 
 (defn delete-budget-item [{:keys [params] :as ctx}]
@@ -472,6 +492,105 @@
                             :xt/id budget-item-id
                             :db/op :delete}]))
       (logger/info "Budget item not found or unauthorized"))))
+
+;; ---------------------------------------------------------------------------
+;; Statement summaries (Spending tab). Totals per uploaded statement; the
+;; statement's individual lines are never stored.
+;; ---------------------------------------------------------------------------
+
+(defn get-statement-summaries
+  "The user's monthly statement summaries, newest month first."
+  [{:keys [biff/db]} user-id]
+  (->> (q db
+          '{:find (pull s [*])
+            :in [user-id]
+            :where [[s :statement-summary/user-id user-id]]}
+          user-id)
+       (sort-by (juxt #(str (:statement-summary/month %)) :statement-summary/period-end :statement-summary/bank)
+                #(compare %2 %1))
+       vec))
+
+(defn- find-statement-summary
+  "The user's existing summary for the same bank and month, if any."
+  [{:keys [biff/db]} user-id {:keys [bank month]}]
+  (first (q db
+            '{:find (pull s [*])
+              :in [user-id bank month]
+              :where [[s :statement-summary/user-id user-id]
+                      [s :statement-summary/bank bank]
+                      [s :statement-summary/month month]]}
+            user-id bank month)))
+
+(defn- covered-days [start end]
+  (inc (.between java.time.temporal.ChronoUnit/DAYS
+                 (java.time.LocalDate/parse start) (java.time.LocalDate/parse end))))
+
+(defn save-statement-summaries
+  "Saves monthly summaries (see com.greed.statements.summary/summarise-months)
+   for the user. Each replaces the saved one for the same bank and month,
+   unless the saved one covers more days of that month (a full month is not
+   replaced by the few days at the edge of a later statement). Returns the
+   number of months saved."
+  [ctx user-id summaries]
+  (let [docs (keep (fn [{:keys [period-start period-end] :as summary}]
+                     (let [old (find-statement-summary ctx user-id summary)]
+                       (when (or (nil? old)
+                                 (>= (covered-days period-start period-end)
+                                     (covered-days (:statement-summary/period-start old)
+                                                   (:statement-summary/period-end old))))
+                         (into {:db/doc-type :statement-summary
+                                :xt/id (or (:xt/id old) (java.util.UUID/randomUUID))
+                                :statement-summary/user-id user-id
+                                :statement-summary/uploaded-at (java.util.Date.)}
+                               (map (fn [[k v]] [(keyword "statement-summary" (name k)) v]))
+                               summary))))
+                   summaries)]
+    (logger/info "Saving statement summaries...")
+    (when (seq docs) (biff/submit-tx ctx (vec docs)))
+    (count docs)))
+
+(defn budget-match-items
+  "The user's expense and savings items that have a statement reference, in
+   the shape com.greed.statements.summary/budget-totals takes."
+  [ctx user-id]
+  (vec (for [{:budget-item/keys [title type reference] :xt/keys [id]} (get-budget-items ctx user-id)
+             :when (and reference (#{:expenses :savings} type))]
+         {:id id :title title :reference reference})))
+
+(defn sync-statement-summaries
+  "Re-matches every saved month against the budget's current statement
+   references, using the payee totals kept with each month. Months saved
+   before payee totals were kept cannot be matched and are left as they are.
+   Returns {:synced n :needs-upload n}."
+  [ctx user-id]
+  (let [ctx       (biff/assoc-db ctx)
+        items     (budget-match-items ctx user-id)
+        summaries (get-statement-summaries ctx user-id)
+        [with without] ((juxt filter remove) :statement-summary/payees summaries)
+        docs      (for [{:statement-summary/keys [payees] :xt/keys [id]} with
+                        :let [{:keys [budget-matches budgeted-cents]} (summary/budget-totals items payees)]]
+                    {:db/doc-type :statement-summary
+                     :xt/id id
+                     :db/op :update
+                     :statement-summary/budget-matches budget-matches
+                     :statement-summary/budgeted-cents budgeted-cents})]
+    (when (seq docs)
+      (logger/info "Syncing statement summaries with the budget...")
+      (biff/submit-tx ctx (vec docs)))
+    {:synced (count docs) :needs-upload (count without)}))
+
+(defn delete-statement-summary [{:keys [params] :as ctx}]
+  (let [id (utilities/->uuid (:summary-id params))
+        {:statement-summary/keys [user-id] :as s}
+        (when id (first (q (:biff/db ctx)
+                           '{:find (pull s [*])
+                             :in [id]
+                             :where [[s :xt/id id] [s :statement-summary/user-id]]}
+                           id)))]
+    (if (and s (owned-by-session? ctx user-id))
+      (do (logger/info "Deleting statement summary...")
+          (biff/submit-tx ctx [{:db/doc-type :statement-summary :xt/id id :db/op :delete}]))
+      (logger/info "Statement summary not found or unauthorized"))))
 
 ;; ---------------------------------------------------------------------------
 ;; Goals
@@ -535,7 +654,8 @@
 
 (defn delete-user
   "Permanently deletes the user with the given id and all of their data
-  (finances, budget items, tax profile, events, goals). Returns the number
+  (finances, budget items, tax profile, events, goals, statement
+  summaries). Returns the number
   of docs deleted (including the user itself), or nil if no user exists
   with that id."
   [ctx user-id]
@@ -553,6 +673,7 @@
                                    [id :tax-profile/user-id user-id]
                                    [id :event/user-id user-id]
                                    [id :goal/user-id user-id]
+                                   [id :statement-summary/user-id user-id]
                                    [id :session/uid user-id])]}
                      user-id)
             owned (conj (into #{} (map first) owned) user-id)]

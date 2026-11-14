@@ -324,6 +324,10 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
         (shared/modal-select :id "type" :label "Category" :options budget-item-options :required? true))
       (shared/modal-input :id "title" :type "text" :label "Title" :required? true)
       (shared/modal-input :id "amount" :type "number" :label "Amount (R)" :required? true)
+      (when (not= :income type)
+        (shared/modal-input :id "reference" :type "text" :label "Statement reference (optional)"
+                            :placeholder "e.g. discovery life, vitality"
+                            :hint "Words from your bank statement for this item, separated by commas. Numbers are ignored, so a reference that changes each month still matches (WESBANK_FI8534...0825 matches \"wesbank\")."))
       [:div {:class "flex gap-2 mt-5"}
        (shared/btn :variant :ghost :type "button" :class "flex-1"
                    :attrs {:_ (shared/close-actions modal-id)}
@@ -331,25 +335,38 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
        (shared/btn :variant :dark :type "submit" :class "flex-1"
                    "Add item")])]))
 
-(defn budget-action-form [item]
+(defn budget-action-form
+  "Edit a budget item. An item kept in step with Settings (:auto?) can only
+   change its statement reference, and cannot be deleted here."
+  [item & {:keys [auto?]}]
   [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-xl p-6 w-full max-w-sm"}
-   [:h3 {:class "text-base font-semibold text-zinc-900 tracking-tight"} "Edit Budget Item"]
+   [:h3 {:class "text-base font-semibold text-zinc-900 tracking-tight"} (if auto? "Statement reference" "Edit Budget Item")]
    [:div {:class "mt-3 p-3 bg-zinc-50 rounded-lg text-sm text-zinc-600 mb-4"}
     [:div {:class "flex justify-between"} [:span {:class "text-zinc-500"} "Title"] (:budget-item/title item)]
     [:div {:class "flex justify-between mt-1"} [:span {:class "text-zinc-500"} "Amount"] (str "R" (:budget-item/amount item))]]
    (biff/form
     {:class "mt-2" :action (str "/app/finances/update-budget-item?budget-item-id=" (:xt/id item))}
-    (shared/modal-input :id "title" :type "text" :label "New Title" :required? true)
-    (shared/modal-input :id "amount" :type "number" :label "New Amount (R)" :required? true)
+    (when-not auto?
+      [:<>
+       (shared/modal-input :id "title" :type "text" :label "Title" :required? true :value (:budget-item/title item))
+       (shared/modal-input :id "amount" :type "number" :label "Amount (R)" :required? true :value (str (:budget-item/amount item)))])
+    (when (not= :income (:budget-item/type item))
+      (shared/modal-input :id "reference" :type "text" :label "Statement reference (optional)"
+                          :value (:budget-item/reference item)
+                          :placeholder "e.g. discovery life, vitality"
+                          :hint "Words from your bank statement for this item, separated by commas. Numbers are ignored, so a reference that changes each month still matches (WESBANK_FI8534...0825 matches \"wesbank\")."))
+    (when auto?
+      [:p {:class "mt-3 text-xs text-zinc-500"} "The title and amount follow your Settings."])
     [:div {:class "flex gap-2 mt-5"}
      (shared/btn :variant :ghost :type "button" :class "flex-1"
                  :attrs {:_ (shared/close-actions (str "budget-action-" (:xt/id item)))}
                  "Cancel")
      (shared/btn :variant :dark :type "submit" :class "flex-1"
                  "Update")])
-   (biff/form
-    {:class "mt-2" :action "/app/finances/delete-budget-item"}
-    [:input {:type "hidden" :name "budget-item-id" :value (str (:xt/id item))}]
-    (shared/btn :variant :danger :type "submit" :class "w-full"
-                :attrs {:data-confirm "Delete this budget item?"}
-                "Delete"))])
+   (when-not auto?
+     (biff/form
+      {:class "mt-2" :action "/app/finances/delete-budget-item"}
+      [:input {:type "hidden" :name "budget-item-id" :value (str (:xt/id item))}]
+      (shared/btn :variant :danger :type "submit" :class "w-full"
+                  :attrs {:data-confirm "Delete this budget item?"}
+                  "Delete")))])

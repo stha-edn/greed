@@ -5,6 +5,7 @@
             [muuntaja.middleware :as muuntaja]
             [ring.middleware.anti-forgery :as csrf]
             [ring.middleware.defaults :as rd]
+            [ring.middleware.multipart-params.byte-array :refer [byte-array-store]]
             [com.core :as c]
             [com.greed.data.core :as data]
             [com.greed.utilities.core :as utilities]
@@ -147,18 +148,27 @@
   {:status 303
    :headers {"location" "/app/settings?alert=tax-profile-saved"}})
 
+(defn- sync-spending!
+  "Keeps the Spending tab's budget matches in step after a budget change."
+  [ctx]
+  (when-let [user-id (data/get-user-id-from-session ctx)]
+    (data/sync-statement-summaries ctx user-id)))
+
 (defn create-budget-item [ctx]
   (data/upsert-budget-item ctx)
+  (sync-spending! ctx)
   {:status 303
    :headers {"location" "/app/finances?alert=budget-item-saved"}})
 
 (defn update-budget-item [ctx]
   (data/update-budget-item ctx)
+  (sync-spending! ctx)
   {:status 303
    :headers {"location" "/app/finances?alert=budget-item-saved"}})
 
 (defn delete-budget-item [ctx]
   (data/delete-budget-item ctx)
+  (sync-spending! ctx)
   {:status 303
    :headers {"location" "/app/finances?alert=budget-item-deleted"}})
 
@@ -241,6 +251,9 @@
       (rd/wrap-defaults (-> rd/site-defaults
                             (assoc-in [:security :anti-forgery] false)
                             (assoc-in [:responses :absolute-redirects] true)
+                            ;; Uploads (bank statements) stay in memory and are never
+                            ;; written to a temp file on disk.
+                            (assoc-in [:params :multipart] {:store (byte-array-store)})
                             (assoc :session false)
                             (assoc :static false)))))
 

@@ -98,6 +98,7 @@
    {:href "/app/finances/" :label "Finances"  :icon (svgs/credit-card)   :bottom? true}
    {:href "/app/calendar"  :label "Calendar"  :icon (svgs/calendar)      :bottom? true}
    {:href "/app/goals"     :label "Goals"     :icon (svgs/target)        :bottom? true}
+   {:href "/app/spending"  :label "Spending"  :icon (svgs/banknotes)     :bottom? false}
    {:href "/app/insights"  :label "Insights"  :icon (svgs/chart-bar)     :bottom? false}])
 
 (defn- sidebar-inner [uri firstname lastname admin?]
