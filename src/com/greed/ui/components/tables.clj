@@ -2,22 +2,29 @@
   (:require [clojure.string :as str]
             [com.greed.ui.components.shared :as shared]
             [com.greed.ui.components.svgs :as svgs]
+            [com.greed.statements.categorise :as categorise]
+            [com.greed.utilities.vat :as vat]
             [com.greed.ui.components.forms :as forms]
             [com.greed.utilities.core :as utilities]))
 
-(defn- budget-row [& {:keys [item protected-titles]}]
+(defn- budget-row [& {:keys [item protected-titles vat?]}]
   (let [{:budget-item/keys [title amount]
          :or {title "Title" amount 0}} item
         action-modal-id (str "budget-action-" (:xt/id item))
         protected? (contains? (or protected-titles #{}) title)
         editable?  (or (not protected?) (not= :income (:budget-item/type item)))
-        reference  (:budget-item/reference item)]
+        reference  (:budget-item/reference item)
+        category   (some-> (:budget-item/category item) categorise/categories)
+        vat-label  (when (and vat? (#{:income :expenses} (:budget-item/type item)))
+                     (vat/vat-types (or (:budget-item/vat item) (vat/default-vat-type (:budget-item/type item)))))]
     [:li {:class "group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-zinc-50/70"}
      [:div {:class "min-w-0 flex-1"}
       [:p {:class "truncate text-sm font-medium text-zinc-800"} title]
-      (when (or protected? reference)
+      (when (or protected? reference category vat-label)
         [:p {:class "mt-0.5 truncate text-xs text-zinc-500"}
          (str/join " · " (remove nil? [(when protected? "Auto")
+                                       vat-label
+                                       category
                                        (when reference (str "Statement: " reference))]))])]
      [:p {:class "flex-shrink-0 text-sm font-semibold text-zinc-900 tabular-nums"}
       (utilities/amount->rands amount)]
@@ -33,20 +40,25 @@
    not valid content directly inside <tbody>, and browsers foster-parent it
    out while silently dropping the <form> wrapper, breaking the delete/update
    buttons inside it."
-  [& {:keys [item protected-titles]}]
+  [& {:keys [item protected-titles vat?]}]
   (let [{:budget-item/keys [title]} item
         action-modal-id (str "budget-action-" (:xt/id item))
         protected? (contains? (or protected-titles #{}) title)]
     (when (or (not protected?) (not= :income (:budget-item/type item)))
-      (shared/modal action-modal-id (forms/budget-action-form item :auto? protected?)))))
+      (shared/modal action-modal-id (forms/budget-action-form item :auto? protected? :vat? vat?)))))
 
-(defn budget-table [{:keys [title items protected-titles]
-                     :or {protected-titles #{}}}]
-  (let [label (case title
-                "income"   "Income"
-                "expenses" "Expenses"
-                "savings"  "Savings"
-                title)
+(defn budget-table
+  "One list of the budget. :label overrides the heading (a business's
+   savings list is \"Set aside\"); :business? gives its Add form the
+   business fields."
+  [{:keys [title items protected-titles label business? vat?]
+    :or {protected-titles #{}}}]
+  (let [label (or label
+                  (case title
+                    "income"   "Income"
+                    "expenses" "Expenses"
+                    "savings"  "Savings"
+                    title))
         count (count items)]
     [:div {:class "flex flex-col rounded-lg bg-white ring-1 ring-zinc-200/70 overflow-hidden transition-shadow duration-200"}
      [:div {:class "flex items-center gap-3 px-5 py-4"}
@@ -60,11 +72,11 @@
      (if (seq items)
        [:ul {:class "divide-y divide-zinc-100 border-t border-zinc-100"}
         (for [item items]
-          (budget-row :item item :protected-titles protected-titles))]
+          (budget-row :item item :protected-titles protected-titles :vat? vat?))]
        [:div {:class "flex flex-col items-center justify-center px-5 py-10 text-center"}
         [:p {:class "text-sm font-medium text-zinc-500"} "Nothing here yet"]
-        [:p {:class "mt-0.5 text-xs text-zinc-500"} (str "Add your first " title " item")]])
+        [:p {:class "mt-0.5 text-xs text-zinc-500"} (str "Add your first " (str/lower-case label) " item")]])
      (for [item items]
-       (budget-row-modal :item item :protected-titles protected-titles))
+       (budget-row-modal :item item :protected-titles protected-titles :vat? vat?))
      (shared/modal (str "budget-add-" title "-modal")
-                   (forms/budget-item-form :type (keyword title)))]))
+                   (forms/budget-item-form :type (keyword title) :business? business? :vat? vat?))]))

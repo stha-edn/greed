@@ -4,6 +4,8 @@
             [com.core :as c]
             [com.greed.data.core :as data]
             [com.greed.utilities.core :as tools]
+            [com.greed.statements.categorise :as categorise]
+            [com.greed.utilities.vat :as vat]
             [com.greed.ui.components.shared :as shared]))
 
 (defn on-error [{:keys [params]}]
@@ -23,6 +25,9 @@
             :invalid-link (:error/invalid-link config)
             :password-blank (:error/password-blank config)
             :password-mismatch (:error/password-mismatch config)
+            :business-name-blank (:error/business-name-blank config)
+            :business-name-too-long (:error/business-name-too-long config)
+            :entity-type-invalid (:error/entity-type-invalid config)
             (:error/default config)))]])))
 
 (defn sign-in [{:keys [site-key] :as ctx}]
@@ -57,9 +62,23 @@
       "Don't have an account? "
       [:a {:href "/signup" :class "font-medium text-zinc-900 underline underline-offset-4 hover:text-zinc-600"} "Create one"]]]]])
 
-(defn sign-up [{:keys [site-key] :as ctx}]
+(defn- account-type-switch
+  "Personal | Business, as two links so it works without JavaScript."
+  [business?]
+  (let [tab (fn [href label active?]
+              [:a (cond-> {:href href
+                           :class (str "flex-1 rounded-md px-3 py-1.5 text-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 "
+                                       (if active? "bg-white text-zinc-900 ring-1 ring-zinc-200" "text-zinc-600 hover:text-zinc-900"))}
+                    active? (assoc :aria-current "page"))
+               label])]
+    [:nav {:aria-label "Account type" :class "mb-6 flex gap-1 rounded-lg bg-zinc-100 p-1"}
+     (tab "/signup" "Personal" (not business?))
+     (tab "/signup?as=business" "Business" business?)]))
+
+(defn sign-up [{:keys [site-key params] :as ctx}]
   [:div {:class "w-full max-w-sm mx-auto"}
    [:div {:class "bg-white rounded-lg border border-zinc-200 overflow-hidden"}
+   (let [business? (= "business" (:as params))]
     [:div {:class "px-8 py-8"}
      [:div {:class "mb-6 text-center"}
       [:a {:href "/" :class "inline-block"}
@@ -68,24 +87,37 @@
               :width 192 :height 192
               :class "block h-10 w-10"}]]
       [:h2 {:class "mt-4 text-lg font-semibold text-zinc-900 tracking-tight"} "Create an account"]
-      [:p {:class "mt-1 text-sm text-zinc-500"} "Start managing your finances"]]
+      [:p {:class "mt-1 text-sm text-zinc-500"}
+       (if business? "Run your business's money next to your own" "Start managing your finances")]]
+     (account-type-switch business?)
      (biff/form
       {:action "authenticate/signup"
        :id "signup"
-       :hidden {:on-error "/"}}
+       :hidden {:on-error "/" :account-type (if business? "business" "personal")}}
       (biff/recaptcha-callback "submitSignup" "signup")
+      (when business?
+        [:<>
+         (shared/input :id "business-name" :type "text" :label "Business name" :required? true)
+         [:div {:class "mt-4"}
+          (shared/form-label "entity-type" "Type of business")
+          [:select {:id "entity-type" :name "entity-type" :required true :class (shared/base-input-class)}
+           [:option {:value ""} "Choose one"]
+           (for [[k label] data/entity-types]
+             [:option {:value (name k)} label])]]
+         [:p {:class "mt-6 text-sm font-medium text-zinc-900"} "About you"]])
       [:div {:class "grid grid-cols-2 gap-3"}
        (shared/input :id "firstname" :type "text" :label "First name" :required? true)
        (shared/input :id "lastname" :type "text" :label "Last name" :required? true)]
-      (shared/input :id "age" :type "number" :label "Age" :required? true)
+      (when-not business?
+        (shared/input :id "age" :type "number" :label "Age" :required? true))
       (shared/input :id "email" :type "email" :label "Email address" :required? true)
       (shared/input :id "password" :type "password" :label "Password" :required? true)
       [:div {:class "mt-5"}
        (shared/btn :variant :primary :size :md :type "submit"
                    :class (str "w-full" (when site-key " g-recaptcha"))
                    :attrs (when site-key {:data-sitekey site-key :data-callback "submitSignup"})
-                   "Create account")]
-      (on-error ctx))]
+                   (if business? "Create business account" "Create account"))]
+      (on-error ctx))])
     [:div {:class "px-8 py-4 bg-zinc-50 border-t border-zinc-100 text-center"}
      [:p {:class "text-sm text-zinc-500"}
       "Already have an account? "
@@ -306,14 +338,43 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
    :expenses {:title "Add expense" :desc "Add an expense to your budget."}
    :savings  {:title "Add savings" :desc "Add a savings item to your budget."}})
 
+(defn- category-select
+  "A business item's spending category: payments its reference matches are
+   counted there on the Spending tab."
+  [current]
+  [:div {:class "mt-3"}
+   (shared/form-label "category" "Spending category (optional)")
+   [:select {:id "category" :name "category" :class (shared/base-input-class) :aria-describedby "category-hint"}
+    [:option {:value ""} "As greed reads it"]
+    (for [k categorise/spending-categories]
+      [:option (cond-> {:value (name k)} (= k current) (assoc :selected true))
+       (categorise/categories k)])]
+   [:p {:id "category-hint" :class "mt-1 text-xs text-zinc-500"}
+    "Payments matched by the reference count in this category, e.g. Stock and suppliers, or Owner's drawings."]])
+
+(defn- vat-select
+  "How VAT applies to a VAT vendor's income or expense item."
+  [budget-type current]
+  (let [current (or current (vat/default-vat-type budget-type))]
+    [:div {:class "mt-3"}
+     (shared/form-label "vat" "VAT")
+     [:select {:id "vat" :name "vat" :class (shared/base-input-class) :aria-describedby "vat-hint"}
+      (for [[k label] vat/vat-types]
+        [:option (cond-> {:value (name k)} (= k current) (assoc :selected true)) label])]
+     [:p {:id "vat-hint" :class "mt-1 text-xs text-zinc-500"}
+      "The amount includes VAT. Salaries, SARS payments and suppliers who are not VAT registered have no VAT."]]))
+
 (defn budget-item-form
   "Add a budget item. Pass :type to fix the category (used by each list's Add
-   button); without it, the category select is shown."
-  [& {:keys [type]}]
+   button); without it, the category select is shown. :business? adds the
+   spending category and business wording."
+  [& {:keys [type business? vat?]}]
   (let [budget-item-options (:budget-item/types c/common-config)
         modal-id            (if type (str "budget-add-" (name type) "-modal") "budget-add-modal")
-        {:keys [title desc]} (get budget-item-form-copy type
-                                  {:title "Add Budget Item" :desc "Add a new item to your budget"})]
+        {:keys [title desc]} (if (and business? (= :savings type))
+                               {:title "Add set-aside item" :desc "Money the business puts away: SARS, VAT, reserves or equipment."}
+                               (get budget-item-form-copy type
+                                    {:title "Add Budget Item" :desc "Add a new item to your budget"}))]
     [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-xl p-6 w-full max-w-sm"}
      [:h3 {:class "text-base font-semibold text-zinc-900 tracking-tight"} title]
      [:p {:class "mt-1 text-sm text-zinc-500 mb-4"} desc]
@@ -324,6 +385,10 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
         (shared/modal-select :id "type" :label "Category" :options budget-item-options :required? true))
       (shared/modal-input :id "title" :type "text" :label "Title" :required? true)
       (shared/modal-input :id "amount" :type "number" :label "Amount (R)" :required? true)
+      (when (and vat? (#{:income :expenses} type))
+        (vat-select type nil))
+      (when (and business? (not= :income type))
+        (category-select nil))
       (when (not= :income type)
         (shared/modal-input :id "reference" :type "text" :label "Statement reference (optional)"
                             :placeholder "e.g. discovery life, vitality"
@@ -338,7 +403,7 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
 (defn budget-action-form
   "Edit a budget item. An item kept in step with Settings (:auto?) can only
    change its statement reference, and cannot be deleted here."
-  [item & {:keys [auto?]}]
+  [item & {:keys [auto? vat?]}]
   [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-xl p-6 w-full max-w-sm"}
    [:h3 {:class "text-base font-semibold text-zinc-900 tracking-tight"} (if auto? "Statement reference" "Edit Budget Item")]
    [:div {:class "mt-3 p-3 bg-zinc-50 rounded-lg text-sm text-zinc-600 mb-4"}
@@ -350,6 +415,10 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
       [:<>
        (shared/modal-input :id "title" :type "text" :label "Title" :required? true :value (:budget-item/title item))
        (shared/modal-input :id "amount" :type "number" :label "Amount (R)" :required? true :value (str (:budget-item/amount item)))])
+    (when (and vat? (:budget-item/business-id item) (#{:income :expenses} (:budget-item/type item)))
+      (vat-select (:budget-item/type item) (:budget-item/vat item)))
+    (when (and (:budget-item/business-id item) (not= :income (:budget-item/type item)))
+      (category-select (:budget-item/category item)))
     (when (not= :income (:budget-item/type item))
       (shared/modal-input :id "reference" :type "text" :label "Statement reference (optional)"
                           :value (:budget-item/reference item)

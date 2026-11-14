@@ -101,7 +101,40 @@
    {:href "/app/spending"  :label "Spending"  :icon (svgs/banknotes)     :bottom? false}
    {:href "/app/insights"  :label "Insights"  :icon (svgs/chart-bar)     :bottom? false}])
 
-(defn- sidebar-inner [uri firstname lastname admin?]
+(def ^:private business-links
+  "A business's destinations: its home, its budget and its spending."
+  [{:href "/app"           :label "Home"     :icon (svgs/squares-2x2) :bottom? true}
+   {:href "/app/finances/" :label "Budget"   :icon (svgs/credit-card) :bottom? true}
+   {:href "/app/spending"  :label "Spending" :icon (svgs/banknotes)   :bottom? true}
+   {:href "/app/company-tax" :label "Tax"    :icon (svgs/percent-badge) :bottom? false}
+   {:href "/app/business"  :label "Business" :icon (svgs/users)       :bottom? true}])
+
+(defn- app-links
+  "The app's primary links for the current profile. A VAT-registered
+   business also gets its VAT page, after Spending."
+  [business]
+  (cond
+    (nil? business) primary-links
+    (:business/vat-registered business)
+    (let [[before after] (split-at 3 business-links)]
+      (concat before [{:href "/app/vat" :label "VAT" :icon (svgs/percent-badge) :bottom? true}] after))
+    :else business-links))
+
+(defn- profile-switcher
+  "Which profile the person is in (Personal or a business), with a link to
+   switch. Only shown to someone who has a business."
+  [ctx business]
+  (when (seq (data/get-user-businesses ctx (get-in ctx [:session :uid])))
+    [:div {:class "mb-4 flex items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2.5"}
+     [:div {:class "min-w-0"}
+      [:p {:class "truncate text-sm font-medium text-zinc-900"} (if business (:business/name business) "Personal")]
+      [:p {:class "truncate text-xs text-zinc-500"}
+       (if business (data/entity-types (:business/entity-type business)) "Your own money")]]
+     [:a {:href "/app/choose"
+          :class "flex-shrink-0 rounded-md px-2 py-1 text-xs font-medium text-zinc-700 underline-offset-4 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"}
+      "Switch"]]))
+
+(defn- sidebar-inner [uri firstname lastname admin? ctx business]
   (let [initials (str (or (first firstname) \?) (or (first lastname) \?))]
     [:<>
      [:div {:class "flex items-center h-16 px-5 border-b border-zinc-200 flex-shrink-0"}
@@ -112,8 +145,9 @@
               :class "h-8 w-auto"}]
        [:span {:class "ml-1.5 text-xs font-medium leading-none text-zinc-500"} "beta"]]]
      [:div {:class "flex flex-col flex-1 px-3 py-5 overflow-y-auto min-h-0"}
+      (profile-switcher ctx business)
       [:nav {:class "space-y-0.5"}
-       (for [item primary-links]
+       (for [item (app-links business)]
          (nav-link (:href item) (:label item) (:icon item) (link-active? uri (:href item))))
        (when admin?
          (nav-link "/app/admin/users" "Users" (svgs/users) (link-active? uri "/app/admin/users")))]
@@ -140,7 +174,7 @@
         user (data/get-user ctx user-id)
         {:user/keys [firstname lastname]} user]
     [:aside {:class "hidden md:flex flex-col w-64 h-dvh bg-zinc-50 border-r border-zinc-200 fixed top-0 left-0 z-30"}
-     (sidebar-inner uri firstname lastname (data/admin? user))]))
+     (sidebar-inner uri firstname lastname (data/admin? user) ctx (data/session-business ctx))]))
 
 (defn- bottom-tab [href label icon active?]
   [:a {:href href
@@ -152,9 +186,9 @@
    [:span {:class "w-6 h-6 flex items-center justify-center [&_svg]:w-full [&_svg]:h-full"} icon]
    label])
 
-(defn mobile-bottom-nav [{:keys [uri]}]
+(defn mobile-bottom-nav [{:keys [uri] :as ctx}]
   [:nav {:class "md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-zinc-200 flex pb-[env(safe-area-inset-bottom)]"}
-   (for [item (filter :bottom? primary-links)]
+   (for [item (filter :bottom? (app-links (data/session-business ctx)))]
      (bottom-tab (:href item) (:label item) (:icon item) (link-active? uri (:href item))))])
 
 (def ^:private drawer-toggle-actions
@@ -233,9 +267,10 @@
          [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "1.8"
                  :d "M6 18L18 6M6 6l12 12"}]]]]
       [:div {:class "flex flex-col flex-1 px-3 py-5 overflow-y-auto"}
+       (profile-switcher ctx (data/session-business ctx))
        [:p {:class "px-3 mb-2 text-xs font-medium text-zinc-500"} "More"]
        [:nav {:class "space-y-0.5"}
-        (for [item (remove :bottom? primary-links)]
+        (for [item (remove :bottom? (app-links (data/session-business ctx)))]
           (nav-link (:href item) (:label item) (:icon item) (link-active? uri (:href item))))
         (when admin?
           (nav-link "/app/admin/users" "Users" (svgs/users) (link-active? uri "/app/admin/users")))]

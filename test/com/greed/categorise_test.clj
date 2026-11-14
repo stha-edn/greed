@@ -68,3 +68,22 @@
     "GYM"                  "DEBICHECK DEBIT ORDER"           :expenses :debit-order     :debit-orders
     "ATM"                  "OTHER BANK ATM CASH WITHD. AT"   :expenses :cash-withdrawal :cash
     "GARAGE"               "REFUND/GARAGE CARD"              :income   :refund          :fuel))
+
+(deftest business-categories
+  (let [biz (fn [d bank-type t] (:category (c/categorise sb/kind {:description d :bank-type bank-type :type t} true)))
+        own (fn [d bank-type t] (:category (c/categorise sb/kind {:description d :bank-type bank-type :type t})))]
+    (testing "a business's payments out get business categories"
+      (is (= :sars (biz "SARS-EFILING VAT201" "IB PAYMENT TO" :expenses)))
+      (is (= :salaries (biz "STAFF" "BOLSA THIRD PARTY PAYMENT SALARIES" :expenses)))
+      (is (= :rent (biz "OFFICE RENTAL" "IB PAYMENT TO" :expenses)))
+      (is (= :software (biz "GOOGLE WORKSPACE" "CHEQUE CARD PURCHASE" :expenses)))
+      (is (= :software (biz "NETFLIX.COM" "CHEQUE CARD PURCHASE" :expenses))))
+    (testing "everything else is read as before"
+      (is (= :fuel (biz "ENGEN" "CHEQUE CARD PURCHASE" :expenses)))
+      (is (= :transfers (biz "SAVINGS" "IB TRANSFER TO" :expenses)))
+      (is (= :income (biz "CLIENT" "PAYSHAP PAYMENT FROM" :income))))
+    (testing "the personal side has no business categories"
+      (is (= :subscriptions (own "NETFLIX.COM" "CHEQUE CARD PURCHASE" :expenses)))
+      (is (= :other (own "OFFICE RENTAL" "IB PAYMENT TO" :expenses))))
+    (testing "salary words mean money in on the personal side"
+      (is (= :salary (:kind (c/categorise sb/kind {:description "ACME" :bank-type "SALARIES" :type :income})))))))

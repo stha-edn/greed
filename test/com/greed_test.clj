@@ -13,6 +13,7 @@
             [com.greed.email :as email]
             [com.biffweb.impl.auth :as biff-auth]
             [com.greed.ui.app.dashboard :as dashboard]
+            [com.greed.ui.app.profiles :as profiles]
             [malli.generator :as mg]
             [rum.core :as rum]
             [xtdb.api :as xt]))
@@ -623,3 +624,285 @@
           (is (= [["2026-11" :fnb] ["2026-10" :standard-bank] ["2026-10" :fnb]]
                  (map (juxt :statement-summary/month :statement-summary/bank)
                       (data/get-statement-summaries (ctx) uid)))))))))
+
+
+;; ---------------------------------------------------------------------------
+;; Businesses
+
+(def ^:private business-signup
+  {:account-type "business" :business-name "  Ngunitek  " :entity-type "pty-ltd"
+   :firstname "Sipho" :lastname "Nkosi" :email "sipho@example.com" :password "sipho-pass"})
+
+(defn- fresh [node] (get-context node))
+
+(deftest business-signup-test
+  (with-open [node (test-xtdb-node [])]
+    (testing "a business sign-up creates the person, the business and the owner link"
+      (is (= {:valid? true} (auth/signup! (assoc (fresh node) :params business-signup))))
+      (xt/sync node)
+      (let [ctx  (fresh node)
+            uid  (biff/lookup-id (:biff/db ctx) :user/email "sipho@example.com")
+            [b & more] (data/get-user-businesses ctx uid)]
+        (is (some? uid))
+        (is (nil? (:user/age (data/get-user ctx uid))) "no age is asked of a business sign-up")
+        (is (nil? more))
+        (is (= ["Ngunitek" :pty-ltd :owner]
+               ((juxt :business/name :business/entity-type :business-member/role) b)))
+        (testing "and the person starts in their new business"
+          (let [resp (with-redefs [email/send-email (constantly true)]
+                       (home/signup-success-page (assoc ctx :params business-signup :session {})))]
+            (is (= (:xt/id b) (get-in resp [:session :business-id])))))))))
+
+(deftest business-signup-errors-test
+  (with-open [node (test-xtdb-node [])]
+   (doseq [[params error] [[(assoc business-signup :business-name " ") :business-name-blank]
+                          [(assoc business-signup :entity-type "llc") :entity-type-invalid]
+                          [(assoc business-signup :business-name (apply str (repeat 121 "x"))) :business-name-too-long]]]
+    (is (= {:valid? false :error error} (auth/signup! (assoc (fresh node) :params params))))
+    (xt/sync node)
+    (is (nil? (biff/lookup-id (xt/db node) :user/email "sipho@example.com"))
+        "nothing is created when the business details are wrong"))))
+
+(deftest personal-signup-still-takes-age-test
+  (with-open [node (test-xtdb-node [])]
+    (is (= {:valid? true}
+           (auth/signup! (assoc (fresh node) :params {:firstname "Lerato" :lastname "M" :age "31"
+                                                      :email "lerato@example.com" :password "pw"}))))
+    (xt/sync node)
+    (let [ctx (fresh node)
+          uid (biff/lookup-id (:biff/db ctx) :user/email "lerato@example.com")]
+      (is (= 31 (:user/age (data/get-user ctx uid))))
+      (is (empty? (data/get-user-businesses ctx uid))))))
+
+(deftest choose-profile-test
+  (let [uid   #uuid "aaaaaaaa-0000-0000-0000-000000000001"
+        other #uuid "aaaaaaaa-0000-0000-0000-000000000002"
+        mine  #uuid "bbbbbbbb-0000-0000-0000-000000000001"
+        theirs #uuid "bbbbbbbb-0000-0000-0000-000000000002"
+        now   (java.util.Date.)]
+    (with-open [node (test-xtdb-node [{:xt/id mine :business/name "Mine" :business/entity-type :trust :business/created-at now}
+                                      {:xt/id theirs :business/name "Theirs" :business/entity-type :npc :business/created-at now}
+                                      {:xt/id (random-uuid) :business-member/business-id mine :business-member/user-id uid
+                                       :business-member/role :owner :business-member/created-at now}
+                                      {:xt/id (random-uuid) :business-member/business-id theirs :business-member/user-id other
+                                       :business-member/role :owner :business-member/created-at now}])]
+      (let [ctx (fresh node)]
+        (testing "choosing your own business"
+          (is (= mine (get-in (profiles/choose (assoc ctx :session {:uid uid} :params {:business-id (str mine)}))
+                              [:session :business-id]))))
+        (testing "someone else's business is ignored"
+          (is (nil? (get-in (profiles/choose (assoc ctx :session {:uid uid :business-id mine}
+                                                    :params {:business-id (str theirs)}))
+                            [:session :business-id]))))
+        (testing "Personal clears the business"
+          (is (nil? (get-in (profiles/choose (assoc ctx :session {:uid uid :business-id mine} :params {:business-id ""}))
+                            [:session :business-id]))))
+        (testing "a business you are not in is not your session's business"
+          (is (nil? (data/session-business (assoc ctx :session {:uid uid :business-id theirs}))))
+          (is (= mine (:xt/id (data/session-business (assoc ctx :session {:uid uid :business-id mine}))))))))))
+
+(deftest delete-user-with-businesses-test
+  (let [uid    #uuid "cccccccc-1111-0000-0000-000000000001"
+        partner #uuid "cccccccc-1111-0000-0000-000000000002"
+        solo   #uuid "dddddddd-1111-0000-0000-000000000001"
+        shared #uuid "dddddddd-1111-0000-0000-000000000002"
+        now    (java.util.Date.)
+        member (fn [b u] {:xt/id (random-uuid) :business-member/business-id b :business-member/user-id u
+                          :business-member/role :owner :business-member/created-at now})]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "gone@example.com" :user/password "x"
+                                       :user/firstname "G" :user/lastname "One" :user/active true}
+                                      {:xt/id solo :business/name "Solo" :business/entity-type :sole-proprietor :business/created-at now}
+                                      {:xt/id shared :business/name "Shared" :business/entity-type :partnership :business/created-at now}
+                                      (member solo uid) (member shared uid) (member shared partner)])]
+      (data/delete-user (fresh node) uid)
+      (xt/sync node)
+      (let [ctx (fresh node)]
+        (testing "a business only they were in goes with them"
+          (is (nil? (xt/entity (:biff/db ctx) solo))))
+        (testing "a business with another member stays, without them"
+          (is (= ["Shared"] (map :business/name (data/get-user-businesses ctx partner))))
+          (is (empty? (data/get-user-businesses ctx uid))))))))
+
+(deftest business-money-is-kept-apart-test
+  (let [uid   #uuid "eeeeeeee-2222-0000-0000-000000000001"
+        stranger #uuid "eeeeeeee-2222-0000-0000-000000000002"
+        biz   #uuid "ffffffff-2222-0000-0000-000000000001"
+        now   (java.util.Date.)
+        item  (fn [id title & [business-id]]
+                (cond-> {:xt/id id :budget-item/user-id uid :budget-item/title title
+                         :budget-item/type :expenses :budget-item/amount 100}
+                  business-id (assoc :budget-item/business-id business-id)))
+        month (fn [id & [business-id]]
+                (cond-> (assoc sample-summary :xt/id id :statement-summary/user-id uid)
+                  true (update-keys #(if (qualified-keyword? %) % (keyword "statement-summary" (name %))))
+                  business-id (assoc :statement-summary/business-id business-id)))
+        own-item #uuid "11111111-2222-0000-0000-000000000001"
+        biz-item #uuid "11111111-2222-0000-0000-000000000002"]
+    (with-open [node (test-xtdb-node [{:xt/id biz :business/name "Biz" :business/entity-type :pty-ltd :business/created-at now}
+                                      {:xt/id (random-uuid) :business-member/business-id biz :business-member/user-id uid
+                                       :business-member/role :owner :business-member/created-at now}
+                                      (item own-item "Rent")
+                                      (item biz-item "Office" biz)
+                                      (month #uuid "22222222-2222-0000-0000-000000000001")
+                                      (month #uuid "22222222-2222-0000-0000-000000000002" biz)])]
+      (let [ctx      (fresh node)
+            personal (assoc ctx :session {:uid uid})
+            in-biz   (assoc ctx :session {:uid uid :business-id biz})]
+        (testing "personal and business budget items never mix"
+          (is (= ["Rent"] (map :budget-item/title (data/get-budget-items ctx uid))))
+          (is (= ["Office"] (map :budget-item/title (data/get-owner-budget-items ctx (data/owner in-biz)))))
+          (is (= ["Rent"] (map :budget-item/title (data/get-owner-budget-items ctx (data/owner personal))))))
+        (testing "nor do statement months"
+          (is (= 1 (count (data/get-statement-summaries ctx uid))))
+          (is (= [biz] (map :statement-summary/business-id (data/get-statement-summaries ctx (data/owner in-biz))))))
+        (testing "a member can change the business's items, others cannot"
+          (is (data/can-change-budget-item? personal (data/get-budget-item ctx biz-item)))
+          (is (not (data/can-change-budget-item? (assoc ctx :session {:uid stranger}) (data/get-budget-item ctx biz-item))))
+          (is (not (data/can-change-budget-item? (assoc ctx :session {:uid stranger}) (data/get-budget-item ctx own-item)))))
+        (testing "an item added while in the business belongs to it, with its category"
+          (data/upsert-budget-item (assoc in-biz :params {:title "Stock" :type "expenses" :amount "500"
+                                                          :category "stock" :reference "makro"}))
+          (xt/sync node)
+          (let [stock (first (filter #(= "Stock" (:budget-item/title %))
+                                     (data/get-business-budget-items (fresh node) biz)))]
+            (is (= [biz :stock "makro"] ((juxt :budget-item/business-id :budget-item/category :budget-item/reference) stock)))
+            (is (not-any? #(= "Stock" (:budget-item/title %)) (data/get-budget-items (fresh node) uid)))))
+        (testing "a category is not kept on a personal item"
+          (data/upsert-budget-item (assoc personal :params {:title "Shop" :type "expenses" :amount "1" :category "stock"}))
+          (xt/sync node)
+          (is (nil? (:budget-item/category (first (filter #(= "Shop" (:budget-item/title %))
+                                                          (data/get-budget-items (fresh node) uid)))))))
+        (testing "deleting the person takes the business's items and months with it"
+          (data/delete-user (fresh node) uid)
+          (xt/sync node)
+          (let [db (xt/db node)]
+            (is (nil? (xt/entity db biz)))
+            (is (nil? (xt/entity db biz-item)))
+            (is (empty? (biff/q db '{:find [s] :where [[s :statement-summary/business-id]]})))))))))
+
+(deftest business-members-test
+  (let [owner  #uuid "aaaaaaaa-3333-0000-0000-000000000001"
+        thandi #uuid "aaaaaaaa-3333-0000-0000-000000000002"
+        eve    #uuid "aaaaaaaa-3333-0000-0000-000000000003"
+        biz    #uuid "bbbbbbbb-3333-0000-0000-000000000001"
+        now    (java.util.Date.)
+        user   (fn [id email first] {:xt/id id :user/email email :user/password "x" :user/firstname first
+                                     :user/lastname "Test" :user/active true})]
+    (with-open [node (test-xtdb-node [(user owner "owner@example.com" "Olu")
+                                      (user thandi "Thandi@Example.com" "Thandi")
+                                      (user eve "eve@example.com" "Eve")
+                                      {:xt/id biz :business/name "Biz" :business/entity-type :pty-ltd :business/created-at now}
+                                      {:xt/id (random-uuid) :business-member/business-id biz :business-member/user-id owner
+                                       :business-member/role :owner :business-member/created-at now}])]
+      (let [ctx    #(fresh node)
+            sync!  #(xt/sync node)
+            member-of (fn [uid] (some #(when (= uid (:business-member/user-id %)) %) (data/get-business-members (ctx) biz)))]
+        (testing "only an owner can invite, and the email must be usable"
+          (is (= {:error :not-owner} (data/invite-member! (ctx) eve biz {:email "x@example.com" :role "member"})))
+          (is (= {:error :invalid-email} (data/invite-member! (ctx) owner biz {:email "not an email" :role "member"})))
+          (is (= {:error :invalid-role} (data/invite-member! (ctx) owner biz {:email "x@example.com" :role "admin"})))
+          (is (= {:error :already-member} (data/invite-member! (ctx) owner biz {:email "OWNER@example.com" :role "member"}))))
+        (let [{:keys [invite]} (data/invite-member! (ctx) owner biz {:email " thandi@example.COM " :role "member"})
+              invite-id (:xt/id invite)]
+          (sync!)
+          (testing "the invitation is saved in lower case, and not twice"
+            (is (= "thandi@example.com" (:business-invite/email invite)))
+            (is (= {:error :already-invited} (data/invite-member! (ctx) owner biz {:email "thandi@example.com" :role "owner"}))))
+          (testing "it waits for the invited person, and only them"
+            (is (= [biz] (map (comp :xt/id :business) (data/get-user-invites (ctx) thandi))))
+            (is (empty? (data/get-user-invites (ctx) eve)))
+            (is (nil? (data/accept-invite! (ctx) eve invite-id)) "someone else cannot accept it")
+            (is (nil? (data/decline-invite! (ctx) eve invite-id))))
+          (testing "accepting makes them a member and uses the invitation up"
+            (is (= biz (data/accept-invite! (ctx) thandi invite-id)))
+            (sync!)
+            (is (= :member (:business-member/role (member-of thandi))))
+            (is (empty? (data/get-user-invites (ctx) thandi)))
+            (is (empty? (data/get-business-invites (ctx) biz)))))
+        (testing "a member cannot manage the business"
+          (is (= :not-owner (data/change-member-role! (ctx) thandi (:xt/id (member-of owner)) "member")))
+          (is (= :not-owner (data/update-business! (ctx) thandi biz {:business-name "X" :entity-type "trust"})))
+          (is (nil? (data/delete-business! (ctx) thandi biz))))
+        (testing "the last owner cannot stop being one, or leave"
+          (is (= :last-owner (data/change-member-role! (ctx) owner (:xt/id (member-of owner)) "member")))
+          (is (= :last-owner (data/remove-member! (ctx) owner (:xt/id (member-of owner))))))
+        (testing "with a second owner, the first can leave"
+          (is (= :ok (data/change-member-role! (ctx) owner (:xt/id (member-of thandi)) "owner")))
+          (sync!)
+          (is (= :ok (data/remove-member! (ctx) owner (:xt/id (member-of owner)))))
+          (sync!)
+          (is (nil? (member-of owner))))
+        (testing "an owner renames the business"
+          (is (= :ok (data/update-business! (ctx) thandi biz {:business-name " New name " :entity-type "trust"})))
+          (sync!)
+          (is (= ["New name" :trust] ((juxt :business/name :business/entity-type) (xt/entity (xt/db node) biz)))))
+        (testing "declining and expired invitations"
+          (let [{:keys [invite]} (data/invite-member! (ctx) thandi biz {:email "eve@example.com" :role "member"})]
+            (sync!)
+            (is (true? (data/decline-invite! (ctx) eve (:xt/id invite))))
+            (sync!)
+            (is (empty? (data/get-user-invites (ctx) eve))))
+          (xt/await-tx node (xt/submit-tx node [[::xt/put {:xt/id (random-uuid) :business-invite/business-id biz
+                                                            :business-invite/email "eve@example.com" :business-invite/role :member
+                                                            :business-invite/invited-by thandi
+                                                            :business-invite/created-at (java.util.Date. (- (System/currentTimeMillis)
+                                                                                                           (* 15 24 60 60 1000)))}]]))
+          (is (empty? (data/get-user-invites (ctx) eve)) "a 15-day-old invitation has expired"))
+        (testing "an owner deletes the business and everything in it"
+          (is (true? (data/delete-business! (ctx) thandi biz)))
+          (sync!)
+          (is (nil? (xt/entity (xt/db node) biz)))
+          (is (empty? (data/get-user-businesses (ctx) thandi)))
+          (is (empty? (biff/q (xt/db node) '{:find [i] :where [[i :business-invite/business-id]]}))))))))
+
+(deftest add-business-test
+  (let [uid #uuid "aaaaaaaa-4444-0000-0000-000000000001"]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "add@example.com" :user/password "x" :user/firstname "A"
+                                       :user/lastname "B" :user/active true}])]
+      (is (= {:error :business-name-blank} (data/add-business! (fresh node) uid {:business-name "" :entity-type "trust"})))
+      (let [{:keys [business-id]} (data/add-business! (fresh node) uid {:business-name "Side hustle" :entity-type "sole-proprietor"})]
+        (xt/sync node)
+        (is (= [[business-id :owner]]
+               (map (juxt :xt/id :business-member/role) (data/get-user-businesses (fresh node) uid))))))))
+
+(deftest vat-settings-test
+  (let [owner #uuid "aaaaaaaa-5555-0000-0000-000000000001"
+        member #uuid "aaaaaaaa-5555-0000-0000-000000000002"
+        biz   #uuid "bbbbbbbb-5555-0000-0000-000000000001"
+        now   (java.util.Date.)
+        join  (fn [u role] {:xt/id (random-uuid) :business-member/business-id biz :business-member/user-id u
+                            :business-member/role role :business-member/created-at now})]
+    (with-open [node (test-xtdb-node [{:xt/id biz :business/name "Biz" :business/entity-type :pty-ltd :business/created-at now}
+                                      (join owner :owner) (join member :member)])]
+      (let [ctx #(fresh node)
+            biz-doc #(xt/entity (xt/db node) biz)]
+        (is (= :not-owner (data/update-vat-settings! (ctx) member biz {:vat-registered "true" :vat-number "4123456789" :vat-category "a"})))
+        (is (= :vat-number-invalid (data/update-vat-settings! (ctx) owner biz {:vat-registered "true" :vat-number "123" :vat-category "a"})))
+        (is (= :vat-category-invalid (data/update-vat-settings! (ctx) owner biz {:vat-registered "true" :vat-number "4123456789"})))
+        (is (= :ok (data/update-vat-settings! (ctx) owner biz {:vat-registered "true" :vat-number "412 345 6789" :vat-category "b"})))
+        (xt/sync node)
+        (is (= [true "4123456789" :b] ((juxt :business/vat-registered :business/vat-number :business/vat-category) (biz-doc))))
+        (testing "a VAT type is kept on the business's items"
+          (data/upsert-budget-item (assoc (ctx) :session {:uid owner :business-id biz}
+                                          :params {:title "Sales" :type "income" :amount "1000" :vat "zero"}))
+          (xt/sync node)
+          (is (= [:zero] (map :budget-item/vat (data/get-business-budget-items (ctx) biz)))))
+        (testing "deregistering clears the number and period"
+          (is (= :ok (data/update-vat-settings! (ctx) owner biz {})))
+          (xt/sync node)
+          (is (= [false nil nil] ((juxt :business/vat-registered :business/vat-number :business/vat-category) (biz-doc)))))))))
+
+(deftest tax-settings-test
+  (let [owner #uuid "aaaaaaaa-6666-0000-0000-000000000001"
+        member #uuid "aaaaaaaa-6666-0000-0000-000000000002"
+        biz   #uuid "bbbbbbbb-6666-0000-0000-000000000001"
+        now   (java.util.Date.)
+        join  (fn [u role] {:xt/id (random-uuid) :business-member/business-id biz :business-member/user-id u
+                            :business-member/role role :business-member/created-at now})]
+    (with-open [node (test-xtdb-node [{:xt/id biz :business/name "Biz" :business/entity-type :pty-ltd :business/created-at now}
+                                      (join owner :owner) (join member :member)])]
+      (is (= :not-owner (data/update-tax-settings! (fresh node) member biz {:year-end-month "6" :sbc "true"})))
+      (is (= :year-end-invalid (data/update-tax-settings! (fresh node) owner biz {:year-end-month "13"})))
+      (is (= :ok (data/update-tax-settings! (fresh node) owner biz {:year-end-month "6" :sbc "true"})))
+      (xt/sync node)
+      (is (= [6 true] ((juxt :business/year-end-month :business/sbc) (xt/entity (xt/db node) biz)))))))

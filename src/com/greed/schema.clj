@@ -8,7 +8,8 @@
           [:user/password  :string]
           [:user/firstname :string]
           [:user/lastname  :string]
-          [:user/age       :int]
+          ;; Asked of personal sign-ups only; a business sign-up has none.
+          [:user/age       {:optional true} :int]
           [:user/roles     {:optional true} [:maybe [:set :keyword]]]
           [:user/active    :boolean]
           [:user/password-reset-token {:optional true} [:maybe :string]]
@@ -49,6 +50,44 @@
           [:goal/saved       :int]
           [:goal/target-date {:optional true} [:maybe :string]]]
 
+   ;; A business a person runs. People are linked to it by :business-member
+   ;; docs, so it can have more than one member later (co-founder,
+   ;; bookkeeper).
+   :business/id :uuid
+   :business [:map {:closed true}
+              [:xt/id                :business/id]
+              [:business/name        :string]
+              [:business/entity-type [:enum :sole-proprietor :pty-ltd :partnership :npc :trust]]
+              [:business/created-at  inst?]
+              ;; VAT: registered vendors get VAT types on budget items and a VAT page
+              [:business/vat-registered {:optional true} :boolean]
+              [:business/vat-number     {:optional true} :string]
+              [:business/vat-category   {:optional true} [:enum :a :b :c]]
+              ;; Company tax: the month the financial year ends (2 = February)
+              ;; and whether the owner declares it a small business corporation.
+              [:business/year-end-month {:optional true} [:int {:min 1 :max 12}]]
+              [:business/sbc            {:optional true} :boolean]]
+
+   :business-member/id :uuid
+   :business-member [:map {:closed true}
+                     [:xt/id                       :business-member/id]
+                     [:business-member/business-id :business/id]
+                     [:business-member/user-id     :user/id]
+                     ;; owner: also manages members and the business's details
+                     [:business-member/role        [:enum :owner :member]]
+                     [:business-member/created-at  inst?]]
+
+   ;; An invitation to join a business, waiting for the person with that
+   ;; email to accept or decline it. Expires after 14 days.
+   :business-invite/id :uuid
+   :business-invite [:map {:closed true}
+                     [:xt/id                       :business-invite/id]
+                     [:business-invite/business-id :business/id]
+                     [:business-invite/email       :string] ; lower case
+                     [:business-invite/role        [:enum :owner :member]]
+                     [:business-invite/invited-by  :user/id]
+                     [:business-invite/created-at  inst?]]
+
    :budget-item/id :uuid
    :budget-item [:map {:closed true}
                  [:xt/id               :budget-item/id]
@@ -59,7 +98,17 @@
                  ;; Text that appears on bank statement lines for this item,
                  ;; comma-separated ("discovery life, vitality"). The Spending
                  ;; tab uses it to tell planned payments from the rest.
-                 [:budget-item/reference {:optional true} :string]]
+                 [:budget-item/reference {:optional true} :string]
+                 ;; Set on a business's items. :budget-item/user-id is then
+                 ;; the member who added it.
+                 [:budget-item/business-id {:optional true} :business/id]
+                 ;; Business items only: the spending category for payments
+                 ;; this item's reference matches (Stock and suppliers, say).
+                 [:budget-item/category {:optional true} :keyword]
+                 ;; Business income and expense items of a VAT vendor; the
+                 ;; amount includes VAT. Unset means income :standard,
+                 ;; expenses :none (see com.greed.utilities.vat).
+                 [:budget-item/vat {:optional true} [:enum :standard :zero :none]]]
 
    ;; Totals from one uploaded bank statement, for the Spending tab. The
    ;; statement's individual lines are never stored. Amounts are in cents.
@@ -69,6 +118,8 @@
    :statement-summary [:map {:closed true}
                        [:xt/id                                   :statement-summary/id]
                        [:statement-summary/user-id               :user/id]
+                       ;; Set on a business's months; user-id is then who uploaded it.
+                       [:statement-summary/business-id {:optional true} :business/id]
                        [:statement-summary/bank                  :keyword]
                        [:statement-summary/month                 :string] ; "2026-10"
                        [:statement-summary/period-start          :string]
@@ -94,8 +145,12 @@
                        ;; Totals per payee (cleaned statement text, no dates or
                        ;; numbers), so the budget sync can re-match references.
                        [:statement-summary/payees {:optional true}
-                        [:vector [:map [:text :string] [:category :keyword] [:spent-cents :int]
+                        [:vector [:map [:name {:optional true} :string] [:text :string] [:category :keyword] [:spent-cents :int]
                                   [:refund-cents :int] [:count :int]]]]
+                       ;; Totals per payer of money in, so a business can add a
+                       ;; regular payer to its budget's income from Spending.
+                       [:statement-summary/income-payees {:optional true}
+                        [:vector [:map [:name :string] [:text :string] [:cents :int] [:count :int]]]]
                        [:statement-summary/checks-ok             :boolean]
                        [:statement-summary/uploaded-at           inst?]]})
 

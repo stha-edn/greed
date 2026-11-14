@@ -11,6 +11,7 @@
             [com.greed.statements.core :as statements]
             [com.greed.statements.summary :as summary]
             [com.greed.statements.categorise :as categorise]
+            [com.greed.utilities.vat :as vat]
             [com.greed.ui.components.alerts :as alerts]
             [com.greed.ui.components.shared :as shared]
             [com.greed.ui.components.headers :as headers]
@@ -103,13 +104,39 @@
    [:p {:class "mt-1 text-lg font-semibold tabular-nums text-zinc-900"} value]
    (when sub [:p {:class "mt-0.5 text-xs text-zinc-500"} sub])])
 
-(defn- linked-plan
-  "Cents your budget plans for the expense items linked on this summary."
-  [{:statement-summary/keys [budget-matches]} items-by-id]
-  (reduce + 0 (for [{:keys [item-id]} budget-matches
-                    :let [i (items-by-id item-id)]
-                    :when (= :expenses (:budget-item/type i))]
-                (* 100 (:budget-item/amount i)))))
+(defn compare-with-budget
+  "Planned against spent for one month: `summaries` are that month's
+   summaries (one per bank), `planned-expenses` the budget's expenses in
+   rands. When budget items are linked by statement reference, their payments
+   are judged item by item, and only the rest of the spending is compared with
+   what the budget leaves for everything else. All amounts in cents; :over is
+   negative when under plan."
+  [summaries items-by-id planned-expenses]
+  (let [spent      (reduce + 0 (map :statement-summary/money-out-cents summaries))
+        budgeted   (reduce + 0 (keep :statement-summary/budgeted-cents summaries))
+        linked-ids (distinct (map :item-id (mapcat :statement-summary/budget-matches summaries)))
+        linked?    (boolean (seq linked-ids))
+        planned    (* 100 planned-expenses)
+        linked-plan (reduce + 0 (for [id linked-ids
+                                      :let [i (items-by-id id)]
+                                      :when (= :expenses (:budget-item/type i))]
+                                  (* 100 (:budget-item/amount i))))
+        unplanned  (- spent budgeted)
+        rest-plan  (max 0 (- planned linked-plan))]
+    {:spent spent :planned planned :linked? linked? :budgeted budgeted
+     :unplanned unplanned :rest-plan rest-plan
+     :over (if linked? (- unplanned rest-plan) (- spent planned))}))
+
+(defn- verdict
+  "One sentence on planned against spent (see compare-with-budget)."
+  [{:keys [linked? budgeted unplanned rest-plan planned over]}]
+  [:p {:class (str "mt-1 text-sm " (if (pos? over) "text-rose-700" "text-zinc-600"))}
+   (if linked?
+     (str (whole budgeted) " went to your linked budget items. The other " (whole unplanned) " is "
+          (whole (Math/abs (long over))) (if (pos? over) " more" " less")
+          " than the " (whole rest-plan) " your budget leaves for everything else.")
+     (str (whole (Math/abs (long over))) (if (pos? over) " more" " less")
+          " than the " (whole planned) " your budget plans for expenses."))])
 
 (defn- headline [{:statement-summary/keys [bank money-out-cents money-in-cents transfers-in-cents transfers-out-cents
                                            line-count checks-ok salary-cents budget-matches budgeted-cents] :as s}
@@ -124,23 +151,7 @@
      [:p {:class "mt-1 text-sm text-zinc-600"}
       (str "Only " (period-label s) " is on your statement, so this is part of the month.")])
    (when (and (pos? planned-expenses) (whole-month? s))
-     (if (seq budget-matches)
-       ;; Linked items are judged one by one below; the rest of the spending
-       ;; is compared with what the budget leaves for everything else.
-       (let [unplanned (- money-out-cents (or budgeted-cents 0))
-             rest-plan (max 0 (- (* 100 planned-expenses) (linked-plan s items-by-id)))
-             diff      (- unplanned rest-plan)]
-         [:p {:class (str "mt-1 text-sm " (if (pos? diff) "text-rose-700" "text-zinc-600"))}
-          (str (whole (or budgeted-cents 0)) " went to your linked budget items. The other " (whole unplanned)
-               (if (pos? diff)
-                 (str " is " (whole diff) " more than the " (whole rest-plan) " your budget leaves for everything else.")
-                 (str " is " (whole (- diff)) " less than the " (whole rest-plan) " your budget leaves for everything else.")))])
-       (let [planned-cents (* 100 planned-expenses)
-             diff (- money-out-cents planned-cents)]
-         [:p {:class (str "mt-1 text-sm " (if (pos? diff) "text-rose-700" "text-zinc-600"))}
-          (if (pos? diff)
-            (str (whole diff) " more than the " (whole planned-cents) " your budget plans for expenses.")
-            (str (whole (- diff)) " less than the " (whole planned-cents) " your budget plans for expenses."))])))
+     (verdict (compare-with-budget [s] items-by-id planned-expenses)))
    (when-not checks-ok
      [:p {:role "alert" :class "mt-4 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800"}
       "This statement's own totals did not match what greed read, so some lines may be missing. Treat these numbers as a guide."])
@@ -201,11 +212,11 @@
           has-references?
           "Your budget items have statement references, but this month has not been matched with them yet."
           :else
-          "Give your expense items a statement reference in Finances, such as \"discovery life\" for medical aid. greed then leaves those payments out of the spending outside your budget, and shows each item's planned and paid amounts.")]
+          "Give your expense items a statement reference in your budget, such as \"discovery life\" for medical aid. greed then leaves those payments out of the spending outside your budget, and shows each item's planned and paid amounts.")]
        (when (and has-references? payees)
          [:div {:class "mt-3"} (sync-button s)])
        [:a {:href "/app/finances" :class "mt-3 inline-block rounded-sm text-sm font-medium text-zinc-900 underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"}
-        "Go to Finances"]])))
+        "Go to your budget"]])))
 
 (defn- category-chart [{:statement-summary/keys [categories money-out-cents]}]
   (let [rows (->> categories (sort-by (comp - val)))
@@ -248,6 +259,94 @@
           [:li
            [:p {:class "text-sm font-medium text-zinc-900"} title]
            [:p {:class "mt-0.5 text-sm text-zinc-600"} body]])]])))
+
+(defn- income-title-set
+  "Titles of the budget's income items, lower case, to tell what is already in it."
+  [items]
+  (set (for [{:budget-item/keys [type title]} items :when (= :income type)]
+         (str/lower-case (str/trim (str title))))))
+
+(defn- money-in-card
+  "A business's payers this month, each with a button that adds it to the
+   budget's income at this month's amount."
+  [{:statement-summary/keys [income-payees bank] :as s} items]
+  (let [in-budget (income-title-set items)]
+    [:section {:class "rounded-lg border border-zinc-200 bg-white p-6" :aria-labelledby "in-h"}
+     [:h2 {:id "in-h" :class "text-sm font-semibold text-zinc-900"} "Money in"]
+     [:p {:class "mt-0.5 text-xs text-zinc-500"} "Who paid the business this month. Add a regular payer to the budget's income at this month's amount; you can change it in Budget."]
+     (cond
+       (nil? income-payees)
+       [:p {:class "mt-4 text-sm text-zinc-600"} "This month was read before greed kept payers. Upload the statement once more to see them here."]
+
+       (empty? income-payees)
+       [:p {:class "mt-4 text-sm text-zinc-600"} "No money came in this month, apart from transfers between the business's own accounts."]
+
+       :else
+       [:ul {:class "mt-4 divide-y divide-zinc-100"}
+        (for [{:keys [name cents count]} income-payees]
+          [:li {:class "flex items-center justify-between gap-4 py-2.5"}
+           [:span {:class "min-w-0"}
+            [:span {:class "block truncate text-sm text-zinc-900"} name]
+            [:span {:class "block text-xs text-zinc-500"} (str (rands cents) " · " count (if (= 1 count) " payment" " payments"))]]
+           (cond
+             (in-budget (str/lower-case (str/trim name)))
+             [:span {:class "flex-shrink-0 text-xs font-medium text-zinc-500"} "In your income"]
+
+             (str/blank? name) nil
+
+             :else
+             (biff/form {:action "/app/spending/add-income" :class "flex-shrink-0"}
+                        [:input {:type "hidden" :name "month" :value (month-of s)}]
+                        [:input {:type "hidden" :name "bank" :value (clojure.core/name bank)}]
+                        [:input {:type "hidden" :name "payer" :value name}]
+                        (shared/btn :variant :outline :size :sm :type "submit"
+                                    :attrs {:aria-label (str "Add " name " to income")}
+                                    "Add to income")))])])]))
+
+(defn- payee-name
+  "A payee's readable name; months read before names were kept use its text."
+  [{:keys [name text]}]
+  (or (not-empty name) (summary/merchant-name text)))
+
+(defn- money-out-card
+  "A business's largest payees this month, each with a button that adds it
+   to the budget's expenses, with its name as the statement reference so its
+   payments are matched from then on. A payee already matched by an item's
+   reference shows that item instead."
+  [{:statement-summary/keys [payees bank] :as s} items]
+  (let [match-items (for [{:budget-item/keys [title type reference category] :xt/keys [id]} items
+                          :when (and reference (#{:expenses :savings} type))]
+                      (cond-> {:id id :title title :reference reference} category (assoc :category category)))
+        linked      (summary/payee-items match-items (take 15 payees))
+        titles      (set (for [{:budget-item/keys [type title]} items :when (#{:expenses :savings} type)]
+                           (str/lower-case (str/trim (str title)))))]
+    [:section {:class "rounded-lg border border-zinc-200 bg-white p-6" :aria-labelledby "out-h"}
+     [:h2 {:id "out-h" :class "text-sm font-semibold text-zinc-900"} "Money out"]
+     [:p {:class "mt-0.5 text-xs text-zinc-500"}
+      "Who the business paid this month, largest first. Add a regular cost to the budget's expenses at this month's amount; its name becomes the statement reference, so its payments are matched from then on."]
+     (if (nil? payees)
+       [:p {:class "mt-4 text-sm text-zinc-600"} "This month was read before greed kept payees. Upload the statement once more to see them here."]
+       [:ul {:class "mt-4 divide-y divide-zinc-100"}
+        (for [[{:keys [spent-cents refund-cents count category] :as p} item] linked
+              :let [nm (payee-name p)]]
+          [:li {:class "flex items-center justify-between gap-4 py-2.5"}
+           [:span {:class "min-w-0"}
+            [:span {:class "block truncate text-sm text-zinc-900"} nm]
+            [:span {:class "block text-xs text-zinc-500"}
+             (str (rands (- spent-cents refund-cents)) " · " (categorise/categories category "Other") " · "
+                  count (if (= 1 count) " payment" " payments"))]]
+           (cond
+             item [:span {:class "flex-shrink-0 truncate text-xs font-medium text-zinc-500"} (str "In budget: " (:title item))]
+             (titles (str/lower-case (str/trim nm))) [:span {:class "flex-shrink-0 text-xs font-medium text-zinc-500"} "In your budget"]
+             (str/blank? nm) nil
+             :else
+             (biff/form {:action "/app/spending/add-expense" :class "flex-shrink-0"}
+                        [:input {:type "hidden" :name "month" :value (month-of s)}]
+                        [:input {:type "hidden" :name "bank" :value (name bank)}]
+                        [:input {:type "hidden" :name "payee" :value (:text p)}]
+                        (shared/btn :variant :outline :size :sm :type "submit"
+                                    :attrs {:aria-label (str "Add " nm " to expenses")}
+                                    "Add to expenses")))])])]))
 
 (defn- merchants [{:statement-summary/keys [top-merchants]}]
   (when (seq top-merchants)
@@ -358,13 +457,84 @@
               (bank-names bank (name bank))]])])])))
 
 ;; ---------------------------------------------------------------------------
+;; Insights card
+
+(defn- bar-row [label cents top bar-class]
+  [:div {:class "grid grid-cols-[minmax(0,8rem)_minmax(0,1fr)_auto] items-center gap-3 text-sm"}
+   [:span {:class "truncate text-zinc-600"} label]
+   [:span {:class "h-2.5 overflow-hidden rounded-full bg-zinc-100"}
+    [:span {:class (str "block h-full rounded-full " bar-class) :style {:width (str (max 2 (pct cents top)) "%")}}]]
+   [:span {:class "w-24 text-right font-semibold tabular-nums text-zinc-900"} (whole cents)]])
+
+(defn planned-vs-spent-card
+  "For Insights: the newest full month from the user's bank statements
+   against the budget's planned expenses, all banks together. Partial months
+   (the edges of a statement) are not compared."
+  [summaries budget-items planned-expenses]
+  (let [items-by-id (into {} (map (juxt :xt/id identity)) budget-items)
+        full        (filter whole-month? summaries)
+        month       (some-> (first full) month-of)
+        in-month    (filter #(= month (month-of %)) full)
+        {:keys [spent planned linked? budgeted unplanned over] :as cmp}
+        (when month (compare-with-budget in-month items-by-id planned-expenses))
+        banks       (str/join " and " (distinct (map #(bank-names (:statement-summary/bank %) "bank") in-month)))
+        link        (fn [href label]
+                      [:a {:href href :class "mt-5 inline-flex items-center gap-1 rounded-sm text-sm font-medium text-zinc-900 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"}
+                       label [:span {:aria-hidden "true"} "→"]])]
+    [:div {:class "p-6 bg-white ring-1 ring-zinc-200/70 rounded-lg"}
+     [:h3 {:class "text-sm font-semibold text-zinc-900 tracking-tight"} "Planned vs spent"]
+     [:p {:class "mt-0.5 text-xs text-zinc-500 leading-relaxed"}
+      (if month
+        (str (month-label (first in-month)) ", from your " banks " statement" (when (> (count in-month) 1) "s") ".")
+        "What your bank statements show against this plan.")]
+     (cond
+       (and month (pos? planned-expenses))
+       [:div {:class "mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-10"}
+        [:div {:class "space-y-3"}
+         (let [top (max 1 planned spent)]
+           [:<>
+            (bar-row "Planned" planned top "bg-zinc-400")
+            (bar-row "Spent" spent top (if (pos? over) "bg-rose-500" "bg-brand-600"))
+            (when linked?
+              [:<>
+               (bar-row "Budget items" budgeted top "bg-brand-600/60")
+               (bar-row "Everything else" unplanned top "bg-brand-600/60")])])]
+        [:div
+         [:p {:class (str "text-2xl font-semibold tracking-[-0.02em] tabular-nums "
+                          (if (pos? over) "text-rose-700" "text-zinc-900"))}
+          (str (whole (Math/abs (long over))) (if (pos? over) " over plan" " under plan"))]
+         (verdict cmp)
+         (link (month-href month) (str "See " (month-label (first in-month)) " in Spending"))]]
+
+       month
+       [:div
+        [:p {:class "mt-5 text-sm text-zinc-600"}
+         (str (whole spent) " spent. Add your expenses in Finances to compare it with a plan.")]
+        (link "/app/finances" "Go to Finances")]
+
+       (seq summaries)
+       [:div
+        [:p {:class "mt-5 text-sm text-zinc-600"}
+         "Your statements only cover part of a month so far. Upload one that covers a full month to compare it with your plan."]
+        (link "/app/spending" "Go to Spending")]
+
+       :else
+       [:div
+        [:p {:class "mt-5 text-sm text-zinc-600"}
+         "Upload a bank statement to see what you actually spent against this plan, by month and by category."]
+        (link "/app/spending" "Upload a statement")])]))
+
+;; ---------------------------------------------------------------------------
 ;; Page and actions
 
-(defn page [{:keys [session params] :as ctx} & {:keys [error]}]
-  (let [uid       (:uid session)
-        summaries (data/get-statement-summaries ctx uid)
+(defn page
+  "GET /app/spending: the chosen business's months, or the personal ones."
+  [{:keys [params] :as ctx} & {:keys [error]}]
+  (let [owner     (data/owner ctx)
+        business  (data/session-business ctx)
+        summaries (data/get-statement-summaries ctx owner)
         latest    (selected-summary summaries params)
-        items     (data/get-budget-items ctx uid)
+        items     (data/get-owner-budget-items ctx owner)
         items-by-id (into {} (map (juxt :xt/id identity)) items)
         has-references? (boolean (some :budget-item/reference items))
         {:keys [total-expenses]} (data/get-budget-data items)]
@@ -372,7 +542,10 @@
      ctx
      [:div {:class "space-y-6"}
       (when (:alert params) (alerts/info params))
-      (headers/pages-heading ["Spending"] "Where your money actually went, from your bank statements.")
+      (headers/pages-heading ["Spending"]
+                             (if business
+                               (str "Where " (:business/name business) "'s money actually went, from its bank statements.")
+                               "Where your money actually went, from your bank statements."))
       (if latest
         [:<>
          (month-switcher summaries latest)
@@ -383,6 +556,11 @@
           [:div {:class "space-y-6"}
            (callouts latest)
            (merchants latest)]]
+         ;; a business can add its payers and payees to its budget from here
+         (when business
+           [:div {:class "grid grid-cols-1 gap-6 lg:grid-cols-2"}
+            (money-in-card latest items)
+            (money-out-card latest items)])
          (month-on-month summaries latest)
          (upload-panel :error error :compact? true)
          (history summaries latest)]
@@ -395,26 +573,74 @@
 
 (defn upload
   "POST /app/spending/upload: read, summarise and save; never keep the file."
-  [{:keys [params session] :as ctx}]
+  [{:keys [params] :as ctx}]
   (let [bs (get-in params [:statement :bytes])]
     (if (or (nil? bs) (zero? (alength ^bytes bs)))
       (page ctx :error :no-file)
-      (let [{:keys [error] :as result} (statements/read-statement-pdf bs)]
+      (let [owner (data/owner ctx)
+            {:keys [error] :as result} (statements/read-statement-pdf bs :business? (some? (:business-id owner)))]
         (if error
           (page ctx :error error)
           (do (data/save-statement-summaries
-               ctx (:uid session)
+               ctx owner
                (summary/summarise-months
                 result
-                (data/budget-match-items ctx (:uid session))))
+                (data/budget-match-items ctx owner)))
               {:status 303
                :headers {"location" "/app/spending?alert=statement-read"}}))))))
+
+(defn add-income
+  "POST /app/spending/add-income: a business adds one of the month's payers
+   to its budget's income, at that month's amount. The amount is read from
+   the saved month, not from the form."
+  [{:keys [params] :as ctx}]
+  (let [owner    (data/owner ctx)
+        s        (when (:business-id owner)
+                   (some #(when (and (= (:month params) (month-of %))
+                                     (= (:bank params) (name (:statement-summary/bank %))))
+                            %)
+                         (data/get-statement-summaries ctx owner)))
+        payer    (some #(when (= (:payer params) (:name %)) %) (:statement-summary/income-payees s))
+        back     (str "/app/spending?month=" (:month params) "&bank=" (:bank params))]
+    (if (and payer (not (str/blank? (:name payer))))
+      (do (data/upsert-budget-item (assoc ctx :params {:title (subs (:name payer) 0 (min 80 (count (:name payer))))
+                                                       :type "income"
+                                                       :amount (str (Math/round (/ (:cents payer) 100.0)))}))
+          {:status 303 :headers {"location" (str back "&alert=income-added")}})
+      {:status 303 :headers {"location" back}})))
+
+(defn add-expense
+  "POST /app/spending/add-expense: a business adds one of the month's payees
+   to its budget's expenses at that month's amount, with the payee's name as
+   the statement reference, then re-matches its months. A VAT vendor's item
+   is standard-rated when the payee's category usually carries VAT. The
+   amount is read from the saved month, not from the form."
+  [{:keys [params] :as ctx}]
+  (let [owner (data/owner ctx)
+        s     (when (:business-id owner)
+                (some #(when (and (= (:month params) (month-of %))
+                                  (= (:bank params) (name (:statement-summary/bank %))))
+                         %)
+                      (data/get-statement-summaries ctx owner)))
+        p     (some #(when (= (:payee params) (:text %)) %) (:statement-summary/payees s))
+        nm    (some-> p payee-name)
+        back  (str "/app/spending?month=" (:month params) "&bank=" (:bank params))]
+    (if (and p (not (str/blank? nm)))
+      (do (data/upsert-budget-item
+           (assoc ctx :params {:title (subs nm 0 (min 80 (count nm)))
+                               :type "expenses"
+                               :amount (str (max 0 (Math/round (/ (- (:spent-cents p) (:refund-cents p)) 100.0))))
+                               :reference nm
+                               :vat (if (vat/vat-categories (:category p)) "standard" "none")}))
+          (data/sync-statement-summaries ctx owner)
+          {:status 303 :headers {"location" (str back "&alert=expense-added")}})
+      {:status 303 :headers {"location" back}})))
 
 (defn sync-budget
   "POST /app/spending/sync: re-match saved months with the budget's statement
    references, then come back to the same month."
-  [{:keys [session params] :as ctx}]
-  (let [{:keys [needs-upload]} (data/sync-statement-summaries ctx (:uid session))]
+  [{:keys [params] :as ctx}]
+  (let [{:keys [needs-upload]} (data/sync-statement-summaries ctx (data/owner ctx))]
     {:status 303
      :headers {"location" (str "/app/spending?alert=" (if (pos? needs-upload) "budget-synced-partly" "budget-synced")
                                (when-let [m (not-empty (:month params))] (str "&month=" m))

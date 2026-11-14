@@ -94,7 +94,9 @@
 
         (not (biff-auth/passed-recaptcha? ctx))
         {:status 303
-         :headers {"location" (str "/" page "?error=recaptcha")}}
+         :headers {"location" (str "/" page "?"
+                                   (when (and (= page "signup") (auth/business-signup? (:params ctx))) "as=business&")
+                                   "error=recaptcha")}}
 
         (not (:valid? result))
         {:status 303
@@ -103,7 +105,9 @@
                                 "/signin?error=account-deactivated"
 
                                 (= page "signup")
-                                "/signup?error=invalid-email"
+                                (str "/signup?"
+                                     (when (auth/business-signup? (:params ctx)) "as=business&")
+                                     "error=" (name (or (:error result) :invalid-email)))
 
                                 :else
                                 "/signin?error=invalid-credentials")}}
@@ -151,8 +155,8 @@
 (defn- sync-spending!
   "Keeps the Spending tab's budget matches in step after a budget change."
   [ctx]
-  (when-let [user-id (data/get-user-id-from-session ctx)]
-    (data/sync-statement-summaries ctx user-id)))
+  (when (data/get-user-id-from-session ctx)
+    (data/sync-statement-summaries ctx (data/owner ctx))))
 
 (defn create-budget-item [ctx]
   (data/upsert-budget-item ctx)
@@ -228,7 +232,7 @@
 (defn logout [{:keys [session]}]
   {:status 303
    :headers {"location" "/"}
-   :session (dissoc session :uid)})
+   :session (dissoc session :uid :business-id)})
 
 (defn dismiss-finance-tax-prompt [{:keys [session]}]
   {:status 303

@@ -115,10 +115,13 @@
                             {:description "Savings" :type :expenses :kind :transfer :category :transfers :amount-cents 9000}
                             {:description "Salary" :type :income :kind :salary :category :income :amount-cents 9000}])]
     (testing "grouped by text, refunds kept apart, transfers and income left out"
-      (is (= [{:text "ENGEN" :category :fuel :spent-cents 1500 :refund-cents 200 :count 2}] ps)))
+      (is (= [{:name "ENGEN" :text "ENGEN" :category :fuel :spent-cents 1500 :refund-cents 200 :count 2}] ps)))
     (testing "the sync matches against payees alone"
-      (is (= {:budget-matches [{:item-id 1 :title "Fuel" :cents 1300 :count 2}] :budgeted-cents 1300}
-             (summary/budget-totals [{:id 1 :title "Fuel" :reference "engen, sasol"}] ps))))))
+      (is (= {:budget-matches [{:item-id 1 :title "Fuel" :cents 1300 :count 2}] :budgeted-cents 1300 :categories {:fuel 1300}}
+             (summary/budget-totals [{:id 1 :title "Fuel" :reference "engen, sasol"}] ps))))
+    (testing "an item with a category puts what it matches in that category"
+      (is (= {:stock 1300}
+             (:categories (summary/budget-totals [{:id 1 :title "Fuel" :reference "engen" :category :stock}] ps)))))))
 
 (deftest references-that-change-each-month
   (testing "numbers stuck to a name are dropped, the name is kept"
@@ -144,3 +147,17 @@
                             {:description "SBSAVAFNO20007921999" :type :expenses :kind :payment-out :category :other :amount-cents 100000}])]
     (is (= 1 (count ps)))
     (is (= 200000 (:budgeted-cents (summary/budget-totals [{:id 1 :title "Savings" :reference "SBSAVAFNO20007921542"}] ps))))))
+
+(deftest money-in-by-payer
+  (let [ps (summary/income-payees
+            [{:description "FNB App Payment From Acme Holdings" :type :income :kind :payment-in :amount-cents 500000}
+             {:description "FNB App Payment From Acme Holdings Ref INV2026" :type :income :kind :payment-in :amount-cents 250000}
+             {:description "Payshap Credit Small Client" :type :income :kind :payment-in :amount-cents 10000}
+             {:description "FNB App Transfer From Savings" :type :income :kind :transfer :amount-cents 999999}
+             {:description "WOOLWORTHS" :type :income :kind :refund :amount-cents 5000}
+             {:description "ENGEN" :type :expenses :kind :card-purchase :amount-cents 1000}])]
+    (testing "payers largest first, with the bank's wording and reference codes dropped"
+      (is (= [["Acme Holdings" 500000 1] ["Acme Holdings Ref INV" 250000 1] ["Small Client" 10000 1]]
+             (map (juxt :name :cents :count) ps))))
+    (testing "transfers, refunds and payments out are not money in"
+      (is (not-any? #(re-find #"(?i)savings|woolworths|engen" (:name %)) ps)))))

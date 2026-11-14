@@ -21,18 +21,19 @@
   "Reads statement text with the matching bank's adapter. Returns
    {:bank :period :transactions :problems}, each line with :kind and
    :category, or {:error kw} when the text is empty or no adapter recognises
-   the bank."
-  [text]
+   the bank. With :business? true, lines are also put in business
+   categories (see categorise/business-category)."
+  [text & {:keys [business?]}]
   (cond
     (str/blank? text) {:error :no-text}
     :else (if-let [{:keys [parse kind]} (first (filter #((:match? %) text) adapters))]
-            (update (parse text) :transactions #(mapv (partial categorise/categorise kind) %))
+            (update (parse text) :transactions #(mapv (fn [l] (categorise/categorise kind l business?)) %))
             {:error :unsupported-bank})))
 
 (defn read-statement-pdf
   "Reads an uploaded statement PDF (bytes) into transaction lines. Returns the
    bank reader's result, or {:error kw} (see pdf/pdf->text and
    read-statement-text)."
-  [bs]
+  [bs & {:keys [business?]}]
   (let [{:keys [text error]} (pdf/pdf->text bs)]
-    (if error {:error error} (read-statement-text text))))
+    (if error {:error error} (read-statement-text text :business? business?))))

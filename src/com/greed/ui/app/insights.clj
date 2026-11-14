@@ -5,6 +5,7 @@
             [com.greed.ui.components.shared :as shared]
             [com.greed.ui.components.stats :as stats]
             [com.greed.ui.components.svgs :as svgs]
+            [com.greed.ui.app.statements :as spending]
             [com.greed.utilities.core :as utilities]))
 
 (defn- legend-row [dot-cls label amount pct amount-cls]
@@ -109,4 +110,7 @@
           [:div {:class "grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3"}
            (allocation-card total-income total-expenses total-savings leftover overspend?)
            (expense-breakdown-card expense-items total-expenses)
-           (stats/savings-pace budget-items payday)]]])])))
+           (stats/savings-pace budget-items payday)]]
+         [:div
+          (stats/section-header "From your bank statements" :href "/app/spending" :link-label "View in Spending")
+          (spending/planned-vs-spent-card (data/get-statement-summaries ctx user-id) budget-items total-expenses)]])])))

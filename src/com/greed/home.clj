@@ -3,6 +3,8 @@
             [xtdb.api :as xt]
             [com.greed.middleware :as mid]
             [com.greed.email :as email]
+            [com.greed.authentication :as auth]
+            [com.greed.data.core :as data]
             [com.greed.ui :as ui]
             [com.greed.ui.pages.about :as p.about]
             [com.greed.ui.pages.contact :as p.contact]
@@ -58,11 +60,15 @@
      (headers/pages ctx)
      (p.signin/form ctx))))
 
-(defn signin-success-page [{:keys [biff/db session params]}]
-  (let [user-id (biff/lookup-id db :user/email (:email params))]
+(defn signin-success-page [{:keys [biff/db session params] :as ctx}]
+  (let [user-id (biff/lookup-id db :user/email (:email params))
+        ;; someone who runs a business, or has an invitation waiting, picks
+        ;; Personal or a business first
+        choose? (or (seq (data/get-user-businesses ctx user-id))
+                    (seq (data/get-user-invites ctx user-id)))]
     {:status 303
-     :headers {"Location" "/app?success=signin"}
-     :session (with-meta (assoc session :uid user-id) {:recreate true})}))
+     :headers {"Location" (if choose? "/app/choose" "/app?success=signin")}
+     :session (with-meta (-> session (assoc :uid user-id) (dissoc :business-id)) {:recreate true})}))
 
 (defn signup-page [{:keys [recaptcha/site-key] :as ctx}]
   (let [ctx (assoc ctx :site-key site-key
@@ -78,9 +84,17 @@
                            :to (:email params)
                            :firstname (:firstname params)
                            :app-url (str base-url "/app")})
-    {:status 303
-     :headers {"Location" "/app?success=signup"}
-     :session (with-meta (assoc session :uid user-id) {:recreate true})}))
+    ;; a business sign-up starts in its new business
+    (let [ctx         (assoc ctx :biff/db (xt/db node))
+          business-id (when (auth/business-signup? params)
+                        (:xt/id (first (data/get-user-businesses ctx user-id))))
+          invited?    (seq (data/get-user-invites ctx user-id))]
+      {:status 303
+       ;; someone who signed up after being invited sees the invitation first
+       :headers {"Location" (if (and invited? (not business-id)) "/app/choose" "/app?success=signup")}
+       :session (with-meta (cond-> (-> session (assoc :uid user-id) (dissoc :business-id))
+                             business-id (assoc :business-id business-id))
+                  {:recreate true})})))
 
 (def module
   {:routes [["/"                  {:get home-page}]

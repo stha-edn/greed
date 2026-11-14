@@ -7,6 +7,9 @@
             [com.greed.ui.app.settings :as settings]
             [com.greed.ui.app.finances :as finances]
             [com.greed.ui.app.statements :as spending]
+            [com.greed.ui.app.profiles :as profiles]
+            [com.greed.ui.app.vat :as vat]
+            [com.greed.ui.app.company-tax :as company-tax]
             [com.greed.ui.app.calendar :as calendar]
             [com.greed.ui.app.insights :as insights]
             [com.greed.ui.app.dashboard :as dashboard]
@@ -21,23 +24,44 @@
 (def module
   {:routes [["/app" {:middleware [mid/wrap-signed-in]}
              ["" {:get dashboard/page}]
+             ["/choose" {:get profiles/page :post profiles/choose}]
+             ["/vat" {:get vat/page}]
+             ["/company-tax" {:get company-tax/page}]
+             ["/invites/accept" {:post profiles/accept-invite}]
+             ["/invites/decline" {:post profiles/decline-invite}]
+             ["/businesses/create" {:post profiles/add-business}]
+             ["/business"
+              ["" {:get profiles/settings-page}]
+              ["/update" {:post profiles/update-details}]
+              ["/vat" {:post profiles/update-vat}]
+              ["/tax" {:post profiles/update-tax}]
+              ["/invite" {:post profiles/invite}]
+              ["/invites/cancel" {:post profiles/cancel-invite}]
+              ["/members/role" {:post profiles/change-role}]
+              ["/members/remove" {:post profiles/remove-member}]
+              ["/delete" {:post profiles/delete-business}]]
+             ;; Budget and Spending show the chosen business's, or personal ones.
              ["/finances"
               ["/" {:get finances/page}]
               ["/account-type-options" {:get forms/account-type-field}]
               ["/create-budget-item" {:post mid/create-budget-item}]
               ["/update-budget-item" {:post mid/update-budget-item}]
               ["/delete-budget-item" {:post mid/delete-budget-item}]]
+             ["/spending"
+              ["" {:get spending/page}]
+              ["/upload" {:post spending/upload}]
+              ["/sync" {:post spending/sync-budget}]
+              ["/add-income" {:post spending/add-income}]
+              ["/add-expense" {:post spending/add-expense}]
+              ["/delete" {:post spending/delete}]]
+             ;; Personal pages: while a business is chosen they go to its home.
+             ["" {:middleware [profiles/wrap-personal]}
              ["/goals"
               ["" {:get goals/page}]
               ["/create-goal" {:post mid/create-goal}]
               ["/update-goal" {:post mid/update-goal}]
               ["/delete-goal" {:post mid/delete-goal}]]
              ["/insights" {:get insights/page}]
-             ["/spending"
-              ["" {:get spending/page}]
-              ["/upload" {:post spending/upload}]
-              ["/sync" {:post spending/sync-budget}]
-              ["/delete" {:post spending/delete}]]
              ["/calendar" {:get calendar/page}]
              ["/calendar/grid" {:get calendar/calendar-grid}]
              ["/calendar/create-event" {:post calendar/create-event}]
@@ -51,7 +75,7 @@
              ;; Legacy redirects — Tools was renamed to Tax.
              ["/tools" {:get (redirect-to "/app/tax")}]
              ["/tools/income-tax-calculator" {:get (redirect-to "/app/tax/income-tax-calculator")}]
-             ["/tools/tax-returns" {:get (redirect-to "/app/tax/tax-returns")}]
+             ["/tools/tax-returns" {:get (redirect-to "/app/tax/tax-returns")}]]
              ["/settings" {:get settings/page}]
              ["/admin" {:middleware [mid/wrap-admin]}
               ["" {:get (redirect-to "/app/admin/users")}]

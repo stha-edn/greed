@@ -7,12 +7,27 @@
 (defn existing-user? [users user]
   (some? (first (filter #(= (:user/email %) (:email user)) users))))
 
-(defn signup!? [{:keys [params] :as ctx}]
-  (let [users (data/get-users ctx)
-        valid? (not (existing-user? users params))]
-    (when valid?
-      (data/upsert-user ctx))
-    valid?))
+(defn business-signup?
+  "Is this sign-up for a business (the Business tab of the sign-up form)?"
+  [params]
+  (= "business" (:account-type params)))
+
+(defn signup!
+  "Creates the person, and for a business sign-up their business too.
+   Everything is checked before anything is created, so a bad form leaves
+   no person without their business. Returns {:valid? true} or
+   {:valid? false :error kw}."
+  [{:keys [params] :as ctx}]
+  (let [business? (business-signup? params)
+        problem   (cond
+                    (existing-user? (data/get-users ctx) params) :invalid-email
+                    business? (data/business-problem params))]
+    (if problem
+      {:valid? false :error problem}
+      (let [user-id (data/upsert-user ctx)]
+        (when business?
+          (data/create-business! ctx user-id params))
+        {:valid? true}))))
 
 (defn hashed-password? [db-password]
   (str/starts-with? db-password "bcrypt"))
@@ -50,7 +65,5 @@
 
 (defn authenticate! [{:keys [uri] :as ctx}]
   (if (= "/authenticate/signup" uri)
-    (if (signup!? ctx)
-      {:valid? true}
-      {:valid? false :error :invalid-email})
+    (signup! ctx)
     (signin? ctx)))

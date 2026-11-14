@@ -2,6 +2,7 @@
   (:require [com.core :as c]
             [com.greed.ui :as ui]
             [com.greed.data.core :as data]
+            [com.greed.ui.app.profiles :as profiles]
             [com.greed.core :as c.greed]
             [com.greed.ui.components.stats :as stats]
             [com.greed.ui.components.cards :as cards]
@@ -37,7 +38,7 @@
   (let [salary (get finances :finances/salary)]
     (and (some? salary) (pos? (long (or salary 0))))))
 
-(defn page [{:keys [session params] :as ctx}]
+(defn- personal-page [{:keys [session params] :as ctx}]
   (let [user-id            (:uid session)
         user               (data/get-user ctx user-id)
         finances           (data/get-finances ctx user-id)
@@ -93,3 +94,11 @@
        (stats/upcoming-summary payday events)
        (stats/tax-summary income-tax-data)
        (stats/goals-summary goals)]])))
+
+(defn page
+  "GET /app: the business's home while a business is chosen, else the
+   personal dashboard."
+  [ctx]
+  (if-let [business (data/session-business ctx)]
+    (profiles/business-home ctx business)
+    (personal-page ctx)))

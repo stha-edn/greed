@@ -112,7 +112,8 @@
        (group-by #(normalise (payee-text %)))
        (map (fn [[_ ls]]
               (let [paid (filter #(= :expenses (:type %)) ls)]
-                {:text (payee-text (first ls))
+                {:name (merchant-name (str/join " " (words (:description (or (first paid) (first ls))))))
+                 :text (payee-text (first ls))
                  :category (:category (or (first paid) (first ls)))
                  :spent-cents (reduce + 0 (map :amount-cents paid))
                  :refund-cents (reduce + 0 (map :amount-cents (remove #(= :expenses (:type %)) ls)))
@@ -120,24 +121,57 @@
        (sort-by (juxt (comp - :spent-cents) :text))
        vec))
 
+(defn income-payees
+  "Totals per payer of the money that came in (own transfers, refunds and
+   reversals left out, as in :money-in-cents), largest first, at most 30:
+   [{:name :text :cents :count}]. :name is readable (the bank's wording
+   dropped), :text is the stable statement text."
+  [lines]
+  (->> lines
+       (filter #(and (= :income (:type %)) (not (#{:transfer :refund} (:kind %)))))
+       (group-by #(normalise (payee-text %)))
+       (map (fn [[_ ls]]
+              (let [l (first ls)]
+                {:name (merchant-name (str/join " " (words (:description l))))
+                 :text (payee-text l)
+                 :cents (reduce + 0 (map :amount-cents ls))
+                 :count (count ls)})))
+       (sort-by (juxt (comp - :cents) :name))
+       (take 30)
+       vec))
+
+(defn payee-items
+  "Each payee with the budget item its text matches (the first whose
+   reference words appear in it, whole words only), or nil."
+  [items payees]
+  (let [items (budget-items items)]
+    (for [{:keys [text] :as p} payees
+          :let [t (str " " (normalise text) " ")]]
+      [p (some (fn [{:keys [words] :as i}] (when (some #(str/includes? t (str " " % " ")) words) i)) items)])))
+
 (defn budget-totals
-  "What was paid towards each budget item with a reference, refunds taken off.
-   A payee counts towards the first item whose reference words appear in its
-   text. `items` are {:id :title :reference}; `payees` come from `payees`."
+  "What was paid towards each budget item with a reference, refunds taken
+   off, and spending by category. A payee counts towards the first item whose
+   reference words appear in its text; an item with a :category (Stock and
+   suppliers, say) also puts that payee's spending in its category.
+   `items` are {:id :title :reference :category}; `payees` come from `payees`."
   [items payees]
   (let [items   (budget-items items)
-        item-of (fn [{:keys [text]}]
-                  ;; whole words only: "bp" must not match inside "bpay"
-                  (let [t (str " " (normalise text) " ")]
-                    (some (fn [{:keys [words] :as i}] (when (some #(str/includes? t (str " " % " ")) words) i)) items)))
-        by-item (group-by (comp :id item-of) payees)
+        linked  (payee-items items payees)
+        by-item (group-by (comp :id second) linked)
+        net     #(- (:spent-cents %) (:refund-cents %))
         matches (vec (for [{:keys [id title]} items
-                           :let [ps (by-item id)]]
+                           :let [ps (map first (by-item id))]]
                        {:item-id id :title title
-                        :cents (max 0 (- (reduce + 0 (map :spent-cents ps)) (reduce + 0 (map :refund-cents ps))))
+                        :cents (max 0 (reduce + 0 (map net ps)))
                         :count (reduce + 0 (map :count ps))}))]
     {:budget-matches matches
-     :budgeted-cents (reduce + 0 (map :cents matches))}))
+     :budgeted-cents (reduce + 0 (map :cents matches))
+     :categories (->> linked
+                      (group-by (fn [[p i]] (or (:category i) (:category p))))
+                      (map (fn [[c pis]] [c (reduce + 0 (map (comp net first) pis))]))
+                      (filter (comp pos? second))
+                      (into {}))}))
 
 (defn- totals
   "Totals for a set of lines (reversals already cancelled)."
@@ -190,7 +224,8 @@
             :period-start (first period)
             :period-end (second period)
             :checks-ok (empty? problems)
-            :payees ps}
+            :payees ps
+            :income-payees (income-payees lines)}
            (totals lines)
            (budget-totals items ps))))
 
@@ -221,6 +256,7 @@
                    :period-end (str to)
                    :checks-ok (empty? problems)}
                   (let [ps (payees (get by-month m []))]
-                    (merge {:payees ps}
+                    (merge {:payees ps
+                            :income-payees (income-payees (get by-month m []))}
                            (totals (get by-month m []))
                            (budget-totals items ps))))))))

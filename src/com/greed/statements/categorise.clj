@@ -28,7 +28,23 @@
    :cash          "Cash"
    :transfers     "Transfers"
    :bank-charges  "Bank charges"
+   ;; business categories (see business-category)
+   :sars          "SARS"
+   :salaries      "Salaries and wages"
+   :rent          "Rent and premises"
+   :software      "Software and subscriptions"
+   :stock         "Stock and suppliers"
+   :drawings      "Owner's drawings"
    :other         "Other"))
+
+(def business-only
+  "Categories that only a business's statements use."
+  #{:sars :salaries :rent :software :stock :drawings})
+
+(def spending-categories
+  "Categories a payment out can be put in, for a budget item to choose from:
+   all but money in and transfers."
+  (remove #{:income :transfers} (keys categories)))
 
 (def kinds
   {:card-purchase    "Card purchase"
@@ -93,9 +109,32 @@
           (when (= :prepaid k) :airtime-data)
           :other))))
 
+(def ^:private business-software
+  ["google workspace" "gsuite" "xero" "sage" "quickbooks" "microsoft" "aws" "amazon web services"
+   "github" "atlassian" "slack" "zoom" "notion" "figma" "dropbox" "hubspot" "mailchimp" "shopify"])
+
+(defn business-category
+  "A business's category for a payment out, from wording the personal side
+   does not look for, or nil. Stock and suppliers, and owner's drawings, have
+   no wording of their own: a budget item's reference puts payments there."
+  [{:keys [description bank-type type]} k]
+  (let [t   (str/lower-case (str description " " bank-type))
+        has? #(re-find % t)]
+    (when (and (= :expenses type) (not= :transfer k))
+      (cond
+        (has? #"(?<![a-z])(sars|e-?filing)(?![a-z])")              :sars
+        (has? #"(?<![a-z])(salar(y|ies)|wages?|payroll)(?![a-z])") :salaries
+        (has? #"(?<![a-z])rent(al)?(?![a-z])")                     :rent
+        (or (some #(str/includes? t %) business-software)
+            (= :subscriptions (merchant-category description)))    :software))))
+
 (defn categorise
   "Adds :kind and :category to a statement line, using the bank adapter's
-   kind function."
-  [kind-fn line]
-  (let [k (if (salary? line) :salary (kind-fn line))]
-    (assoc line :kind k :category (category line k))))
+   kind function. A business's lines are also checked for business
+   categories (SARS, salaries, rent, software); on the personal side the
+   words SALARY and WAGES mark money coming in instead."
+  ([kind-fn line] (categorise kind-fn line false))
+  ([kind-fn line business?]
+   (let [k (if (salary? line) :salary (kind-fn line))]
+     (assoc line :kind k :category (or (when business? (business-category line k))
+                                       (category line k))))))

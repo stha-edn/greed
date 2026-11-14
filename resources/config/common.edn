@@ -13,6 +13,9 @@
  :error/invalid-link "This password reset link is invalid or has expired. Request a new one."
  :error/password-blank "Your password can't be empty."
  :error/password-mismatch "The passwords don't match. Try again."
+ :error/business-name-blank "Enter your business's name."
+ :error/business-name-too-long "That business name is too long. Use up to 120 characters."
+ :error/entity-type-invalid "Choose what kind of business it is."
  :error/default "There was an error."
 
  :alert/user-saved "Your user has been successfully saved or updated."
@@ -25,6 +28,39 @@
  :alert/statement-read "Your statement was read and split by month. The file was not kept, only totals per payee."
  :alert/budget-synced "Your months were matched with your budget's statement references."
  :alert/budget-synced-partly "Months were matched with your budget. Some were read before greed kept payee totals: upload those statements once more."
+ ;; VAT (SARS). Check each February's Budget; thresholds apply from April 2026.
+ :vat/rate 15
+ :vat/compulsory-threshold 2300000
+ :vat/voluntary-threshold 120000
+
+ ;; Company income tax (SARS). Add next year's SBC table after each February Budget.
+ :company-tax/rate 27
+ :company-tax/sbc-tables
+ [{:from "2025-04-01" :to "2026-03-31"
+   :brackets [{:above 0 :base 0 :rate 0}
+              {:above 95750 :base 0 :rate 7}
+              {:above 365000 :base 18848 :rate 21}
+              {:above 550000 :base 57698 :rate 27}]}
+  {:from "2026-04-01" :to "2027-03-31"
+   :brackets [{:above 0 :base 0 :rate 0}
+              {:above 99000 :base 0 :rate 7}
+              {:above 365000 :base 18620 :rate 21}
+              {:above 550000 :base 57470 :rate 27}]}]
+
+ :alert/tax-details-saved "The business's tax details were saved."
+ :alert/income-added "Added to the budget's income at this month's amount. You can change it in Budget."
+ :alert/expense-added "Added to the budget's expenses at this month's amount, with its name as the statement reference. You can change it in Budget."
+ :alert/vat-saved "The business's VAT details were saved."
+ :alert/business-added "Your business was added. You are working in it now."
+ :alert/business-saved "The business's details were saved."
+ :alert/business-deleted "The business was deleted."
+ :alert/invite-sent "The invitation was sent."
+ :alert/invite-cancelled "The invitation was cancelled."
+ :alert/invite-accepted "You joined the business. You are working in it now."
+ :alert/invite-declined "The invitation was declined."
+ :alert/member-updated "The member's role was changed."
+ :alert/member-removed "The member was removed from the business."
+ :alert/left-business "You left the business."
  :alert/statement-removed "That month has been removed from your history."
  :alert/user-deleted "The user and all of their data has been deleted."
  :alert/user-not-found "That user could not be found."

@@ -98,12 +98,37 @@
               "This link will expire in one hour. If you did not request this, "
               "you can ignore this email and your password will stay the same.")})
 
+(defn business-invite
+  "An invitation to join a business on greed."
+  [{:keys [to business-name inviter role-label url]}]
+  {:to [{:email to}]
+   :subject (str inviter " invited you to " business-name " on " settings/app-name)
+   :html (rum/render-static-markup
+          [:html
+           [:body
+            [:p inviter " invited you to join " [:strong business-name] " on " settings/app-name
+             " as " (if (= "Owner" role-label) "an owner" "a member") "."]
+            [:p "Sign in, or create an account with this email address (" to "), and the invitation will be waiting for you."]
+            [:p [:a {:href url :target "_blank"} "Open the invitation"]]
+            [:p "The invitation can be accepted for 14 days. If you were not expecting it, you can ignore this email."]]])
+   :text (str inviter " invited you to join " business-name " on " settings/app-name
+              " as " (if (= "Owner" role-label) "an owner" "a member") ".
+
+"
+              "Sign in, or create an account with this email address (" to "), and the invitation will be waiting for you:
+"
+              url "
+
+"
+              "The invitation can be accepted for 14 days. If you were not expecting it, you can ignore this email.")})
+
 (defn template [k opts]
   ((case k
      :signin-link signin-link
      :signin-code signin-code
      :welcome welcome
-     :password-reset password-reset)
+     :password-reset password-reset
+     :business-invite business-invite)
    opts))
 
 (defn send-mailersend [{:keys [biff/secret
