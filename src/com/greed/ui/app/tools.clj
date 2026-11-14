@@ -4,7 +4,8 @@
             [com.greed.ui :as ui]
             [com.greed.ui.tools.core :as tools]
             [com.greed.ui.components.headers :as headers]
-            [com.greed.ui.components.stats :as stats]))
+            [com.greed.ui.components.stats :as stats]
+            [com.greed.ui.app.owner-tax :as owner-tax]))
 
 (defn page [ctx]
   (let [user-id         (:uid (:session ctx))
@@ -22,4 +23,5 @@
         [:div {:class "space-y-4"}
          (stats/tax-readiness income-tax-data tax-profile)
          (stats/tax-bracket-breakdown income-tax-data)])
+      (owner-tax/section ctx user (:annual-income income-tax-data))
       (tools/tools)])))

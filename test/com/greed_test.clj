@@ -14,6 +14,8 @@
             [com.biffweb.impl.auth :as biff-auth]
             [com.greed.ui.app.dashboard :as dashboard]
             [com.greed.ui.app.profiles :as profiles]
+            [com.greed.ui.app.owner-tax :as owner-tax]
+            [com.greed.utilities.tax :as tax]
             [malli.generator :as mg]
             [rum.core :as rum]
             [xtdb.api :as xt]))
@@ -906,3 +908,80 @@
       (is (= :ok (data/update-tax-settings! (fresh node) owner biz {:year-end-month "6" :sbc "true"})))
       (xt/sync node)
       (is (= [6 true] ((juxt :business/year-end-month :business/sbc) (xt/entity (xt/db node) biz)))))))
+
+(deftest owner-pay-test
+  (let [a #uuid "aaaaaaaa-7777-0000-0000-000000000001"
+        b #uuid "aaaaaaaa-7777-0000-0000-000000000002"
+        m (fn [u role & [share]] (cond-> {:business-member/user-id u :business-member/role role}
+                                   share (assoc :business-member/profit-share share)))
+        drawings (fn [amount & [to]] (cond-> {:budget-item/type :expenses :budget-item/category :drawings :budget-item/amount amount}
+                                       to (assoc :budget-item/paid-to to)))]
+    (testing "with one owner, drawings go to them unless someone else is chosen"
+      (is (= {a 5000} (data/owner-pay [(drawings 3000) (drawings 2000) {:budget-item/type :expenses :budget-item/amount 999}]
+                                       [(m a :owner)])))
+      (is (= {a 3000 b 2000} (data/owner-pay [(drawings 3000) (drawings 2000 b)] [(m a :owner) (m b :member)]))))
+    (testing "with two owners, only chosen drawings count"
+      (is (= {b 2000} (data/owner-pay [(drawings 3000) (drawings 2000 b)] [(m a :owner) (m b :owner)]))))
+    (testing "profit shares: equal until set"
+      (is (= {a 50.0 b 50.0} (data/profit-shares [(m a :owner) (m b :owner)])))
+      (is (= {a 70 b 30} (data/profit-shares [(m a :owner 70) (m b :owner 30)]))))))
+
+(deftest owner-pay-sync-test
+  (let [uid #uuid "aaaaaaaa-8888-0000-0000-000000000001"
+        biz #uuid "bbbbbbbb-8888-0000-0000-000000000001"
+        now (java.util.Date.)]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "o@example.com" :user/password "x" :user/firstname "O"
+                                       :user/lastname "P" :user/active true}
+                                      {:xt/id biz :business/name "Biz" :business/entity-type :sole-proprietor :business/created-at now}
+                                      {:xt/id (random-uuid) :business-member/business-id biz :business-member/user-id uid
+                                       :business-member/role :owner :business-member/created-at now}])]
+      (let [in-biz #(assoc (fresh node) :session {:uid uid :business-id biz})
+            from   #(first (filter :budget-item/source-business-id (data/get-budget-items (fresh node) uid)))]
+        (testing "drawings in the business become personal income"
+          (data/upsert-budget-item (assoc (in-biz) :params {:title "Drawings" :type "expenses" :amount "5000" :category "drawings"}))
+          (data/sync-owner-pay! (fresh node) biz)
+          (xt/sync node)
+          (is (= ["From Biz" :income 5000] ((juxt :budget-item/title :budget-item/type :budget-item/amount) (from)))))
+        (testing "it cannot be deleted from the personal side"
+          (data/delete-budget-item (assoc (fresh node) :session {:uid uid} :params {:budget-item-id (str (:xt/id (from)))}))
+          (xt/sync node)
+          (is (some? (from))))
+        (testing "renaming the business renames it"
+          (data/update-business! (fresh node) uid biz {:business-name "Renamed" :entity-type "sole-proprietor"})
+          (xt/sync node)
+          (is (= "From Renamed" (:budget-item/title (from)))))
+        (testing "without drawings it goes"
+          (let [item (first (data/get-business-budget-items (fresh node) biz))]
+            (data/delete-budget-item (assoc (in-biz) :params {:budget-item-id (str (:xt/id item))}))
+            (xt/sync node)
+            (data/sync-owner-pay! (fresh node) biz)
+            (xt/sync node)
+            (is (nil? (from)))))))))
+
+(deftest profit-shares-settings-test
+  (let [a #uuid "aaaaaaaa-9999-0000-0000-000000000001"
+        b #uuid "aaaaaaaa-9999-0000-0000-000000000002"
+        biz #uuid "bbbbbbbb-9999-0000-0000-000000000001"
+        ma #uuid "cccccccc-9999-0000-0000-000000000001"
+        mb #uuid "cccccccc-9999-0000-0000-000000000002"
+        now (java.util.Date.)]
+    (with-open [node (test-xtdb-node [{:xt/id biz :business/name "P" :business/entity-type :partnership :business/created-at now}
+                                      {:xt/id ma :business-member/business-id biz :business-member/user-id a :business-member/role :owner :business-member/created-at now}
+                                      {:xt/id mb :business-member/business-id biz :business-member/user-id b :business-member/role :owner :business-member/created-at now}])]
+      (let [k #(keyword (str "share-" %))]
+        (is (= :shares-not-100 (data/update-profit-shares! (fresh node) a biz {(k ma) "60" (k mb) "30"})))
+        (is (= :ok (data/update-profit-shares! (fresh node) a biz {(k ma) "60" (k mb) "40"})))
+        (xt/sync node)
+        (is (= {a 60 b 40} (data/profit-shares (data/get-business-members (fresh node) biz))))))))
+
+(deftest personal-tax-with-business-test
+  (testing "the business profit is added to the salary"
+    (let [{:keys [with without extra]} (owner-tax/tax-with-business 300000 200000 40)]
+      (is (= without (:net-tax (tax/calculate-income-tax 300000 40))))
+      (is (= with (:net-tax (tax/calculate-income-tax 500000 40))))
+      (is (= extra (- with without)))
+      (is (pos? extra))))
+  (testing "a loss lowers it, but taxable income never goes below zero"
+    (is (= 0 (:with (owner-tax/tax-with-business 0 -50000 40)))))
+  (testing "dividends tax is 20%"
+    (is (= 20 (owner-tax/dividends-rate)))))

@@ -7,11 +7,14 @@
             [com.greed.ui.components.forms :as forms]
             [com.greed.utilities.core :as utilities]))
 
-(defn- budget-row [& {:keys [item protected-titles vat?]}]
+(defn- budget-row [& {:keys [item protected-titles vat? owners]}]
   (let [{:budget-item/keys [title amount]
          :or {title "Title" amount 0}} item
         action-modal-id (str "budget-action-" (:xt/id item))
-        protected? (contains? (or protected-titles #{}) title)
+        ;; kept in step with Settings, or with what a business pays you
+        protected? (or (contains? (or protected-titles #{}) title)
+                       (some? (:budget-item/source-business-id item)))
+        paid-to    (some #(when (= (:id %) (:budget-item/paid-to item)) (:name %)) owners)
         editable?  (or (not protected?) (not= :income (:budget-item/type item)))
         reference  (:budget-item/reference item)
         category   (some-> (:budget-item/category item) categorise/categories)
@@ -20,11 +23,12 @@
     [:li {:class "group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-zinc-50/70"}
      [:div {:class "min-w-0 flex-1"}
       [:p {:class "truncate text-sm font-medium text-zinc-800"} title]
-      (when (or protected? reference category vat-label)
+      (when (or protected? reference category vat-label paid-to)
         [:p {:class "mt-0.5 truncate text-xs text-zinc-500"}
          (str/join " · " (remove nil? [(when protected? "Auto")
                                        vat-label
                                        category
+                                       (when paid-to (str "Paid to " paid-to))
                                        (when reference (str "Statement: " reference))]))])]
      [:p {:class "flex-shrink-0 text-sm font-semibold text-zinc-900 tabular-nums"}
       (utilities/amount->rands amount)]
@@ -40,18 +44,19 @@
    not valid content directly inside <tbody>, and browsers foster-parent it
    out while silently dropping the <form> wrapper, breaking the delete/update
    buttons inside it."
-  [& {:keys [item protected-titles vat?]}]
+  [& {:keys [item protected-titles vat? owners]}]
   (let [{:budget-item/keys [title]} item
         action-modal-id (str "budget-action-" (:xt/id item))
-        protected? (contains? (or protected-titles #{}) title)]
+        protected? (or (contains? (or protected-titles #{}) title)
+                       (some? (:budget-item/source-business-id item)))]
     (when (or (not protected?) (not= :income (:budget-item/type item)))
-      (shared/modal action-modal-id (forms/budget-action-form item :auto? protected? :vat? vat?)))))
+      (shared/modal action-modal-id (forms/budget-action-form item :auto? protected? :vat? vat? :owners owners)))))
 
 (defn budget-table
   "One list of the budget. :label overrides the heading (a business's
    savings list is \"Set aside\"); :business? gives its Add form the
    business fields."
-  [{:keys [title items protected-titles label business? vat?]
+  [{:keys [title items protected-titles label business? vat? owners]
     :or {protected-titles #{}}}]
   (let [label (or label
                   (case title
@@ -72,11 +77,11 @@
      (if (seq items)
        [:ul {:class "divide-y divide-zinc-100 border-t border-zinc-100"}
         (for [item items]
-          (budget-row :item item :protected-titles protected-titles :vat? vat?))]
+          (budget-row :item item :protected-titles protected-titles :vat? vat? :owners owners))]
        [:div {:class "flex flex-col items-center justify-center px-5 py-10 text-center"}
         [:p {:class "text-sm font-medium text-zinc-500"} "Nothing here yet"]
         [:p {:class "mt-0.5 text-xs text-zinc-500"} (str "Add your first " (str/lower-case label) " item")]])
      (for [item items]
-       (budget-row-modal :item item :protected-titles protected-titles :vat? vat?))
+       (budget-row-modal :item item :protected-titles protected-titles :vat? vat? :owners owners))
      (shared/modal (str "budget-add-" title "-modal")
-                   (forms/budget-item-form :type (keyword title) :business? business? :vat? vat?))]))
+                   (forms/budget-item-form :type (keyword title) :business? business? :vat? vat? :owners owners))]))

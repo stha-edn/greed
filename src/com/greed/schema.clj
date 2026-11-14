@@ -75,6 +75,9 @@
                      [:business-member/user-id     :user/id]
                      ;; owner: also manages members and the business's details
                      [:business-member/role        [:enum :owner :member]]
+                     ;; A partnership's split of the profit, in percent. Unset
+                     ;; means an equal share among the owners.
+                     [:business-member/profit-share {:optional true} [:int {:min 0 :max 100}]]
                      [:business-member/created-at  inst?]]
 
    ;; An invitation to join a business, waiting for the person with that
@@ -108,7 +111,12 @@
                  ;; Business income and expense items of a VAT vendor; the
                  ;; amount includes VAT. Unset means income :standard,
                  ;; expenses :none (see com.greed.utilities.vat).
-                 [:budget-item/vat {:optional true} [:enum :standard :zero :none]]]
+                 [:budget-item/vat {:optional true} [:enum :standard :zero :none]]
+                 ;; A business's Owner's drawings item: the owner it is paid to.
+                 [:budget-item/paid-to {:optional true} :user/id]
+                 ;; A personal income item greed keeps in step with what a
+                 ;; business pays this person ("From Ngunitek").
+                 [:budget-item/source-business-id {:optional true} :business/id]]
 
    ;; Totals from one uploaded bank statement, for the Spending tab. The
    ;; statement's individual lines are never stored. Amounts are in cents.

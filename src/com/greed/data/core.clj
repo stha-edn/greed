@@ -26,7 +26,7 @@
   [{:keys [session]} owner-id]
   (= (:uid session) owner-id))
 
-(declare session-business get-user-business)
+(declare session-business get-user-business sync-owner-pay!)
 
 (defn owner
   "Whose money the signed-in person is working on: {:user-id uid
@@ -493,6 +493,15 @@
   [s]
   (#{:standard :zero :none} (keyword (str s))))
 
+(declare get-business-members)
+
+(defn ->member-id
+  "A member of the business's user id from a form, or nil."
+  [ctx business-id s]
+  (when-let [id (parse-uuid (str s))]
+    (when (some #(= id (:business-member/user-id %)) (get-business-members ctx business-id))
+      id)))
+
 (defn ->category
   "A spending category from a form, or nil when blank or unknown."
   [s]
@@ -526,6 +535,8 @@
                        (assoc :budget-item/category (->category (:category params)))
                        (and business-id (->vat-type (:vat params)))
                        (assoc :budget-item/vat (->vat-type (:vat params)))
+                       (and business-id (->member-id ctx business-id (:paid-to params)))
+                       (assoc :budget-item/paid-to (->member-id ctx business-id (:paid-to params)))
                        (->reference (:reference params))
                        (assoc :budget-item/reference (->reference (:reference params))))])))
 
@@ -534,8 +545,9 @@
         budget-item-id (utilities/->uuid budget-item-id)
         {:budget-item/keys [type title amount business-id]
          :as budget-item} (get-budget-item ctx budget-item-id)
-        ;; only personal items are kept in step with Settings
-        auto? (and (not business-id) (contains? auto-titles title))]
+        ;; only personal items are kept in step with Settings, or with a business
+        auto? (and (not business-id)
+                   (or (contains? auto-titles title) (:budget-item/source-business-id budget-item)))]
     (if (and budget-item (can-change-budget-item? ctx budget-item))
       (do
         (logger/info "Updating budget item...")
@@ -551,14 +563,17 @@
                                                 (validation/->valid-amount (:amount params)))
                           :budget-item/reference (or (->reference (:reference params)) :db/dissoc)
                           :budget-item/category (or (when business-id (->category (:category params))) :db/dissoc)
-                          :budget-item/vat (or (when business-id (->vat-type (:vat params))) :db/dissoc)}]))
+                          :budget-item/vat (or (when business-id (->vat-type (:vat params))) :db/dissoc)
+                          :budget-item/paid-to (or (when business-id (->member-id ctx business-id (:paid-to params))) :db/dissoc)}]))
       (logger/info "Budget item not found or unauthorized"))))
 
 (defn delete-budget-item [{:keys [params] :as ctx}]
   (let [{:keys [budget-item-id]} params
         budget-item-id (utilities/->uuid budget-item-id)
         budget-item (get-budget-item ctx budget-item-id)]
-    (if (and budget-item (can-change-budget-item? ctx budget-item))
+    ;; an item kept in step with a business is removed from the business side
+    (if (and budget-item (can-change-budget-item? ctx budget-item)
+             (not (:budget-item/source-business-id budget-item)))
       (do (logger/info "Deleting budget item...")
           (biff/submit-tx ctx
                           [{:db/doc-type :budget-item
@@ -1000,6 +1015,7 @@
                              :business-member/user-id user-id
                              :business-member/role role
                              :business-member/created-at (java.util.Date.)})))
+    (sync-owner-pay! ctx business-id)
     business-id))
 
 (defn decline-invite!
@@ -1034,6 +1050,7 @@
       (and (= :owner (:business-member/role m)) (not= :owner role) (= 1 (owner-count ctx business-id))) :last-owner
       :else (do (biff/submit-tx ctx [{:db/doc-type :business-member :xt/id member-id :db/op :update
                                       :business-member/role role}])
+                (sync-owner-pay! ctx business-id)
                 :ok))))
 
 (defn remove-member!
@@ -1046,6 +1063,7 @@
       (or (nil? m) (not (or self? (business-owner? ctx user-id business-id)))) :not-allowed
       (and (= :owner (:business-member/role m)) (= 1 (owner-count ctx business-id))) :last-owner
       :else (do (biff/submit-tx ctx [{:db/doc-type :business-member :xt/id member-id :db/op :delete}])
+                (sync-owner-pay! ctx business-id)
                 :ok))))
 
 (defn update-business!
@@ -1058,6 +1076,7 @@
     :else (do (biff/submit-tx ctx [{:db/doc-type :business :xt/id business-id :db/op :update
                                     :business/name (str/trim business-name)
                                     :business/entity-type (keyword entity-type)}])
+              (sync-owner-pay! ctx business-id)
               :ok)))
 
 (defn update-vat-settings!
@@ -1097,6 +1116,81 @@
                                       :business/sbc (= "true" (str sbc))}])
                 :ok))))
 
+(defn owner-pay
+  "What a business's budget pays each person, in rands a month: its expense
+   items in the Owner's drawings category, by who they are paid to. An item
+   with no one chosen goes to the owner when there is only one.
+   `members` are business-member docs."
+  [items members]
+  (let [ids    (set (map :business-member/user-id members))
+        owners (filter #(= :owner (:business-member/role %)) members)
+        single (when (= 1 (count owners)) (:business-member/user-id (first owners)))]
+    (reduce (fn [m {:budget-item/keys [type category paid-to amount]}]
+              (if-let [to (when (and (= :expenses type) (= :drawings category))
+                            (or (ids paid-to) single))]
+                (update m to (fnil + 0) amount)
+                m))
+            {}
+            items)))
+
+(defn profit-shares
+  "Each owner's share of a business's profit, in percent: the shares set on
+   their memberships, or an equal split. `members` are business-member docs."
+  [members]
+  (let [owners (filter #(= :owner (:business-member/role %)) members)]
+    (if (some :business-member/profit-share owners)
+      (into {} (map (juxt :business-member/user-id #(or (:business-member/profit-share %) 0))) owners)
+      (into {} (map (fn [o] [(:business-member/user-id o) (/ 100.0 (count owners))])) owners))))
+
+(defn sync-owner-pay!
+  "Keeps each person's \"From <business>\" personal income item in step with
+   what the business's budget pays them: created, changed, or removed when
+   it pays them nothing (or the business is gone)."
+  [ctx business-id]
+  (let [{:keys [biff/db] :as ctx} (biff/assoc-db ctx)
+        business (xt/entity db business-id)
+        members  (when (:business/name business) (get-business-members ctx business-id))
+        pay      (if members (owner-pay (get-business-budget-items ctx business-id) members) {})
+        existing (into {} (map (juxt :budget-item/user-id identity))
+                       (q db '{:find (pull i [*])
+                               :in [b]
+                               :where [[i :budget-item/source-business-id b]]}
+                          business-id))
+        docs     (for [uid (distinct (concat (keys pay) (keys existing)))
+                       :let [amount (get pay uid 0)
+                             old    (existing uid)]
+                       :when (or (pos? amount) old)]
+                   (if (pos? amount)
+                     {:db/doc-type :budget-item
+                      :xt/id (or (:xt/id old) (java.util.UUID/randomUUID))
+                      :budget-item/user-id uid
+                      :budget-item/title (str "From " (:business/name business))
+                      :budget-item/type :income
+                      :budget-item/amount amount
+                      :budget-item/source-business-id business-id}
+                     {:db/doc-type :budget-item :xt/id (:xt/id old) :db/op :delete}))]
+    (when (seq docs)
+      (logger/info "Syncing owner's pay to personal budgets...")
+      (biff/submit-tx ctx (vec docs)))
+    (count docs)))
+
+(defn update-profit-shares!
+  "An owner sets the owners' shares of the profit, in whole percent adding up
+   to 100. `params` has :share-<member id> for each owner. Returns :ok,
+   :not-owner or :shares-not-100."
+  [ctx user-id business-id params]
+  (let [owners (filter #(= :owner (:business-member/role %)) (get-business-members ctx business-id))
+        shares (for [o owners]
+                 [o (utilities/->int (str (get params (keyword (str "share-" (:xt/id o))))))])]
+    (cond
+      (not (business-owner? ctx user-id business-id)) :not-owner
+      (or (some (fn [[_ n]] (not (and n (<= 0 n 100)))) shares)
+          (not= 100 (reduce + 0 (map second shares)))) :shares-not-100
+      :else (do (biff/submit-tx ctx (for [[o n] shares]
+                                      {:db/doc-type :business-member :xt/id (:xt/id o) :db/op :update
+                                       :business-member/profit-share n}))
+                :ok))))
+
 (defn delete-business!
   "An owner deletes the business with its members, invitations, budget items
    and statement months. Returns true if they could."
@@ -1108,6 +1202,7 @@
                               :where [(or [id :business-member/business-id b]
                                           [id :business-invite/business-id b]
                                           [id :budget-item/business-id b]
+                                          [id :budget-item/source-business-id b]
                                           [id :statement-summary/business-id b])]}
                             business-id))]
       (logger/info "Deleting a business...")

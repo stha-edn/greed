@@ -364,11 +364,23 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
      [:p {:id "vat-hint" :class "mt-1 text-xs text-zinc-500"}
       "The amount includes VAT. Salaries, SARS payments and suppliers who are not VAT registered have no VAT."]]))
 
+(defn- paid-to-select
+  "Who a business's Owner's drawings item is paid to, when it has more than
+   one person to choose from. `owners` are [{:id :name}]."
+  [owners current]
+  (when (> (count owners) 1)
+    [:div {:class "mt-3"}
+     (shared/form-label "paid-to" "Paid to (for Owner's drawings)")
+     [:select {:id "paid-to" :name "paid-to" :class (shared/base-input-class)}
+      [:option {:value ""} "Not chosen"]
+      (for [{:keys [id name]} owners]
+        [:option (cond-> {:value (str id)} (= id current) (assoc :selected true)) name])]]))
+
 (defn budget-item-form
   "Add a budget item. Pass :type to fix the category (used by each list's Add
    button); without it, the category select is shown. :business? adds the
    spending category and business wording."
-  [& {:keys [type business? vat?]}]
+  [& {:keys [type business? vat? owners]}]
   (let [budget-item-options (:budget-item/types c/common-config)
         modal-id            (if type (str "budget-add-" (name type) "-modal") "budget-add-modal")
         {:keys [title desc]} (if (and business? (= :savings type))
@@ -389,6 +401,8 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
         (vat-select type nil))
       (when (and business? (not= :income type))
         (category-select nil))
+      (when (and business? (= :expenses type))
+        (paid-to-select owners nil))
       (when (not= :income type)
         (shared/modal-input :id "reference" :type "text" :label "Statement reference (optional)"
                             :placeholder "e.g. discovery life, vitality"
@@ -403,7 +417,7 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
 (defn budget-action-form
   "Edit a budget item. An item kept in step with Settings (:auto?) can only
    change its statement reference, and cannot be deleted here."
-  [item & {:keys [auto? vat?]}]
+  [item & {:keys [auto? vat? owners]}]
   [:div {:class "bg-white rounded-xl border border-zinc-200/70 shadow-xl p-6 w-full max-w-sm"}
    [:h3 {:class "text-base font-semibold text-zinc-900 tracking-tight"} (if auto? "Statement reference" "Edit Budget Item")]
    [:div {:class "mt-3 p-3 bg-zinc-50 rounded-lg text-sm text-zinc-600 mb-4"}
@@ -419,6 +433,8 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
       (vat-select (:budget-item/type item) (:budget-item/vat item)))
     (when (and (:budget-item/business-id item) (not= :income (:budget-item/type item)))
       (category-select (:budget-item/category item)))
+    (when (and (:budget-item/business-id item) (= :expenses (:budget-item/type item)))
+      (paid-to-select owners (:budget-item/paid-to item)))
     (when (not= :income (:budget-item/type item))
       (shared/modal-input :id "reference" :type "text" :label "Statement reference (optional)"
                           :value (:budget-item/reference item)

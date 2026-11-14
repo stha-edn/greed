@@ -2,7 +2,7 @@
   (:require [com.core :as c]
             [com.greed.ui :as ui]
             [com.greed.data.core :as data]
-            [com.greed.ui.app.profiles :as profiles]
+            [com.greed.ui.app.business-home :as business-home]
             [com.greed.core :as c.greed]
             [com.greed.ui.components.stats :as stats]
             [com.greed.ui.components.cards :as cards]
@@ -100,5 +100,5 @@
    personal dashboard."
   [ctx]
   (if-let [business (data/session-business ctx)]
-    (profiles/business-home ctx business)
+    (business-home/page ctx business)
     (personal-page ctx)))

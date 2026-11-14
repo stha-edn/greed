@@ -21,11 +21,11 @@
     {:title "savings"
      :items (filterv #(= (:budget-item/type %) :savings) budget-items)})])
 
-(defn- business-lists [budget-items vat?]
+(defn- business-lists [budget-items vat? owners]
   (let [of-type (fn [t] (filterv #(= (:budget-item/type %) t) budget-items))]
     [:div {:class "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"}
      (tables/budget-table {:title "income" :items (of-type :income) :business? true :vat? vat?})
-     (tables/budget-table {:title "expenses" :items (of-type :expenses) :business? true :vat? vat?})
+     (tables/budget-table {:title "expenses" :items (of-type :expenses) :business? true :vat? vat? :owners owners})
      (tables/budget-table {:title "savings" :label "Set aside" :items (of-type :savings) :business? true})]))
 
 (defn- business-hero
@@ -57,7 +57,10 @@
       (when (:alert params) (alerts/info params))
       (headers/pages-heading ["Budget"] (str name "'s monthly plan. Set aside is money put away for SARS, VAT, reserves and equipment."))
       (business-hero budget-items)
-      (business-lists budget-items (:business/vat-registered business))])))
+      (business-lists budget-items (:business/vat-registered business)
+                      ;; people an Owner's drawings item can be paid to
+                      (for [{:keys [user] :business-member/keys [user-id]} (data/get-business-members ctx (:xt/id business))]
+                        {:id user-id :name (str (:user/firstname user) " " (:user/lastname user))}))])))
 
 (defn- personal-page [{:keys [session params] :as ctx}]
   (let [user-id      (:uid session)

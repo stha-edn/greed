@@ -31,7 +31,8 @@
    :invite-gone "That invitation has expired or was cancelled. Ask for a new one."
    :vat-number-invalid "A VAT number is 10 digits and starts with 4."
    :vat-category-invalid "Choose the business's VAT period: A, B or C."
-   :year-end-invalid "Choose the month the business's financial year ends."})
+   :year-end-invalid "Choose the month the business's financial year ends."
+   :shares-not-100 "The partners' shares must be whole percentages that add up to 100."})
 
 (defn- problem [params]
   (when-let [e (:error params)]
@@ -156,37 +157,6 @@
                 (assoc session :business-id (:xt/id business))
                 (dissoc session :business-id))}))
 
-(defn- home-card [href title body]
-  [:a {:href href :class "group block rounded-lg border border-zinc-200 bg-white p-6 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"}
-   [:h2 {:class "flex items-center justify-between text-base font-semibold text-zinc-900"}
-    title [:span {:aria-hidden "true" :class "text-zinc-500 transition-transform group-hover:translate-x-1"} "→"]]
-   [:p {:class "mt-1 text-sm text-zinc-600"} body]])
-
-(defn business-home
-  "The home of a business: where its budget and spending are, at a glance."
-  [ctx {:business/keys [name entity-type] :xt/keys [id]}]
-  (let [items  (data/get-business-budget-items ctx id)
-        months (data/get-statement-summaries ctx {:business-id id})
-        {:keys [total-income total-expenses total-savings]} (data/get-budget-data items)]
-    (ui/app
-     ctx
-     [:div {:class "space-y-6"}
-      (headers/pages-heading [name] (data/entity-types entity-type))
-      [:div {:class "grid grid-cols-1 gap-4 md:grid-cols-2"}
-       (home-card "/app/finances/" "Budget"
-                  (if (seq items)
-                    (str "Income " (utilities/amount->rands total-income)
-                         " · expenses " (utilities/amount->rands total-expenses)
-                         " · set aside " (utilities/amount->rands total-savings) " a month.")
-                    "Plan the business's monthly income, costs and what it sets aside for SARS."))
-       (home-card "/app/spending" "Spending"
-                  (if (seq months)
-                    (str (count months) (if (= 1 (count months)) " month" " months") " read from its bank statements.")
-                    "Upload the business's bank statement to see where its money went."))]
-      [:p {:class "text-sm text-zinc-600"}
-       "The business's money is kept apart from your own. "
-       [:a {:href "/app/choose" :class "font-medium text-zinc-900 underline underline-offset-4"} "Switch to Personal"]]])))
-
 (defn wrap-personal
   "For pages that belong to the personal side only: while a business is
    chosen they go to the business's home instead of showing personal data
@@ -263,6 +233,30 @@
      [:p {:class "mt-2 text-sm text-zinc-600"}
       (str "Financial year ends in " (month-names (dec (or year-end-month 2))) "."
            (when sbc " A small business corporation."))])])
+
+(defn- shares-section
+  "A partnership's split of the profit between its owners (partners)."
+  [members owner?]
+  (let [owners (filter #(= :owner (:business-member/role %)) members)
+        shares (data/profit-shares members)]
+    [:section {:class card :aria-labelledby "shares-h"}
+     [:h2 {:id "shares-h" :class "text-sm font-semibold text-zinc-900"} "Partners' shares"]
+     [:p {:class "mt-0.5 max-w-[70ch] text-xs text-zinc-500"}
+      "Each partner's share of the profit, which is taxed in their own personal return. Owners are the partners; until shares are set, the profit is split equally."]
+     (if owner?
+       (biff/form {:action "/app/business/shares" :class "mt-3 max-w-md space-y-2"}
+                  (for [{:keys [user] :business-member/keys [user-id] :xt/keys [id]} owners]
+                    [:div {:class "flex items-center justify-between gap-4"}
+                     [:label {:for (str "share-" id) :class "min-w-0 truncate text-sm text-zinc-800"} (person-name user)]
+                     [:span {:class "flex items-center gap-1"}
+                      [:input {:id (str "share-" id) :name (str "share-" id) :type "number" :min 0 :max 100 :step 1 :required true
+                               :value (str (Math/round (double (get shares user-id 0))))
+                               :class "w-20 rounded-md border border-zinc-200 px-2 py-1 text-right text-sm tabular-nums"}]
+                      [:span {:class "text-sm text-zinc-500"} "%"]]])
+                  [:div {:class "pt-3"} (shared/btn :variant :dark :size :md :type "submit" "Save shares")])
+       [:ul {:class "mt-3 space-y-1 text-sm text-zinc-700"}
+        (for [{:keys [user] :business-member/keys [user-id]} owners]
+          [:li (str (person-name user) ": " (Math/round (double (get shares user-id 0))) "%")])])]))
 
 (defn- members-section [members uid owner?]
   [:section {:class card :aria-labelledby "members-h"}
@@ -343,6 +337,8 @@
         (details-section business owner?)
         (vat-section business owner?)
         (when (= :pty-ltd (:business/entity-type business)) (tax-section business owner?))
+        (when (= :partnership (:business/entity-type business))
+          (shares-section (data/get-business-members ctx id) owner?))
         (members-section (data/get-business-members ctx id) uid owner?)
         (when owner? (invites-section (data/get-business-invites ctx id)))
         (when owner? (delete-section business))]))
@@ -369,6 +365,11 @@
   "POST /app/business/vat."
   [{:keys [params] :as ctx}]
   (in-business ctx (fn [uid id _] (back (data/update-vat-settings! ctx uid id params) "vat-saved"))))
+
+(defn update-shares
+  "POST /app/business/shares."
+  [{:keys [params] :as ctx}]
+  (in-business ctx (fn [uid id _] (back (data/update-profit-shares! ctx uid id params) "shares-saved"))))
 
 (defn update-tax
   "POST /app/business/tax."

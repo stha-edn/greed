@@ -35,6 +35,7 @@
               ["/update" {:post profiles/update-details}]
               ["/vat" {:post profiles/update-vat}]
               ["/tax" {:post profiles/update-tax}]
+              ["/shares" {:post profiles/update-shares}]
               ["/invite" {:post profiles/invite}]
               ["/invites/cancel" {:post profiles/cancel-invite}]
               ["/members/role" {:post profiles/change-role}]

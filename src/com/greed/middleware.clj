@@ -153,10 +153,13 @@
    :headers {"location" "/app/settings?alert=tax-profile-saved"}})
 
 (defn- sync-spending!
-  "Keeps the Spending tab's budget matches in step after a budget change."
+  "Keeps the Spending tab's budget matches in step after a budget change,
+   and, for a business, what it pays its owners on their personal side."
   [ctx]
   (when (data/get-user-id-from-session ctx)
-    (data/sync-statement-summaries ctx (data/owner ctx))))
+    (let [{:keys [business-id] :as owner} (data/owner ctx)]
+      (data/sync-statement-summaries ctx owner)
+      (when business-id (data/sync-owner-pay! ctx business-id)))))
 
 (defn create-budget-item [ctx]
   (data/upsert-budget-item ctx)

@@ -47,6 +47,10 @@
               {:above 365000 :base 18620 :rate 21}
               {:above 550000 :base 57470 :rate 27}]}]
 
+ ;; Dividends tax withheld by a company paying its shareholders (SARS, Budget 2026: no change).
+ :dividends-tax/rate 20
+
+ :alert/shares-saved "The partners' shares were saved."
  :alert/tax-details-saved "The business's tax details were saved."
  :alert/income-added "Added to the budget's income at this month's amount. You can change it in Budget."
  :alert/expense-added "Added to the budget's expenses at this month's amount, with its name as the statement reference. You can change it in Budget."
