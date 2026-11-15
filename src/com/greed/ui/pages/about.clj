@@ -1,43 +1,42 @@
 (ns com.greed.ui.pages.about
   (:require [com.biffweb :as biff]
-            [com.greed.ui.components.illustrations :as ill]
             [com.greed.ui.components.marketing :as m]))
 
-;; Small, true pieces of the app beside each claim (sample salary R25,000).
+;; Small, true pieces of the app beside each claim, in the same header-card
+;; style as the app (sample salary R25,000; sample business Mosa Studio).
 
-(defn- frag-split []
-  [:div {:data-ui "" :class "w-full max-w-[460px] rounded-lg border border-zinc-200 bg-white p-6"}
-   [:p {:class "text-sm font-medium text-zinc-500"} "Where your income goes"]
-   [:div {:class "mt-4 flex h-2.5 w-full overflow-hidden rounded-full bg-zinc-100"}
-    [:div {:class "h-full bg-brand-600" :style {:width "86%"}}]
-    [:div {:class "h-full bg-zinc-400" :style {:width "14%"}}]]
-   [:div {:class "mt-4 space-y-2 text-sm tabular-nums"}
-    [:p {:class "flex justify-between"} [:span {:class "flex items-center gap-2 text-zinc-600"} [:span {:class "h-2 w-2 rounded-full bg-brand-600"}] "Take-home"] [:span {:class "font-semibold text-zinc-900"} "R259,428"]]
-    [:p {:class "flex justify-between"} [:span {:class "flex items-center gap-2 text-zinc-600"} [:span {:class "h-2 w-2 rounded-full bg-zinc-400"}] "Tax"] [:span {:class "font-semibold text-zinc-900"} "R40,572"]]]
-   [:p {:class "mt-4 text-sm text-zinc-600"} "Of every R1 you earn, 14c goes to SARS."]])
+(defn- frag-earn []
+  [:div {:class "w-full max-w-[440px]"}
+   (m/shot {:label "Your tax year" :badge "2026/27" :value "R259,428" :unit "take-home this year"
+            :reading "Of every R1 you earn, 14c goes to SARS."
+            :bars {:title "Where your income goes" :of 300000
+                   :rows [{:label "Take-home" :value "R259,428" :amount 259428 :cls "bg-brand-600"}
+                          {:label "Tax" :value "R40,572" :amount 40572 :cls "bg-zinc-400"}]}})])
 
-(defn- frag-budget-row []
-  [:div {:data-ui "" :class "w-full max-w-[380px] rounded-lg border border-zinc-200 bg-white"}
-   [:div {:class "flex items-center justify-between px-5 py-4"}
-    [:p {:class "text-sm font-semibold text-zinc-900"} "Expenses"]
-    [:span {:class "rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-700"} "+ Add item"]]
-   [:div {:class "flex items-center justify-between bg-zinc-100 px-5 py-3 text-sm"}
-    [:span {:class "text-zinc-800"} "Rent · debit order on the 1st"] [:span {:class "font-semibold tabular-nums"} "R7,000"]]
-   [:div {:class "flex items-center justify-between px-5 py-3 text-sm"}
-    [:span {:class "text-zinc-800"} "Car payment"] [:span {:class "font-semibold tabular-nums"} "R3,500"]]
-   [:div {:class "flex items-center justify-between px-5 py-3 text-sm"}
-    [:span {:class "text-zinc-800"} "R370 a day to spend until payday"]]])
+(defn- frag-spent []
+  [:div {:class "w-full max-w-[440px]"}
+   (m/shot {:label "October 2026" :value "R11,240" :unit "spent"
+            :reading "R760 less than the plan, read from your FNB statement."
+            :bars {:title "Where it went"
+                   :rows [{:label "Groceries" :value "R4,180" :amount 4180 :cls "bg-brand-600"}
+                          {:label "Transport" :value "R2,240" :amount 2240 :cls "bg-brand-600"}
+                          {:label "Eating out" :value "R1,310" :amount 1310 :cls "bg-brand-600"}]}})])
 
-(defn- frag-goal []
-  [:div {:data-ui "" :class "w-full max-w-[320px] rounded-lg border border-zinc-200 bg-white p-5"}
-   [:div {:class "flex items-center justify-between gap-3"}
-    [:p {:class "text-sm font-semibold text-zinc-900"} "Emergency fund"]
-    [:span {:class "rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700"} "By 1 Mar 2027"]]
-   [:p {:class "mt-4 flex items-baseline justify-between tabular-nums"}
-    [:span {:class "text-2xl font-semibold text-zinc-900"} "R6,000"] [:span {:class "text-sm text-zinc-500"} "of R10,000"]]
-   [:div {:class "mt-2 h-2 w-full overflow-hidden rounded-full bg-zinc-100"}
-    [:div {:class "h-full rounded-full bg-brand-600" :style {:width "60%"}}]]
-   [:p {:class "mt-2 text-sm text-zinc-600"} "60% funded · R1,000 a month keeps you on track"]])
+(defn- frag-plan []
+  [:div {:data-ui "" :class "w-full max-w-[400px] divide-y divide-zinc-100 rounded-lg bg-white px-5 py-2 shadow-card-md ring-1 ring-zinc-200/70"} ; taste-skill-ignore: rows inside a data-ui fragment
+   (m/item-row "Car finance" "R3,500" "Monthly" "WESBANK")
+   (m/item-row "Rent" "R7,000" "Monthly")
+   (m/item-row "Emergency fund" "R1,000" "Monthly")
+   (m/item-row "Plumber" "R1,150" "From Oct 2026 statement")])
+
+(defn- frag-business []
+  [:div {:class "w-full max-w-[440px]"}
+   (m/shot {:label "VAT" :badge "Mosa Studio (Pty) Ltd" :value "R7,200" :unit "to pay"
+            :reading "For September and October, due 30 November."
+            :bars {:title "VAT on sales against VAT on costs"
+                   :rows [{:label "On sales" :value "R11,270" :amount 11270 :cls "bg-brand-600"}
+                          {:label "On costs" :value "R4,070" :amount 4070 :cls "bg-zinc-400"}]}
+            :stats [["Company tax" "R30,170"] ["Owner's pay" "R20,000"] ["Team" "3 people"]]})])
 
 (defn- claim-row [{:keys [title body d]} fragment & {:keys [flip?]}]
   [:div {:class "grid grid-cols-1 items-center gap-8 py-10 lg:grid-cols-12 lg:gap-10 lg:py-14"}
@@ -60,10 +59,10 @@
         "We built the plan we wished we had."]
        [:div {:class "mt-12 grid grid-cols-1 gap-10 lg:mt-16 lg:grid-cols-12"}
         [:p {:class "enter max-w-[46ch] text-xl leading-relaxed text-zinc-700 lg:col-span-6" :style {"--d" "120ms"}}
-         "greed was started by a small South African team who got tired of guessing their way through tax, budgets and payday. So we built one calm, private place that shows what you earn, what SARS takes, and what you can do with the rest."]
+         "greed was started by a small South African team who got tired of guessing their way through tax, budgets and payday. So we built one calm, private place that reads your bank statements, shows what you earn and what SARS takes, and plans the rest. Then we built the same for the businesses we run."]
         [:dl {:class "enter grid grid-cols-3 gap-6 lg:col-span-5 lg:col-start-8" :style {"--d" "160ms"}}
          (for [[k v] [["2" "founders, both in South Africa"]
-                      ["R0" "to use, for everyone"]
+                      ["R0" "to use, for you and your business"]
                       ["0" "rands made selling your data"]]]
            [:div
             [:dt {:class "font-semibold tracking-[-0.03em] text-zinc-900 [font-size:clamp(36px,4vw,56px)] leading-none tabular-nums"} k]
@@ -78,14 +77,36 @@
      [:section {:id "get" :class "container mx-auto px-6 py-20 lg:py-32" :aria-labelledby "get-h"}
       [:h2 {:id "get-h" :class "enter text-[28px] font-semibold tracking-[-0.02em] text-zinc-900"} "What you get"]
       (claim-row {:title "Understand what you earn."
-                  :body "See your real take-home pay and tax for the right SARS year of assessment, before you plan anything else."}
-                 (frag-split))
+                  :body "See your real take-home pay and tax for the right SARS year of assessment, before you plan anything else. Work out a bonus, or practise your ITR12 return."}
+                 (frag-earn))
+      (claim-row {:title "See where it actually went."
+                  :body "Upload a PDF statement from FNB or Standard Bank. greed reads every line, sorts it into categories and compares the month with your plan. It keeps the totals, never the file."}
+                 (frag-spent) :flip? true)
       (claim-row {:title "Plan before payday."
-                  :body "Give every rand a job, from commitments to savings and goals, before the first debit order goes off."}
-                 (frag-budget-row) :flip? true)
-      (claim-row {:title "See what is next."
-                  :body "Spot shortfalls early, track your tax readiness and watch real progress towards the goals that matter to you."}
-                 (frag-goal))]
+                  :body "Give every rand a job, from debit orders to savings and goals. Each month has its own budget, and items you add from a statement count only in their month."}
+                 (frag-plan))
+      (claim-row {:title "Run the business side too."
+                  :body "Add your sole proprietorship or company to the same account. It gets its own budget, statements, VAT and company tax, a team you invite, and owner's pay that lands on your personal Tax page."}
+                 (frag-business) :flip? true)]
+
+     ;; From the founder: the letter that used to close the home page
+     [:section {:id "why" :class "bg-stone-100" :aria-labelledby "why-h"}
+      [:div {:class "container mx-auto grid grid-cols-1 gap-10 px-6 py-20 lg:grid-cols-12 lg:py-28"}
+       [:div {:class "enter flex items-center gap-4 lg:col-span-4 lg:items-start"}
+        [:img {:src "/img/IMG_3777.webp" :alt "Sithabiso Makhathini" :width 56 :height 56 :loading "lazy"
+               :class "h-14 w-14 rounded-full object-cover object-top"}]
+        [:h2 {:id "why-h" :class "text-[28px] font-semibold leading-tight tracking-[-0.02em] text-zinc-900"} "From the founder"]]
+       [:div {:class "enter max-w-[600px] lg:col-span-7 lg:col-start-6" :style {"--d" "80ms"}}
+        [:div {:class "space-y-6 text-[17px] leading-[1.6] text-zinc-800"}
+         [:p "Money is private, and so is ambition. We built greed to take your financial life off the messy back of your mind and put it in "
+          [:mark {:class "rounded-sm bg-brand-100 text-zinc-900"} "one clear place"]
+          ": salary, tax, spending, savings and the dates that matter."]
+         [:p "Many of us also run something on the side, or full time: a studio, a trade, a small company. Its money deserves the same clarity, without a second app or a spreadsheet nobody updates. So greed runs your business too, from the same sign-in."]
+         [:p "There is no judgement and no jargon here, and no promise of instant wealth. Your information stays yours. We will never sell your data."]
+         [:p "We are a small team in South Africa, and we read every message ourselves. Write to us at "
+          [:a {:href "mailto:support@mygreed.co.za" :class m/link-ink} "support@mygreed.co.za"] "."]]
+        [:p {:class "mt-10 text-[22px] italic text-zinc-900"} "Sithabiso Makhathini"]
+        [:p {:class "mt-1 text-sm text-zinc-600"} "Founder & CEO"]]]]
 
      ;; Why the name: the logo's own idea, drawn large
      [:section {:id "name" :class "bg-zinc-950 text-white" :aria-labelledby "name-h"}
@@ -102,13 +123,17 @@
          "It does not mean taking without limits. It means wanting more: more security, more ownership, more choice, disciplined by a plan you can see. The mark says it too: one level line, cut where enough is."]]]]
 
      ;; Privacy: on the stone tone, beside the shape of a vault door
-     [:section {:id "privacy" :class "bg-stone-100" :aria-labelledby "privacy-h"}
+     [:section {:id "privacy" :class "bg-white" :aria-labelledby "privacy-h"}
       [:div {:class "container mx-auto grid grid-cols-1 gap-8 px-6 py-20 lg:grid-cols-12 lg:gap-10 lg:py-28"}
        [:h2 {:id "privacy-h" :class "enter text-[32px] font-semibold leading-[1.15] tracking-[-0.03em] text-zinc-900 lg:col-span-5"}
         "Your financial life stays yours."]
        [:div {:class "enter lg:col-span-6 lg:col-start-7" :style {"--d" "80ms"}}
         [:p {:class "max-w-[52ch] text-[17px] leading-relaxed text-zinc-800"}
          "Keeping your data secure is our priority. Your information is stored safely and access is protected, so your money and your details stay private."]
+        [:ul {:class "mt-6 max-w-[52ch] space-y-3 text-[17px] leading-relaxed text-zinc-800"}
+         [:li [:span {:class "font-semibold text-zinc-900"} "Statements are read, then let go. "] "greed keeps the monthly totals it needs. The PDF itself is never stored."]
+         [:li [:span {:class "font-semibold text-zinc-900"} "Profiles stay apart. "] "People you invite to a business see that business, never your personal budget."]
+         [:li [:span {:class "font-semibold text-zinc-900"} "No ads, no trackers. "] "Nothing on greed is there to sell you something."]]
         [:p {:class "mt-6 text-[24px] font-semibold tracking-[-0.02em] text-zinc-900"} "We will never sell your data."]
         [:p {:class "mt-6 max-w-[52ch] text-[17px] leading-relaxed text-zinc-800"}
          "Read our " [:a {:href "/privacy" :class m/link-ink} "privacy policy"]
@@ -116,9 +141,9 @@
 
      [:div
       (m/action-tile
-       {:id "close" :ground "bg-white"
+       {:id "close" :ground "bg-stone-100"
         :heading "Built by people who refuse to settle"
-        :line "A small South African team, tired of guessing through tax, budgets and payday, built the tool they wished they had."
-        :primary {:href (if signed-in? "/app" "/signup") :label (if signed-in? "Go to dashboard" "Create your free account")}
+        :line "A small South African team, tired of guessing through tax, budgets, payday and VAT returns, built the tool they wished they had."
+        :primary {:href (if signed-in? "/app" "/signup") :label (if signed-in? "Go to your account" "Create your free account")}
         :secondary {:href "/team" :label "Meet the team"}})]
      [:script (biff/unsafe m/enter-js)]]))

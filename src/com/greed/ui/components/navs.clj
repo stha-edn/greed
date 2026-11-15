@@ -27,9 +27,9 @@
     [:nav {:class "relative flex items-center justify-between gap-3 py-4" :_ public-menu-escape-actions}
      [:a {:href "/" :aria-label "greed home"
           :class "inline-flex items-center active:scale-[0.97] transition-transform"}
-      [:img {:src "/img/greed-wordmark-green-tight.svg"
+      [:img {:src "/img/greed-symbol-green-tight.svg"
              :alt "greed"
-             :width 648 :height 192
+             :width 192 :height 192
              :class "h-8 sm:h-9 w-auto"}]]
      [:div {:class "flex items-center gap-1.5 sm:gap-2"}
       [:a {:href "/about"
@@ -145,9 +145,9 @@
     [:<>
      [:div {:class "flex items-center h-16 px-5 border-b border-zinc-200 flex-shrink-0"}
       [:a {:href "/" :class "inline-flex items-start"}
-       [:img {:src "/img/greed-wordmark-green-tight.svg"
+       [:img {:src "/img/greed-symbol-green-tight.svg"
               :alt "greed"
-              :width 648 :height 192
+              :width 192 :height 192
               :class "h-8 w-auto"}]
        [:span {:class "ml-1.5 text-xs font-medium leading-none text-zinc-500"} "beta"]]]
      [:div {:class "flex flex-col flex-1 px-3 py-5 overflow-y-auto min-h-0"}
@@ -238,9 +238,9 @@
     [:div {:_ drawer-escape-actions}
      [:div {:class "md:hidden fixed top-0 left-0 right-0 min-h-14 bg-zinc-50 border-b border-zinc-200 z-20 flex items-center justify-between px-4 pt-[env(safe-area-inset-top)]"}
       [:a {:href "/" :class "inline-flex items-start"}
-       [:img {:src "/img/greed-wordmark-green-tight.svg"
+       [:img {:src "/img/greed-symbol-green-tight.svg"
               :alt "greed"
-              :width 648 :height 192
+              :width 192 :height 192
               :class "h-7 w-auto"}]
        [:span {:class "ml-1.5 text-xs font-medium leading-none text-zinc-500"} "beta"]]
       (mobile-profile-link (data/session-business ctx))
@@ -261,9 +261,9 @@
               :class "fixed top-0 left-0 h-full w-64 bg-zinc-50 shadow-xl z-40 md:hidden flex flex-col -translate-x-full invisible transition-transform duration-200 ease-out [&[open]]:translate-x-0 [&[open]]:visible"}
       [:div {:class "flex items-center justify-between min-h-14 px-4 border-b border-zinc-200 flex-shrink-0 pt-[env(safe-area-inset-top)]"}
        [:a {:href "/" :class "inline-flex items-start"}
-        [:img {:src "/img/greed-wordmark-green-tight.svg"
+        [:img {:src "/img/greed-symbol-green-tight.svg"
                :alt "greed"
-               :width 648 :height 192
+               :width 192 :height 192
                :class "h-7 w-auto"}]
         [:span {:class "ml-1.5 text-xs font-medium leading-none text-zinc-500"} "beta"]]
        [:button {:id "mobile-drawer-close"

@@ -12,7 +12,7 @@
     [:p {:class "flex items-center gap-2 text-zinc-600"}
      [:a {:href "/" :class "inline-block"}
       [:img {:src "/img/greed-symbol-green-tight.svg" :alt "greed" :width 192 :height 192 :class "block h-5 w-5"}]]
-     "Personal finance for South Africans"]
+     "Money and business finance for South Africans"]
     [:nav {:aria-label "Footer" :class "flex flex-wrap gap-x-6 gap-y-1"}
      [:a {:href "/about" :class link} "About"]
      [:a {:href "/team" :class link} "Team"]
@@ -27,9 +27,9 @@
   [:footer {:class "border-t border-zinc-200 bg-white"}
    [:div {:class "container mx-auto px-6 py-6"}
     [:div {:class "flex flex-col items-center justify-between gap-4 sm:flex-row"}
-     [:img {:src "/img/greed-wordmark-green-tight.svg"
+     [:img {:src "/img/greed-symbol-green-tight.svg"
             :alt "greed"
-            :width 648 :height 192
+            :width 192 :height 192
             :class "h-6 w-auto"}]
      [:nav {:class "flex items-center gap-6"}
       [:a {:href "/privacy" :class "text-sm text-zinc-500 hover:text-zinc-900 transition-colors"} "Privacy"]

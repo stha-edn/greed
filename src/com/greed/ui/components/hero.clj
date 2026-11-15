@@ -34,12 +34,13 @@
      (when title [:p {:class "text-xs font-medium text-zinc-500"} title])
      [:div {:class (str (when title "mt-3 ") "space-y-3")}
       (for [{:keys [label value amount cls]} rows]
-        [:div {:class "grid grid-cols-[7.5rem_minmax(0,1fr)_6rem] items-center gap-3 text-sm"}
-         [:span {:class "truncate text-zinc-600"} label]
-         [:span {:class "h-2.5 overflow-hidden rounded-full bg-zinc-200/70"}
+        [:div {:class "text-sm"}
+         [:div {:class "flex items-baseline justify-between gap-3"}
+          [:span {:class "truncate text-zinc-600"} label]
+          [:span {:class "flex-shrink-0 font-semibold tabular-nums text-zinc-900"} value]]
+         [:span {:class "mt-1.5 block h-2 overflow-hidden rounded-full bg-zinc-200/70"}
           [:span {:class (str "block h-full rounded-full greed-bar-grow " (or cls "bg-brand-600"))
-                  :style {:width (str (if (pos? (or amount 0)) (max 2.0 (pct amount top)) 0) "%")}}]]
-         [:span {:class "truncate text-right font-semibold tabular-nums text-zinc-900"} value]])]
+                  :style {:width (str (if (pos? (or amount 0)) (max 2.0 (pct amount top)) 0) "%")}}]]])]
      (when note [:p {:class "mt-3 text-xs text-zinc-500"} note])]))
 
 ;; ---------------------------------------------------------------------------

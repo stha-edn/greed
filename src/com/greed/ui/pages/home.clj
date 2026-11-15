@@ -1,15 +1,15 @@
 (ns com.greed.ui.pages.home
-  "Home page, built to the taste-skill direction 'The product performs'
-   (seed 1129384765). The product does its job in front of the visitor:
-   the hero headline is a live take-home calculation, the showcase is a
-   row of real interface fragments, and the capability list is the
-   product's own command menu. Interface fragments carry data-ui."
+  "Home page: one app, two profiles. It opens on personal money and shows
+   that the same account runs a business too. Every product picture uses
+   the app's own header-card bars (hero/bars), with sample figures that
+   add up, so the page looks like the product it describes. Interface
+   fragments carry data-ui."
   (:require [clojure.string :as string]
             [com.biffweb :as biff]
             [com.core :as c]
             [com.greed.utilities.core :as utilities]
             [com.greed.utilities.tax :as tax]
-            [com.greed.ui.components.illustrations :as ill]
+            [com.greed.ui.components.hero :as hero]
             [com.greed.ui.components.marketing :as m]))
 
 ;; ---------------------------------------------------------------------------
@@ -38,49 +38,120 @@
      :tax monthly-tax
      :cents (Math/round (* 100 (/ (double net-tax) (* 12 monthly))))}))
 
+
 ;; ---------------------------------------------------------------------------
 ;; Small pieces
-
-(def ^:private btn-primary
-  "inline-flex items-center justify-center rounded-md bg-brand-600 px-6 py-3 text-base font-semibold text-white transition-[transform,background-color] duration-150 ease-out hover:bg-brand-700 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2")
 
 (def ^:private btn-dark
   "inline-flex items-center justify-center rounded-md bg-zinc-900 px-6 py-3 text-base font-semibold text-white transition-[transform,background-color] duration-150 ease-out hover:bg-zinc-700 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2")
 
-(defn- arrow-link [href label]
-  [:a {:href href
-       :class "group inline-flex items-center gap-1.5 text-base font-medium text-zinc-900 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 rounded-sm"}
-   label
-   [:span {:aria-hidden "true" :class "transition-transform duration-150 ease-out group-hover:translate-x-0.5"} "→"]])
+(def ^:private btn-light
+  "inline-flex items-center justify-center rounded-md bg-white px-6 py-3 text-base font-semibold text-zinc-900 transition-[transform,background-color] duration-150 ease-out hover:bg-zinc-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950")
 
-(defn- row [label value & [cls]]
-  [:div {:class "flex items-center justify-between gap-4 py-2.5"}
-   [:span {:class "text-sm text-zinc-600"} label]
-   [:span {:class (str "text-sm font-semibold tabular-nums " (or cls "text-zinc-900"))} value]])
+(def ^:private h2-class
+  "max-w-[20ch] [text-wrap:balance] font-semibold [font-size:clamp(32px,4vw,56px)] leading-[1.04] tracking-[-0.035em]")
 
 ;; ---------------------------------------------------------------------------
-;; Hero: the headline is the calculation
+;; Sample figures. Personal: a R25,000 salary (R21,619 after tax).
+;; Business: Mosa Studio (Pty) Ltd, a VAT vendor and small business corporation.
 
-(defn- hero [signed-in?]
-  [:section {:class "grid grid-cols-1 items-center gap-14 pb-20 pt-12 sm:pt-16 lg:grid-cols-12 lg:gap-10 lg:pb-24 lg:pt-20"}
-   [:div {:class "lg:col-span-7"}
-    [:h1 {:class "enter max-w-[13ch] [text-wrap:balance] font-semibold text-zinc-900 [font-size:clamp(52px,7.4vw,128px)] leading-[0.95] tracking-[-0.05em]"}
-     "Your money, in one clear plan."]
-    [:p {:class "enter mt-8 max-w-[44ch] text-xl leading-relaxed text-zinc-700" :style {"--d" "80ms"}}
-     "greed is personal finance built for South Africa. It starts where your payslip ends, and turns your salary, tax, spending and goals into one plan. No jargon, no judgement."]
+(defn- personal-shot []
+  (m/shot {:label "October 2026" :badge "Personal"
+         :value "R11,240" :unit "spent"
+         :reading "R760 less than the R12,000 the budget plans for expenses."
+         :bars {:title "Planned against spent"
+                :rows [{:label "Planned" :value "R12,000" :amount 12000 :cls "bg-zinc-400"}
+                       {:label "Spent" :value "R11,240" :amount 11240 :cls "bg-brand-600"}]}
+         :stats [["Money in" "R21,619"] ["Money out" "R11,240"] ["In minus out" "R10,379"]]}))
+
+(defn- business-shot []
+  (m/shot {:label "October 2026" :badge "Mosa Studio (Pty) Ltd"
+         :value "R31,200" :unit "spent"
+         :reading "R2,800 less than the R34,000 the budget plans for costs."
+         :bars {:title "Money in against money out"
+                :rows [{:label "Money in" :value "R86,400" :amount 86400 :cls "bg-brand-600"}
+                       {:label "Money out" :value "R31,200" :amount 31200 :cls "bg-zinc-400"}]}
+         :stats [["VAT to pay" "R7,200"] ["Owner's pay" "R20,000"] ["Team" "3 people"]]}))
+
+;; ---------------------------------------------------------------------------
+;; Hero: one account, two profiles, switched like the app does
+
+(defn- hero-section [signed-in?]
+  [:section {:class "grid grid-cols-1 items-center gap-14 pb-20 pt-12 sm:pt-16 lg:grid-cols-12 lg:gap-12 lg:pb-28 lg:pt-20"}
+   [:div {:class "lg:col-span-6"}
+    [:h1 {:class "enter max-w-[14ch] [text-wrap:balance] font-semibold text-zinc-900 [font-size:clamp(48px,6.4vw,104px)] leading-[0.95] tracking-[-0.05em]"}
+     "Know where every rand goes."]
+    [:p {:class "enter mt-8 max-w-[46ch] text-xl leading-relaxed text-zinc-700" :style {"--d" "80ms"}}
+     "greed reads your bank statements, plans your month and works out what SARS takes. For your own money, and for your business, in one account."]
     [:div {:class "enter mt-10 flex flex-wrap items-center gap-x-6 gap-y-4" :style {"--d" "120ms"}}
      (if signed-in?
-       [:a {:href "/app" :class btn-dark} "Go to dashboard"]
+       [:a {:href "/app" :class btn-dark} "Go to your account"]
        [:a {:href "/signup" :class btn-dark} "Create your free account"])
-     [:a {:href "#keep" :class "text-base font-medium text-zinc-900 underline underline-offset-4 decoration-zinc-400 transition-colors hover:decoration-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 rounded-sm"}
-      "Work out your take-home"]]]
-   [:div {:class "enter relative mx-auto w-full max-w-[420px] lg:col-span-5 lg:mr-0" :style {"--d" "140ms"}}
-    [:div {:class "relative rotate-[3deg]"}
-     (ill/payslip :class "w-full")]]])
+     [:a {:href "#how" :class (str "text-base " m/link-ink)} "See how it works"]]]
+   [:div {:class "enter lg:col-span-6" :style {"--d" "140ms"}}
+    [:div {:class "mx-auto max-w-[540px] rounded-2xl bg-stone-100 p-4 sm:p-6"}
+     [:div {:role "tablist" :aria-label "Profiles" :class "mb-4 flex gap-1 rounded-lg bg-white p-1 ring-1 ring-zinc-200/70"}
+      (for [[id label sel?] [["pf-personal" "Personal" true] ["pf-business" "Business" false]]]
+        [:button {:type "button" :role "tab" :id (str id "-tab") :aria-controls id :aria-selected (str sel?)
+                  :class "pf-tab flex-1 rounded-md px-3 py-2 text-sm font-semibold text-zinc-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"}
+         label])]
+     [:div {:id "pf-personal" :role "tabpanel" :aria-labelledby "pf-personal-tab" :class "pf-panel"} (personal-shot)]
+     [:div {:id "pf-business" :role "tabpanel" :aria-labelledby "pf-business-tab" :class "pf-panel" :hidden true} (business-shot)]
+     [:p {:class "mt-4 text-center text-sm text-zinc-600"} "One sign-in. Switch between you and your business at any time."]]]])
+
+(defn- facts []
+  [:dl {:class "enter grid grid-cols-2 gap-x-6 gap-y-8 border-y border-zinc-200 py-10 lg:grid-cols-4"}
+   (for [[k v] [["FNB & Standard Bank" "PDF statements, read for you"]
+                ["SARS 2026/27" "tables for income, VAT and company tax"]
+                ["Free" "to use, for you and your business"]
+                ["Never" "sells your data, and never keeps your statements"]]]
+     [:div
+      [:dt {:class "text-lg font-semibold tracking-[-0.02em] text-zinc-900"} k]
+      [:dd {:class "mt-1 max-w-[28ch] text-base leading-snug text-zinc-600"} v]])])
+
+;; ---------------------------------------------------------------------------
+;; How it works: statement, plan, what is left
+
+(defn- step [n title line visual & [d]]
+  [:li {:class "enter flex flex-col" :style {"--d" (or d "0ms")}}
+   [:p {:class "text-sm font-semibold tabular-nums text-brand-700"} (str "0" n)]
+   [:h3 {:class "mt-2 text-2xl font-semibold tracking-[-0.02em] text-zinc-900"} title]
+   [:p {:class "mt-2 max-w-[38ch] text-base leading-relaxed text-zinc-600"} line]
+   [:div {:class "mt-8 flex-1"} visual]])
+
+(defn- how []
+  [:section {:id "how" :class "py-24 lg:py-32" :aria-labelledby "how-h"}
+   [:h2 {:id "how-h" :class (str "enter text-zinc-900 " h2-class)} "From bank statement to a plan, in three steps."]
+   [:ol {:class "mt-16 grid grid-cols-1 gap-14 lg:grid-cols-3 lg:gap-10"}
+    (step 1 "Upload a statement"
+          "Drop in a PDF from FNB or Standard Bank. greed reads every line, sorts it into categories, then keeps only the totals."
+          (m/shot {:label "Banking" :value "4" :unit "months read"
+                 :reading "Only totals are kept, never the files."
+                 :bars {:title "The last 12 months, per bank" :of 12
+                        :rows [{:label "FNB" :value "4 of 12" :amount 4 :cls "bg-brand-600"}
+                               {:label "Standard Bank" :value "3 of 12" :amount 3 :cls "bg-brand-600"}]}}))
+    (step 2 "Plan the month"
+          "Add what you expect to earn and spend, or add straight from a statement. A reference links a budget item to its debit order, even when the bank changes the number."
+          [:div {:data-ui "" :class "rounded-lg bg-white px-5 py-2 shadow-card-md ring-1 ring-zinc-200/70 divide-y divide-zinc-100"} ; taste-skill-ignore: rows inside a data-ui fragment
+           (m/item-row "Car finance" "R3,500" "Monthly" "WESBANK")
+           (m/item-row "Rent" "R7,000" "Monthly")
+           (m/item-row "Plumber" "R1,150" "From Oct 2026 statement")]
+          "80ms")
+    (step 3 "See what is left"
+          "Spending compares each month with the plan, and leaves out what you already budgeted for. Home shows it all at a glance."
+          (m/shot {:label "Spending" :value "R11,240" :unit "spent"
+                 :reading "R760 less than planned."
+                 :bars {:title "Planned against spent"
+                        :rows [{:label "Planned" :value "R12,000" :amount 12000 :cls "bg-zinc-400"}
+                               {:label "Spent" :value "R11,240" :amount 11240 :cls "bg-brand-600"}]}})
+          "160ms")]])
+
+;; ---------------------------------------------------------------------------
+;; The tax calculator (personal tax, live)
 
 (defn- calculator [cfg signed-in?]
   (let [{:keys [keep tax cents]} (monthly-take-home cfg sample-salary 30)]
-    [:section {:id "keep" :aria-labelledby "keep-h" :class "pb-24 pt-8 text-center lg:pb-32 lg:pt-12"
+    [:section {:id "keep" :aria-labelledby "keep-h" :class "py-24 text-center lg:py-32"
                :data-tax (tax-config-json cfg)}
      ;; The heading is the calculation, centred and as large as the page allows
      [:h2 {:id "keep-h" :class "enter mx-auto w-full font-semibold text-zinc-900 [font-size:var(--keep-fs,clamp(68px,12vw,208px))] leading-[0.9] tracking-[-0.055em]"}
@@ -108,211 +179,130 @@
         [:span {:class "block text-sm text-zinc-600"} "Adds the secondary rebate"]]
        [:input {:id "older" :type "checkbox" :role "switch" :class "age-switch"}]]]
      [:p {:class "enter mx-auto mt-10 max-w-[44ch] text-xl leading-relaxed text-zinc-700" :style {"--d" "120ms"}}
-      "Your take-home on SARS 2026/27 tables. Drag your salary, then let greed plan the rest with you: budget, goals and payday."]
+      "Your take-home on the SARS 2026/27 tables. Drag your salary. The full calculators also do bonuses and a practice ITR12 return."]
      [:div {:class "enter mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-4" :style {"--d" "160ms"}}
       [:a {:href (if signed-in? "/app/tax/income-tax-calculator" "/signin")
            :class "group inline-flex items-center gap-1.5 rounded-sm text-base font-medium text-zinc-900 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"}
        "Open the full tax calculator"
        [:span {:aria-hidden "true" :class "transition-transform duration-150 ease-out group-hover:translate-x-0.5"} "→"]]]]))
 
-;; ---------------------------------------------------------------------------
-;; Showcase: lit panel, dark row. Each panel is a cropped piece of the app,
-;; with sample data that adds up (R25,000 salary, see the hero).
-
-(defn- panel [{:keys [id name line]} & body]
-  [:article {:data-ui "" :data-name name :data-line line :id id
-             :class "panel snap-center shrink-0 w-[min(86vw,400px)] rounded-lg bg-white p-6 text-zinc-900"}
-   body])
-
-(defn- frag-month []
-  (panel {:id "p-month" :name "Your month"
-          :line "One number to plan by: what is left after expenses and savings, and how far you are from payday."}
-   [:p {:class "text-sm font-medium text-zinc-500"} "Your month"]
-   [:p {:class "mt-3 flex items-baseline gap-2"}
-    [:span {:class "text-4xl font-semibold tracking-tight tabular-nums"} "R9,619"]
-    [:span {:class "text-sm text-zinc-500"} "left to plan"]]
-   [:p {:class "mt-1 text-sm text-zinc-500"} "On track: spending is under income so far."]
-   [:div {:class "mt-5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100"}
-    [:div {:class "h-full rounded-full bg-brand-600" :style {:width "19%"}}]]
-   [:p {:class "mt-2 text-sm text-zinc-500"} "Day 6 of 32 · payday in 26 days"]
-   [:div {:class "mt-5 grid grid-cols-3 gap-3 border-t border-zinc-100 pt-4"} ; taste-skill-ignore: rule inside a data-ui fragment
-    (for [[l v] [["Savings rate" "7%"] ["Income" "R21,619"] ["Payday" "25th"]]]
-      [:div [:p {:class "text-xs text-zinc-500"} l] [:p {:class "mt-1 text-sm font-semibold tabular-nums"} v]])]))
-
-(defn- frag-budget []
-  (panel {:id "p-budget" :name "Budget"
-          :line "Every rand gets a job. Your salary flows in from settings; add rent, the car and what you save."}
-   [:div {:class "flex items-center justify-between"}
-    [:p {:class "text-sm font-semibold"} "Expenses"]
-    [:span {:class "rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-700"} "+ Add item"]]
-   [:div {:class "mt-3 divide-y divide-zinc-100"} ; taste-skill-ignore: rule inside a data-ui fragment
-    (row "Rent" "R7,000")
-    [:div {:class "-mx-2 rounded-md bg-zinc-100 px-2"} (row "Car payment" "R3,500")]
-    (row "TFSA (savings)" "R1,500")]
-   [:div {:class "mt-3 border-t border-zinc-200 pt-3"} ; taste-skill-ignore: rule inside a data-ui fragment
-    (row "Salary after tax" "R21,619")
-    (row "Left to plan" "R9,619" "text-brand-700")]))
-
-(defn- frag-bracket []
-  (panel {:id "p-bracket" :name "Your tax bracket"
-          :line "See your marginal rate, and how far your income is from the next SARS bracket."}
-   [:div {:class "flex items-start justify-between"}
-    [:p {:class "text-sm font-semibold"} "Your tax bracket"]
-    [:p {:class "text-right"} [:span {:class "block text-2xl font-semibold tabular-nums"} "26%"]
-     [:span {:class "text-xs text-zinc-500"} "Marginal rate"]]]
-   [:div {:class "mt-3 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100"}
-    [:div {:class "h-full rounded-full bg-brand-600" :style {:width "40%"}}]]
-   [:p {:class "mt-2 text-sm tabular-nums text-zinc-600"} "R83,100 until the 31% bracket"]
-   [:div {:class "mt-3 divide-y divide-zinc-100 text-sm tabular-nums"} ; taste-skill-ignore: rule inside a data-ui fragment
-    (for [[r p active?] [["R0 – R245,099" "18%" false]
-                         ["R245,100 – R383,099" "26%" true]
-                         ["R383,100 – R530,199" "31%" false]]]
-      [:div {:class (str "flex justify-between py-2.5 " (when active? "-mx-2 rounded-md bg-zinc-100 px-2 font-semibold"))}
-       [:span r] [:span p]])]))
-
-(defn- frag-goals []
-  (panel {:id "p-goals" :name "Goals"
-          :line "Set a target and a date. greed shows what is left to save, and tells you when one falls behind."}
-   (for [[t date saved target pct over?] [["Emergency fund" "By 1 Sep 2026" "R1,000" "R2,500" 40 true]
-                                          ["Holiday" "By 1 Dec 2026" "R0" "R5,000" 0 false]]]
-     [:div {:class "py-3 first:pt-0"}
-      [:div {:class "flex items-center justify-between gap-3"}
-       [:p {:class "text-sm font-semibold"} t]
-       (when over? [:span {:class "rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700"} "Overdue"])]
-      [:p {:class "text-xs text-zinc-500"} date]
-      [:p {:class "mt-3 flex items-baseline justify-between text-sm tabular-nums"}
-       [:span {:class "text-lg font-semibold"} saved] [:span {:class "text-zinc-500"} (str "of " target)]]
-      [:div {:class "mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100"}
-       [:div {:class "h-full rounded-full bg-brand-600" :style {:width (str pct "%")}}]]
-      [:p {:class "mt-1.5 text-xs tabular-nums text-zinc-600"} (str pct "% funded")]])))
-
-(defn- frag-calendar []
-  ;; November 2026 starts on a Sunday.
-  (panel {:id "p-cal" :name "Payday calendar"
-          :line "Payday, bills and to-dos on one month, so nothing slips between one salary and the next."}
-   [:div {:class "flex items-center justify-between"}
-    [:p {:class "text-base font-semibold"} "November " [:span {:class "font-normal text-zinc-500"} "2026"]]
-    [:div {:class "flex gap-3 text-xs text-zinc-600"}
-     [:span {:class "flex items-center gap-1"} [:span {:class "h-1.5 w-1.5 rounded-full bg-brand-600"}] "Payday"]
-     [:span {:class "flex items-center gap-1"} [:span {:class "h-1.5 w-1.5 rounded-full bg-zinc-700"}] "Bill"]]]
-   [:div {:class "mt-4 grid grid-cols-7 gap-y-1 text-center text-xs text-zinc-500"}
-    (for [d ["S" "M" "T" "W" "T" "F" "S"]] [:span {:class "py-1"} d])
-    (for [n (range 1 31)]
-      [:span {:class (str "relative flex h-9 flex-col items-center justify-center rounded-md text-sm tabular-nums "
-                          (cond (= n 25) "bg-brand-600 font-semibold text-white"
-                                :else "text-zinc-800"))}
-       n
-       (when (#{1 15} n) [:span {:class "absolute bottom-1 h-1 w-1 rounded-full bg-zinc-700"}])])]
-   [:p {:class "mt-3 text-sm text-zinc-600"} "Rent on the 1st · car on the 15th · salary on the 25th"]))
-
-(defn- frag-bonus []
-  (panel {:id "p-bonus" :name "Bonus tax"
-          :line "Know what a bonus or 13th cheque really adds before it lands, taxed at your marginal rate."}
-   [:p {:class "text-sm font-semibold"} "13th cheque"]
-   [:div {:class "mt-3 divide-y divide-zinc-100"} ; taste-skill-ignore: rule inside a data-ui fragment
-    (row "Bonus" "R25,000")
-    (row "PAYE at 26%" "R6,500")]
-   [:div {:class "mt-3 rounded-md bg-zinc-100 px-4 py-3"}
-    [:p {:class "text-sm text-zinc-600"} "Lands in your account"]
-    [:p {:class "mt-1 text-2xl font-semibold tabular-nums text-brand-700"} "R18,500"]]))
-
-(defn- showcase []
-  [:section {:id "inside" :class "showcase relative bg-zinc-950 py-20 text-white lg:py-28" :aria-labelledby "inside-h"}
-   [:div {:class "container mx-auto px-6"}
-    [:h2 {:id "inside-h" :class "enter text-2xl font-semibold tracking-tight text-white"} "Inside your account"]]
-   [:div {:class "relative mt-10 lg:grid lg:grid-cols-[minmax(0,1fr)_24ch] lg:items-start lg:gap-10 lg:pr-10"}
-    [:div {:id "shelf" :tabindex "0" :aria-label "Account screens, scroll sideways"
-           :class "shelf flex snap-x snap-mandatory items-center gap-[3vw] lg:gap-[6vw] overflow-x-auto pb-6 [scrollbar-width:none] focus-visible:outline-none"}
-     (frag-month) (frag-budget) (frag-bracket) (frag-goals) (frag-calendar) (frag-bonus)]
-    [:div {:class "mt-2 px-6 lg:mt-0 lg:px-0" :aria-live "polite"}
-     [:h3 {:id "shelf-name" :class "text-2xl font-light text-white"} "Your month"]
-     [:p {:id "shelf-line" :class "mt-3 text-base leading-relaxed text-zinc-300"}
-      "One number to plan by: what is left after expenses and savings, and how far you are from payday."]
-     [:div {:class "mt-6 flex gap-2"}
-      [:button {:type "button" :id "shelf-prev" :aria-label "Previous screen"
-                :class "rounded-md bg-zinc-800 px-3 py-2 text-base text-white transition-[transform,background-color] hover:bg-zinc-700 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"} "←"]
-      [:button {:type "button" :id "shelf-next" :aria-label "Next screen"
-                :class "rounded-md bg-zinc-800 px-3 py-2 text-base text-white transition-[transform,background-color] hover:bg-zinc-700 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"} "→"]]]]])
 
 ;; ---------------------------------------------------------------------------
-;; Features: the product's own command menu, scaled up
+;; Everything for your own money
 
-(defn- commands [signed-in?]
+(defn- tile [{:keys [title line href d]} & body]
+  [:a {:href href :style {"--d" (or d "0ms")}
+       :class "enter group flex flex-col rounded-lg bg-white p-6 ring-1 ring-zinc-200/70 transition-shadow duration-200 hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900"}
+   [:h3 {:class "flex items-center justify-between gap-3 text-lg font-semibold tracking-[-0.01em] text-zinc-900"}
+    title [:span {:aria-hidden "true" :class "text-zinc-400 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-zinc-900"} "→"]]
+   [:p {:class "mt-1.5 text-[15px] leading-relaxed text-zinc-600"} line]
+   (into [:div {:class "mt-6"}] body)])
+
+(defn- personal-features [signed-in?]
   (let [go (fn [href] (if signed-in? href "/signin"))]
-    [{:name "Work out my income tax" :href (go "/app/tax/income-tax-calculator")
-      :line "Enter a salary and age. See tax, rebates, your effective and marginal rate, and take-home pay."}
-     {:name "Simulate my ITR12 return" :href (go "/app/tax/tax-returns")
-      :line "Add medical aid, a retirement annuity and travel allowance, and see if SARS owes you a refund."}
-     {:name "Tax my bonus" :href (go "/app/tax/bonus-tax-calculator")
-      :line "See the PAYE on a bonus or 13th cheque, and what lands in your account."}
-     {:name "Plan this month" :href (go "/app/finances/")
-      :line "Income, expenses and savings in one budget, with what is left to spend each day until payday."}
-     {:name "Save towards a goal" :href (go "/app/goals")
-      :line "Set a target and a date, add to it as you go, and see when a goal falls behind."}
-     {:name "Mark payday and bills" :href (go "/app/calendar")
-      :line "A month of paydays, bills and to-dos, so nothing slips between salaries."}
-     {:name "Read my savings rate" :href (go "/app/insights")
-      :line "Your savings rate against a 20% benchmark, and where every rand went this month."}]))
-
-(defn- command-list [signed-in?]
-  [:section {:id "do" :class "grid grid-cols-1 gap-10 py-24 lg:grid-cols-12 lg:py-40" :aria-labelledby "do-h"}
-   [:div {:class "enter lg:col-span-4"}
-    [:h2 {:id "do-h" :class "text-[28px] font-semibold leading-tight tracking-[-0.02em] text-zinc-900"} "What greed does"]
-    [:p {:class "mt-4 max-w-[34ch] text-[17px] leading-relaxed text-zinc-700"}
-     "Type what you want to do, or pick a line. Enter opens it."]]
-   [:div {:data-ui "" :class "cmd enter lg:col-span-7 lg:col-start-6" :style {"--d" "80ms"}}
-    [:label {:for "cmd-q" :class "sr-only"} "What do you want to do?"]
-    [:div {:class "relative"}
-     [:svg {:class "pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500" :fill "none" :stroke "currentColor" :stroke-width "2" :viewBox "0 0 24 24" :aria-hidden "true"}
-      [:circle {:cx "11" :cy "11" :r "7"}]
-      [:path {:stroke-linecap "round" :d "m20 20-3.5-3.5"}]]
-     [:input {:id "cmd-q" :type "search" :autocomplete "off" :placeholder "What do you want to do?"
-              :role "combobox" :aria-controls "cmd-list" :aria-expanded "true"
-              :class "block h-14 w-full rounded-md border border-zinc-300 bg-white pl-12 pr-4 text-lg text-zinc-900 placeholder:text-zinc-500 transition-colors focus:border-zinc-900 focus:outline-none focus:ring-0"}]]
-    [:ul {:id "cmd-list" :role "listbox" :class "mt-3"}
-     (for [[i {:keys [name href line]}] (map-indexed vector (commands signed-in?))]
-       [:li {:role "option" :aria-selected (str (zero? i)) :data-href href
-             :class (str "cmd-row cursor-pointer rounded-md px-4 py-3 text-zinc-900" (when (zero? i) " is-sel"))}
-        [:a {:href href :tabindex "-1" :class "flex items-baseline justify-between gap-4 focus:outline-none"}
-         [:span {:class "font-semibold tracking-[-0.02em] [font-size:clamp(20px,2vw,28px)] leading-snug"} name]
-         [:span {:class "cmd-go hidden shrink-0 text-base font-medium"} "Open →"]]
-        [:p {:class "cmd-line hidden mt-1 max-w-[56ch] text-base leading-relaxed"} line]])]
-    [:p {:id "cmd-none" :class "mt-4 hidden px-4 text-base text-zinc-700"} "Nothing matches. Try “tax”, “budget” or “goal”."]]])
+    [:section {:id "personal" :class "py-24 lg:py-32" :aria-labelledby "personal-h"}
+     [:div {:class "grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-end"}
+      [:h2 {:id "personal-h" :class (str "enter text-zinc-900 lg:col-span-7 " h2-class)} "Everything for your own money."]
+      [:p {:class "enter max-w-[44ch] text-lg leading-relaxed text-zinc-600 lg:col-span-5" :style {"--d" "80ms"}}
+       "Each tab opens on the same kind of card: one number, what it means, and bars that show it."]]
+     [:div {:class "mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"}
+      (tile {:title "Budget" :href (go "/app/finances/")
+             :line "Income, expenses and savings for each month. Items from a statement count only in their month."}
+            (hero/bars {:of 21619 :rows [{:label "Expenses" :value "R12,000" :amount 12000 :cls "bg-zinc-700"}
+                                         {:label "Savings" :value "R2,500" :amount 2500 :cls "bg-zinc-400"}
+                                         {:label "Left" :value "R7,119" :amount 7119 :cls "bg-brand-600"}]}))
+      (tile {:title "Spending" :href (go "/app/spending") :d "60ms"
+             :line "What actually left your account, by month and category, with refunds and transfers set apart."}
+            (hero/bars {:rows [{:label "Groceries" :value "R4,180" :amount 4180 :cls "bg-brand-600"}
+                               {:label "Transport" :value "R2,240" :amount 2240 :cls "bg-brand-600"}
+                               {:label "Eating out" :value "R1,310" :amount 1310 :cls "bg-brand-600"}]}))
+      (tile {:title "Tax" :href (go "/app/tax") :d "120ms"
+             :line "Your take-home and tax bracket, a bonus or 13th cheque, and a practice ITR12 return."}
+            (hero/bars {:of 300000 :rows [{:label "Take-home" :value "R259,428" :amount 259428 :cls "bg-brand-600"}
+                                          {:label "Tax" :value "R40,572" :amount 40572 :cls "bg-zinc-400"}]}))
+      (tile {:title "Calendar" :href (go "/app/calendar")
+             :line "Payday, bills and to-dos on one month, so nothing slips between one salary and the next."}
+            (hero/bars {:of 31 :rows [{:label "Days gone" :value "15 of 31" :amount 15 :cls "bg-zinc-400"}
+                                      {:label "To payday" :value "10" :amount 10 :cls "bg-brand-600"}]}))
+      (tile {:title "Goals" :href (go "/app/goals") :d "60ms"
+             :line "Set a target and a date. See what is left to save, and which goal falls behind."}
+            (hero/bars {:of 7500 :rows [{:label "Saved" :value "R3,000" :amount 3000 :cls "bg-brand-600"}
+                                        {:label "Still to save" :value "R4,500" :amount 4500 :cls "bg-zinc-400"}]}))
+      (tile {:title "Insights" :href (go "/app/insights") :d "120ms"
+             :line "Your savings rate against a 20% benchmark, and planned against spent for the month."}
+            (hero/bars {:of 21619 :rows [{:label "Saved" :value "R2,500" :amount 2500 :cls "bg-brand-600"}
+                                         {:label "20% benchmark" :value "R4,324" :amount 4324 :cls "bg-zinc-400"}]}))]]))
 
 ;; ---------------------------------------------------------------------------
-;; About: a letter
+;; Your business, in the same account
 
-(defn- letter []
-  [:section {:id "why" :class "grid grid-cols-1 items-center gap-12 py-24 lg:grid-cols-12 lg:gap-10 lg:py-32" :aria-labelledby "why-h"}
-   [:div {:class "enter hidden lg:col-span-5 lg:flex lg:justify-start"}
-    (ill/calendar-sheet :class "w-full max-w-[300px] -rotate-[3deg]")]
-   [:div {:class "max-w-[560px] lg:col-span-6 lg:col-start-7"}
-    [:div {:class "enter flex items-center gap-3"}
-     [:img {:src "/img/IMG_3777.webp" :alt "Sithabiso Makhathini" :width 44 :height 44 :loading "lazy"
-            :class "h-11 w-11 rounded-full object-cover object-top"}]
-     [:h2 {:id "why-h" :class "text-2xl font-semibold tracking-tight text-zinc-900"} "Why we built greed"]]
-    [:div {:class "enter mt-7 space-y-6 text-[17px] leading-[1.55] text-zinc-800" :style {"--d" "80ms"}}
-     [:p "Money is private, and so is ambition. We built greed to take your financial life off the messy back of your mind and put it in "
-      [:mark {:class "rounded-sm bg-brand-100 text-zinc-900"} "one clear place"]
-      ": salary, tax, spending, savings and the dates that matter."]
-     [:p "To us, greed does not mean taking without limits. It means wanting more: more security, more ownership, more choice, with a plan you can actually see."]
-     [:p "There is no judgement and no jargon here, and no promise of instant wealth. Your information stays yours. We will never sell your data."]
-     [:p "We are a small team in South Africa, and we read every message ourselves. Write to us at "
-      [:a {:href "mailto:support@mygreed.co.za" :class "font-medium text-zinc-900 underline underline-offset-4 hover:text-zinc-600"} "support@mygreed.co.za"] "."]]
-    [:div {:class "enter mt-10" :style {"--d" "140ms"}}
-     [:p {:class "text-[22px] italic text-zinc-900"} "Sithabiso Makhathini"]
-     [:p {:class "mt-1 text-sm text-zinc-600"} "Founder & CEO"]]]])
+(defn- business [signed-in?]
+  [:section {:id "business" :class "bg-zinc-950 text-white" :aria-labelledby "business-h"}
+   [:div {:class "container mx-auto px-6 py-24 lg:py-32"}
+    [:div {:class "grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-end"}
+     [:h2 {:id "business-h" :class (str "enter text-white lg:col-span-7 " h2-class)} "Run your business from the same account."]
+     [:p {:class "enter max-w-[44ch] text-lg leading-relaxed text-zinc-300 lg:col-span-5" :style {"--d" "80ms"}}
+      "Add a sole proprietorship, a (Pty) Ltd, a partnership, a trust or a non-profit. It gets its own budget, statements and tax, and you switch to it in one click."]]
+    [:div {:class "mt-14 grid grid-cols-1 gap-5 lg:grid-cols-3"}
+     [:div {:class "enter" :style {"--d" "0ms"}}
+      (m/shot {:label "VAT" :badge "Due 30 Nov" :value "R7,200" :unit "to pay"
+             :reading "For September and October. The VAT201 is due on the last business day of the next month."
+             :bars {:title "VAT on sales against VAT on costs"
+                    :rows [{:label "On sales" :value "R11,270" :amount 11270 :cls "bg-brand-600"}
+                           {:label "On costs" :value "R4,070" :amount 4070 :cls "bg-zinc-400"}]}
+             :stats [["Period" "Sep–Oct"] ["Category" "B"] ["Set aside" "R7,500"]]})]
+     [:div {:class "enter" :style {"--d" "80ms"}}
+      (m/shot {:label "Company tax" :badge "Small business corporation" :value "R30,170" :unit "this year"
+             :reading "On R420,000 taxable income, with the SBC rates. Provisional payment dates go on the calendar."
+             :bars {:title "Where the profit goes" :of 420000
+                    :rows [{:label "Kept" :value "R389,830" :amount 389830 :cls "bg-brand-600"}
+                           {:label "Income tax" :value "R30,170" :amount 30170 :cls "bg-zinc-400"}]}
+             :stats [["Effective rate" "7%"] ["Year end" "February"] ["Next payment" "31 Aug"]]})]
+     [:div {:class "enter" :style {"--d" "160ms"}}
+      (m/shot {:label "Owner's pay" :value "R20,000" :unit "a month"
+             :reading "Paid to you from the business budget. It appears on your personal Tax page, so both sides agree."
+             :bars {:title "Profit shares" :of 100
+                    :rows [{:label "You" :value "60%" :amount 60 :cls "bg-brand-600"}
+                           {:label "Partner" :value "40%" :amount 40 :cls "bg-zinc-400"}]}
+             :stats [["Members" "3"] ["Owners" "2"] ["Invites" "1"]]})]]
+    [:ul {:class "enter mt-14 grid grid-cols-1 gap-x-10 gap-y-6 text-base sm:grid-cols-2 lg:grid-cols-4" :style {"--d" "120ms"}}
+     (for [[t l] [["Money in and out" "Read from the business's statements, in business categories like SARS, salaries and stock."]
+                  ["A team" "Invite a partner or a bookkeeper by email. Owners manage invites and roles, members work in the budget."]
+                  ["SARS dates" "VAT201 and provisional tax dates appear on the calendar by themselves."]
+                  ["One sign-in" "Your personal money stays private from the business, and the other way round."]]]
+       [:li
+        [:p {:class "font-semibold text-white"} t]
+        [:p {:class "mt-1.5 leading-relaxed text-zinc-400"} l]])]
+    [:div {:class "enter mt-14" :style {"--d" "160ms"}}
+     [:a {:href (if signed-in? "/app/choose?add=1#add-business" "/signup") :class btn-light}
+      (if signed-in? "Add your business" "Sign up with a business")]]]])
 
 ;; ---------------------------------------------------------------------------
-;; CTA: the action tile
+;; Privacy
+
+(defn- privacy []
+  [:section {:id "private" :class "py-24 lg:py-32" :aria-labelledby "private-h"}
+   [:div {:class "grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10"}
+    [:h2 {:id "private-h" :class (str "enter text-zinc-900 lg:col-span-5 " h2-class)} "Your statements are read, then let go."]
+    [:dl {:class "grid grid-cols-1 gap-10 sm:grid-cols-3 lg:col-span-7"}
+     (for [[i [k v]] (map-indexed vector
+                                  [["Totals, not files" "greed keeps the monthly totals it needs. The PDF itself is never stored."]
+                                   ["No ads, no selling" "We never sell your data, and there are no advertising trackers."]
+                                   ["Profiles kept apart" "Business members see the business, never your personal budget."]])]
+       [:div {:class "enter" :style {"--d" (str (* 80 i) "ms")}}
+        [:dt {:class "text-lg font-semibold tracking-[-0.01em] text-zinc-900"} k]
+        [:dd {:class "mt-2 text-base leading-relaxed text-zinc-600"} v]])]]])
+
+;; ---------------------------------------------------------------------------
+;; Close
 
 (defn- action-tile [signed-in?]
   (m/action-tile
-   {:id "start" :ground "bg-white"
-    :heading "Plan your next payday"
-    :line "Your salary, what SARS takes and the plan for the rest, in one calm, private place."
-    :primary {:href (if signed-in? "/app" "/signup") :label (if signed-in? "Go to dashboard" "Create your free account")}
-    :secondary {:href (if signed-in? "/app/tax/income-tax-calculator" "/signin") :label "Try the tax calculator"}}))
+   {:id "start" :ground "bg-stone-100" :facts :none
+    :heading "Plan your next payday, and your next VAT return."
+    :line "Your money and your business, read from your statements and planned in one calm, private place."
+    :primary {:href (if signed-in? "/app" "/signup") :label (if signed-in? "Go to your account" "Create your free account")}
+    :secondary {:href (if signed-in? "/app/tax/income-tax-calculator" "#keep") :label "Try the tax calculator"}}))
 
 ;; ---------------------------------------------------------------------------
 ;; Page-local style and behaviour
@@ -325,23 +315,19 @@
 .age-switch:checked{background:#0F6B4F}
 .age-switch:checked::after{transform:translateX(18px)}
 .age-switch:focus-visible{outline:2px solid #18181b;outline-offset:2px}
-.shelf{padding-inline:calc(50% - min(43vw,200px))}
-.shelf::-webkit-scrollbar{display:none}
-.shelf .panel{transition:filter .9s ease, transform .9s cubic-bezier(.16,1,.3,1)}
-.shelf .panel:not(.is-lit){filter:invert(.9) hue-rotate(180deg);transform:scale(.96);cursor:pointer}
-@media (min-width:1024px){.shelf{padding-inline:calc(50% - 200px)}}
-.cmd-row{transition:background-color .15s ease-out,color .15s ease-out}
-.cmd-row.is-sel{background:#0F6B4F;color:#fff}
-.cmd-row.is-sel .cmd-line,.cmd-row.is-sel .cmd-go{display:block}
-.cmd-row:not(.is-sel):hover{background:#f4f4f5}
-html.js .enter{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.16,1,.3,1) var(--d,0ms),transform .7s cubic-bezier(.16,1,.3,1) var(--d,0ms)}
-html.js .enter.chip{transform:translateY(24px)}
-html.js .enter.in{opacity:1;transform:none}
 #keep-out.tick{animation:keep-tick .35s cubic-bezier(.16,1,.3,1)}
 @keyframes keep-tick{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
+.pf-tab[aria-selected=true]{background:#18181b;color:#fff}
+.pf-tab[aria-selected=false]:hover{color:#18181b}
+.pf-panel:not([hidden]){animation:pf-in .45s cubic-bezier(.16,1,.3,1)}
+@keyframes pf-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+html.js .enter{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.16,1,.3,1) var(--d,0ms),transform .7s cubic-bezier(.16,1,.3,1) var(--d,0ms)}
+html.js .enter.in{opacity:1;transform:none}
+html.js .enter:not(.in) .greed-bar-grow{animation:none;transform:scaleX(0)}
 @media (prefers-reduced-motion:reduce){
   html.js .enter{opacity:1;transform:none;transition:none}
-  .shelf .panel{transition:none}
+  html.js .enter:not(.in) .greed-bar-grow{transform:none}
+  .pf-panel:not([hidden]){animation:none}
   #keep-out.tick{animation:none}
 }
 ")
@@ -353,12 +339,27 @@ html.js .enter.in{opacity:1;transform:none}
   var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function rands(n){return 'R'+Math.round(n).toLocaleString('en-US');}
 
-  // Entrances: each part rises once as its section arrives.
+  // Entrances: each part rises once as its section arrives; its bars grow then.
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -8% 0px'});
   document.querySelectorAll('.enter').forEach(function(el){io.observe(el);});
   setTimeout(function(){document.querySelectorAll('.enter').forEach(function(el){el.classList.add('in');});},2500);
 
-  // Hero: the headline is the calculation, on the server's own SARS tables.
+  // Profiles: Personal and Business, switched like the app's profile switcher.
+  var tabs=[].slice.call(document.querySelectorAll('.pf-tab'));
+  function show(i){
+    tabs.forEach(function(t,k){var on=k===i; t.setAttribute('aria-selected',on?'true':'false'); t.tabIndex=on?0:-1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden=!on;});
+  }
+  var cur=0, held=false, timer=null;
+  function hold(){held=true; clearInterval(timer);}
+  tabs.forEach(function(t,k){
+    t.addEventListener('click',function(){hold(); cur=k; show(k);});
+    t.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault(); hold(); cur=(cur+1)%tabs.length; show(cur); tabs[cur].focus();}});
+  });
+  show(0);
+  if(!reduce){timer=setInterval(function(){if(!held && !document.hidden){cur=(cur+1)%tabs.length; show(cur);}},5000);}
+
+  // Tax: the headline is the calculation, on the server's own SARS tables.
   var hero=document.getElementById('keep');
   var cfg=JSON.parse(hero.getAttribute('data-tax'));
   var salary=document.getElementById('salary'), older=document.getElementById('older');
@@ -386,58 +387,6 @@ html.js .enter.in{opacity:1;transform:none}
   window.addEventListener('resize', fit); fit();
   salary.addEventListener('input',update); older.addEventListener('change',update);
 
-  // Showcase: the panel at the centre is lit; the caption follows it.
-  var shelf=document.getElementById('shelf');
-  var panels=[].slice.call(shelf.querySelectorAll('.panel'));
-  var nameEl=document.getElementById('shelf-name'), lineEl=document.getElementById('shelf-line');
-  var lit=-1;
-  function light(i){
-    if(i===lit) return; lit=i;
-    panels.forEach(function(p,k){p.classList.toggle('is-lit',k===i); if(k===i){p.removeAttribute('inert');}else{p.setAttribute('inert','');}});
-    nameEl.textContent=panels[i].getAttribute('data-name'); lineEl.textContent=panels[i].getAttribute('data-line');
-  }
-  function nearest(){
-    var c=shelf.getBoundingClientRect(), mid=c.left+c.width/2, best=0, d=1e9;
-    panels.forEach(function(p,k){var r=p.getBoundingClientRect(), dd=Math.abs(r.left+r.width/2-mid); if(dd<d){d=dd;best=k;}});
-    return best;
-  }
-  function go(i){i=(i+panels.length)%panels.length; panels[i].scrollIntoView({behavior:reduce?'auto':'smooth',block:'nearest',inline:'center'});}
-  var raf=0; shelf.addEventListener('scroll',function(){cancelAnimationFrame(raf); raf=requestAnimationFrame(function(){light(nearest());});},{passive:true});
-  panels.forEach(function(p,k){p.addEventListener('click',function(){if(k!==lit){go(k);}});});
-  document.getElementById('shelf-prev').addEventListener('click',function(){hold(); go(lit-1);});
-  document.getElementById('shelf-next').addEventListener('click',function(){hold(); go(lit+1);});
-  shelf.addEventListener('keydown',function(e){if(e.key==='ArrowRight'){e.preventDefault();hold();go(lit+1);} if(e.key==='ArrowLeft'){e.preventDefault();hold();go(lit-1);}});
-  light(0);
-  // Signature move: a slow change of the lit panel, like light shifting.
-  var held=false, timer=null;
-  function hold(){held=true; clearInterval(timer);}
-  ['pointerdown','wheel','touchstart','focusin'].forEach(function(t){shelf.addEventListener(t,hold,{passive:true});});
-  if(!reduce){
-    var vis=false;
-    new IntersectionObserver(function(es){vis=es[0].isIntersecting;}).observe(shelf);
-    timer=setInterval(function(){if(!held && vis && !document.hidden){go(lit+1);}},6000);
-  }
-
-  // Command list: type to filter, arrows or hover to select, Enter to open.
-  var q=document.getElementById('cmd-q'), rows=[].slice.call(document.querySelectorAll('.cmd-row')), none=document.getElementById('cmd-none');
-  var sel=0;
-  function shown(){return rows.filter(function(r){return !r.hidden;});}
-  function pick(r){rows.forEach(function(x){var on=x===r; x.classList.toggle('is-sel',on); x.setAttribute('aria-selected',on?'true':'false');});}
-  q.addEventListener('input',function(){
-    var v=q.value.trim().toLowerCase();
-    rows.forEach(function(r){r.hidden=v!=='' && (r.textContent.toLowerCase().indexOf(v)<0);});
-    var s=shown(); none.classList.toggle('hidden',s.length>0); if(s.length){sel=0; pick(s[0]);}
-  });
-  q.addEventListener('keydown',function(e){
-    var s=shown(); if(!s.length) return;
-    if(e.key==='ArrowDown'){e.preventDefault(); sel=Math.min(sel+1,s.length-1); pick(s[sel]);}
-    if(e.key==='ArrowUp'){e.preventDefault(); sel=Math.max(sel-1,0); pick(s[sel]);}
-    if(e.key==='Enter'){e.preventDefault(); window.location.href=s[sel].getAttribute('data-href');}
-  });
-  rows.forEach(function(r){
-    r.addEventListener('pointerenter',function(){if(window.matchMedia('(hover: hover)').matches){sel=shown().indexOf(r); pick(r);}});
-    r.addEventListener('click',function(e){if(!r.classList.contains('is-sel')){e.preventDefault(); sel=shown().indexOf(r); pick(r);}});
-  });
 })();
 ")
 
@@ -448,11 +397,14 @@ html.js .enter.in{opacity:1;transform:none}
         cfg (c/get-tax-config)]
     [:div
      [:style (biff/unsafe page-css)]
-     [:div {:class "container mx-auto px-6"} (hero signed-in?) (calculator cfg signed-in?)]
-     (showcase)
      [:div {:class "container mx-auto px-6"}
-      (command-list signed-in?)]
+      (hero-section signed-in?)
+      (facts)
+      (how)]
      [:div {:class "bg-stone-100"}
-      [:div {:class "container mx-auto px-6"} (letter)]]
+      [:div {:class "container mx-auto px-6"} (calculator cfg signed-in?)]]
+     [:div {:class "container mx-auto px-6"} (personal-features signed-in?)]
+     (business signed-in?)
+     [:div {:class "container mx-auto px-6"} (privacy)]
      (action-tile signed-in?)
      [:script (biff/unsafe page-js)]]))
