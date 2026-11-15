@@ -15,6 +15,8 @@
             [com.greed.ui.app.dashboard :as dashboard]
             [com.greed.ui.app.profiles :as profiles]
             [com.greed.ui.app.owner-tax :as owner-tax]
+            [com.greed.ui.components.navs :as navs]
+            [com.greed.ui.components.alerts :as alerts]
             [com.greed.utilities.tax :as tax]
             [malli.generator :as mg]
             [rum.core :as rum]
@@ -397,23 +399,6 @@
     (is (data/user-active? {:user/active true}))
     (is (not (data/user-active? {:user/active false})))))
 
-(deftest finance-tax-prompt-due-test
-  (testing "due when never dismissed"
-    (is (dashboard/finance-tax-prompt-due? {:session {}})))
-  (testing "not due when dismissed within the 24 hour window"
-    (is (not (dashboard/finance-tax-prompt-due?
-              {:session {:finance-tax-prompt-dismissed-at
-                         (- (System/currentTimeMillis) (* 1 60 60 1000))}}))))
-  (testing "due again after 24 hours"
-    (is (dashboard/finance-tax-prompt-due?
-         {:session {:finance-tax-prompt-dismissed-at
-                    (- (System/currentTimeMillis) (* 25 60 60 1000))}})))
-  (testing "the dismiss handler records the dismissal timestamp in the session"
-    (let [response (mid/dismiss-finance-tax-prompt {:session {:uid #uuid "ffffffff-ffff-ffff-ffff-ffffffffffff"}})]
-      (is (= 303 (:status response)))
-      (is (= "/app" (get-in response [:headers "location"])))
-      (is (some? (get-in response [:session :finance-tax-prompt-dismissed-at]))))))
-
 (deftest signin-active-status-test
   (testing "deactivated users can't sign in and get a contact-support message"
     (with-open [node (test-xtdb-node [{:xt/id #uuid "cccccccc-cccc-cccc-cccc-cccccccccccc"
@@ -551,8 +536,8 @@
                                       uid))]
           (is (= 303 (:status resp)))
           (is (nil? (:finances/card-type finances)))
-          (is (= :standard-bank (:finances/bank finances)))
-          (is (= "Private Banking" (:finances/account-type finances)))
+          ;; the bank is set on Banking now, so Settings leaves it as it was
+          (is (= :fnb (:finances/bank finances)))
           (is (= 52500 (:finances/salary finances))))))))
 
 
@@ -769,7 +754,12 @@
                                      (data/get-business-budget-items (fresh node) biz)))]
             (is (= [biz :stock "makro"] ((juxt :budget-item/business-id :budget-item/category :budget-item/reference) stock)))
             (is (not-any? #(= "Stock" (:budget-item/title %)) (data/get-budget-items (fresh node) uid)))))
-        (testing "a category is not kept on a personal item"
+        (testing "a personal item keeps a personal category"
+          (data/upsert-budget-item (assoc personal :params {:title "Life cover" :type "expenses" :amount "1" :category "insurance"}))
+          (xt/sync node)
+          (is (= :insurance (:budget-item/category (first (filter #(= "Life cover" (:budget-item/title %))
+                                                                  (data/get-budget-items (fresh node) uid)))))))
+        (testing "a business category is not kept on a personal item"
           (data/upsert-budget-item (assoc personal :params {:title "Shop" :type "expenses" :amount "1" :category "stock"}))
           (xt/sync node)
           (is (nil? (:budget-item/category (first (filter #(= "Shop" (:budget-item/title %))
@@ -985,3 +975,171 @@
     (is (= 0 (:with (owner-tax/tax-with-business 0 -50000 40)))))
   (testing "dividends tax is 20%"
     (is (= 20 (owner-tax/dividends-rate)))))
+
+(deftest profile-switcher-for-everyone-test
+  (let [uid #uuid "aaaaaaaa-aaaa-0000-0000-000000000001"]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "solo@example.com" :user/password "x" :user/firstname "Solo"
+                                       :user/lastname "Person" :user/active true}])]
+      (let [html #(rum/render-static-markup (navs/sidebar (assoc (fresh node) :session %1 :uri "/app")))]
+        (testing "a personal sign-up sees the switcher, with a way to add a business"
+          (let [h (html {:uid uid})]
+            (is (str/includes? h "Personal"))
+            (is (str/includes? h "Add a business"))
+            (is (str/includes? h "/app/choose?add=1"))))
+        (testing "once they add one, they land in it and can switch"
+          (let [{:keys [business-id]} (data/add-business! (fresh node) uid {:business-name "Side Co" :entity-type "pty-ltd"})]
+            (xt/sync node)
+            (let [h (html {:uid uid :business-id business-id})]
+              (is (str/includes? h "Side Co"))
+              (is (str/includes? h ">Switch<")))))))))
+
+(deftest business-goals-and-events-test
+  (let [uid #uuid "aaaaaaaa-bbbb-0000-0000-000000000001"
+        other #uuid "aaaaaaaa-bbbb-0000-0000-000000000002"
+        biz #uuid "bbbbbbbb-bbbb-0000-0000-000000000001"
+        now (java.util.Date.)]
+    (with-open [node (test-xtdb-node [{:xt/id biz :business/name "Biz" :business/entity-type :pty-ltd :business/created-at now}
+                                      {:xt/id (random-uuid) :business-member/business-id biz :business-member/user-id uid
+                                       :business-member/role :owner :business-member/created-at now}])]
+      (let [personal #(assoc (fresh node) :session {:uid uid})
+            in-biz   #(assoc (fresh node) :session {:uid uid :business-id biz})]
+        (data/upsert-goal (assoc (personal) :params {:title "Holiday" :target "10000" :saved "0"}))
+        (data/upsert-goal (assoc (in-biz) :params {:title "Tax reserve" :target "50000" :saved "0"}))
+        (data/create-event (assoc (personal) :params {:title "Dentist" :type "bill" :date "2026-12-01"}))
+        (data/create-event (assoc (in-biz) :params {:title "Client meeting" :type "bill" :date "2026-12-02"}))
+        (xt/sync node)
+        (testing "each profile has its own goals and events"
+          (is (= ["Holiday"] (map :goal/title (data/get-goals (fresh node) uid))))
+          (is (= ["Tax reserve"] (map :goal/title (data/get-goals (fresh node) {:business-id biz}))))
+          (is (= ["Dentist"] (map :event/title (data/get-events (fresh node) uid))))
+          (is (= ["Client meeting"] (map :event/title (data/get-events (fresh node) {:business-id biz})))))
+        (testing "someone outside the business cannot remove its event"
+          (let [ev (first (data/get-events (fresh node) {:business-id biz}))]
+            (data/delete-event (assoc (fresh node) :session {:uid other} :params {:event-id (str (:xt/id ev))}))
+            (xt/sync node)
+            (is (= 1 (count (data/get-events (fresh node) {:business-id biz}))))))
+        (testing "deleting the business takes its goals and events, not personal ones"
+          (data/delete-business! (fresh node) uid biz)
+          (xt/sync node)
+          (is (empty? (data/get-goals (fresh node) {:business-id biz})))
+          (is (empty? (data/get-events (fresh node) {:business-id biz})))
+          (is (= ["Holiday"] (map :goal/title (data/get-goals (fresh node) uid)))))))))
+
+
+(deftest bank-details-test
+  (let [uid #uuid "eeeeeeee-1212-0000-0000-000000000001"]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "bank@example.com" :user/password "x" :user/firstname "B"
+                                       :user/lastname "K" :user/age 30 :user/active true}])]
+      (let [ctx #(assoc (fresh node) :session {:uid uid} :params %)
+            fin #(data/get-finances (fresh node) uid)
+            banks #{:fnb :standard-bank}]
+        (testing "the bank can be set before salary and payday"
+          (is (= :bank-invalid (data/save-bank-details! (ctx {:bank "monzo"}) banks)))
+          (is (= :ok (data/save-bank-details! (ctx {:bank "fnb" :account-type "Aspire"}) banks)))
+          (xt/sync node)
+          (is (= [:fnb "Aspire" nil] ((juxt :finances/bank :finances/account-type :finances/salary) (fin)))))
+        (testing "then Settings adds salary and payday, keeps the bank, and makes the Salary item"
+          (mid/save-finances (ctx {:salary "40000" :payday "25"}))
+          (xt/sync node)
+          (is (= [:fnb 40000 25] ((juxt :finances/bank :finances/salary :finances/payday) (fin))))
+          (is (some? (data/get-salary-budget-item (fresh node) uid))))
+        (testing "changing bank keeps salary"
+          (data/save-bank-details! (ctx {:bank "standard-bank"}) banks)
+          (xt/sync node)
+          (is (= [:standard-bank nil 40000] ((juxt :finances/bank :finances/account-type :finances/salary) (fin)))))))))
+
+(deftest banking-coverage-and-fees-test
+  (let [coverage (requiring-resolve 'com.greed.ui.app.banking/coverage)
+        fees     (requiring-resolve 'com.greed.ui.app.banking/monthly-fees)
+        s (fn [bank month start end fee n]
+            {:statement-summary/bank bank :statement-summary/month month
+             :statement-summary/period-start start :statement-summary/period-end end
+             :statement-summary/fees-cents fee :statement-summary/fee-count n})
+        ss [(s :fnb "2026-10" "2026-10-01" "2026-10-31" 1500 3)
+            (s :fnb "2026-11" "2026-11-01" "2026-11-10" 500 1)
+            (s :standard-bank "2026-10" "2026-10-01" "2026-10-31" 2000 2)]]
+    (testing "each bank's last months: full, part or missing"
+      (is (= [:missing :full :partial]
+             (map :state (take-last 3 (get (coverage ss 12 (java.time.LocalDate/parse "2026-11-15")) :fnb))))))
+    (testing "fees per month, all banks together"
+      (is (= [{:month "2026-10" :cents 3500 :count 5} {:month "2026-11" :cents 500 :count 1}] (fees ss 6))))))
+
+(deftest items-added-from-a-statement-are-tagged-test
+  (let [uid #uuid "eeeeeeee-3434-0000-0000-000000000001"]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "tag@example.com" :user/password "x" :user/firstname "T"
+                                       :user/lastname "G" :user/active true}])]
+      (let [add! (fn [p] (data/upsert-budget-item (assoc (fresh node) :session {:uid uid} :params p)))]
+        (add! {:title "Rent" :type "expenses" :amount "8000"})
+        (add! {:title "Netcash" :type "expenses" :amount "100" :from-statement "2026-10"})
+        (add! {:title "Odd" :type "expenses" :amount "1" :from-statement "not a month"})
+        (xt/sync node)
+        (is (= {"Rent" nil "Netcash" "2026-10" "Odd" nil}
+               (into {} (map (juxt :budget-item/title :budget-item/from-statement))
+                     (data/get-budget-items (fresh node) uid))))))))
+
+(deftest statement-origins-test
+  (let [item (fn [id type title amount & [reference]]
+               (cond-> {:xt/id id :budget-item/type type :budget-item/title title :budget-item/amount amount}
+                 reference (assoc :budget-item/reference reference)))
+        items [(item 1 :expenses "ADMYT PARKING" 11 "ADMYT PARKING")   ; added from October
+               (item 2 :expenses "Mom" 2000 "Mom")                     ; planned, no such payee
+               (item 3 :expenses "Engen" 999 "Engen")                  ; amount differs: planned
+               (item 4 :income "Acme Holdings" 5000)                   ; payer in October
+               (item 5 :expenses "Rent" 8000)                          ; no reference
+               (assoc (item 6 :expenses "Netcash" 100 "Netcash") :budget-item/from-statement "2026-09")]
+        months [{:statement-summary/month "2026-10"
+                 :statement-summary/payees [{:name "ADMYT PARKING" :text "ADMYT PARKING CHEQUE CARD PURCHASE" :spent-cents 1100 :refund-cents 0}
+                                            {:name "Engen" :text "ENGEN" :spent-cents 40000 :refund-cents 0}
+                                            {:name "Netcash" :text "Netcash" :spent-cents 10000 :refund-cents 0}]
+                 :statement-summary/income-payees [{:name "Acme Holdings" :cents 500000}]}]]
+    (is (= {1 "2026-10" 4 "2026-10"} (data/statement-origins items months)))))
+
+(deftest toasts-test
+  (let [uid #uuid "eeeeeeee-5656-0000-0000-000000000001"]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "t@example.com" :user/password "x" :user/firstname "Thandi"
+                                       :user/lastname "Z" :user/active true}])]
+      (let [html (fn [params session & opts]
+                   (some-> (apply alerts/toasts (assoc (fresh node) :params params :session session :uri "/app/finances/") opts)
+                           rum/render-static-markup))
+            seen {:uid uid :app-update-seen-version (:app/version com.core/common-config)}]
+        (testing "signing in greets the person by name"
+          (is (str/includes? (html {:success "signin"} seen :in-app? true) "Welcome back, Thandi.")))
+        (testing "a saved notice hides by itself; an error stays"
+          (is (str/includes? (html {:alert "goal-saved"} seen :in-app? true) "wait 6s"))
+          (is (not (str/includes? (html {:alert "email-taken"} seen :in-app? true) "wait 6s"))))
+        (testing "the update notice shows until acknowledged, and returns to the same page"
+          (let [h (html {} {:uid uid} :in-app? true)]
+            (is (str/includes? h "What's new"))
+            (is (str/includes? h "/app/finances/")))
+          (is (nil? (html {} seen :in-app? true))))
+        (testing "signing out says so on the public page"
+          (is (str/includes? (html {:alert "signed-out"} {}) "signed out")))
+        (testing "dismissing goes back to an app page only"
+          (is (= "/app/finances/" (get-in (mid/dismiss-app-update-banner {:session {} :params {:next "/app/finances/"}}) [:headers "location"])))
+          (is (= "/app" (get-in (mid/dismiss-app-update-banner {:session {} :params {:next "https://evil.example"}}) [:headers "location"]))))))))
+
+(deftest budget-periods-test
+  (let [items [{:budget-item/title "Rent" :budget-item/type :expenses :budget-item/amount 8000}
+               {:budget-item/title "Apple" :budget-item/type :expenses :budget-item/amount 15 :budget-item/from-statement "2026-10"}
+               {:budget-item/title "Afrihost" :budget-item/type :expenses :budget-item/amount 9 :budget-item/from-statement "2026-11"}
+               {:budget-item/title "Sales" :budget-item/type :income :budget-item/amount 11500}]]
+    (testing "monthly items count in every month; statement items only in their month"
+      (is (= ["Rent" "Apple" "Sales"] (map :budget-item/title (data/items-for-month items "2026-10"))))
+      (is (= ["Rent" "Afrihost" "Sales"] (map :budget-item/title (data/items-for-month items "2026-11"))))
+      (is (= ["Rent" "Sales"] (map :budget-item/title (data/items-for-month items "2026-12")))))
+    (testing "yearly estimates use monthly items only"
+      (is (= (* 12 (- 1150000 800000)) (com.greed.utilities.company-tax/budget-taxable items false))))))
+
+(deftest make-monthly-test
+  (let [uid #uuid "eeeeeeee-7878-0000-0000-000000000001"]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "m@example.com" :user/password "x" :user/firstname "M"
+                                       :user/lastname "N" :user/active true}])]
+      (data/upsert-budget-item (assoc (fresh node) :session {:uid uid}
+                                      :params {:title "Apple" :type "expenses" :amount "15" :from-statement "2026-10"}))
+      (xt/sync node)
+      (let [item (first (data/get-budget-items (fresh node) uid))]
+        (is (not (data/make-monthly! (assoc (fresh node) :session {:uid (random-uuid)} :params {:budget-item-id (str (:xt/id item))})))
+            "someone else cannot change it")
+        (is (true? (data/make-monthly! (assoc (fresh node) :session {:uid uid} :params {:budget-item-id (str (:xt/id item))}))))
+        (xt/sync node)
+        (is (nil? (:budget-item/from-statement (first (data/get-budget-items (fresh node) uid)))))))))

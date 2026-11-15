@@ -43,7 +43,7 @@
   (cond-> {:status 303 :headers {"location" location}}
     session (assoc :session session)))
 
-(def ^:private card "rounded-lg border border-zinc-200 bg-white p-6")
+(def ^:private card "rounded-lg bg-white ring-1 ring-zinc-200/70 p-6")
 
 (defn- business-fields
   "Name and type, prefilled when editing."
@@ -77,7 +77,7 @@
 (defn- invitations [invites]
   (when (seq invites)
     [:section {:class "mb-8" :aria-labelledby "inv-h"}
-     [:h2 {:id "inv-h" :class "text-sm font-semibold text-zinc-900"} "Invitations"]
+     [:h2 {:id "inv-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Invitations"]
      [:ul {:class "mt-3 space-y-3"}
       (for [{:keys [business inviter] :business-invite/keys [role] :xt/keys [id]} invites]
         [:li {:class (str card " flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between")}
@@ -94,8 +94,11 @@
                      [:input {:type "hidden" :name "invite-id" :value (str id)}]
                      (shared/btn :variant :dark :size :sm :type "submit" "Accept"))]])]]))
 
-(defn- add-business-form []
-  [:details {:class (str card " mt-8") :id "add-business"}
+(defn- add-business-form
+  "Open when asked for (?add=1, from the switcher) or when there is no
+   business yet to choose."
+  [open?]
+  [:details (cond-> {:class (str card " mt-8") :id "add-business"} open? (assoc :open true))
    [:summary {:class "cursor-pointer text-sm font-semibold text-zinc-900"} "Add a business"]
    [:p {:class "mt-2 text-sm text-zinc-600"} "A business you run. Its budget and spending are kept apart from your own, and you can invite others to it."]
    (biff/form {:action "/app/businesses/create" :class "mt-2"}
@@ -112,7 +115,6 @@
     (ui/app
      ctx
      [:div {:class "mx-auto max-w-lg"}
-      (when (:alert params) (alerts/info params))
       (headers/pages-heading ["Continue as"] "Choose whose money you are working on. You can switch at any time.")
       (problem params)
       (invitations invites)
@@ -121,7 +123,7 @@
        (for [{:business/keys [name entity-type] :business-member/keys [role] :xt/keys [id]} businesses]
          (choice {:title name :sub (str (data/entity-types entity-type) " · " (data/roles role))
                   :business-id id :current? (= id (:xt/id current))}))]
-      (add-business-form)])))
+      (add-business-form (or (= "1" (:add params)) (empty? businesses) (some? (:error params))))])))
 
 (defn accept-invite
   "POST /app/invites/accept: join the business and switch to it."
@@ -172,7 +174,7 @@
 
 (defn- details-section [business owner?]
   [:section {:class card :aria-labelledby "details-h"}
-   [:h2 {:id "details-h" :class "text-sm font-semibold text-zinc-900"} "Details"]
+   [:h2 {:id "details-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Details"]
    (if owner?
      (biff/form {:action "/app/business/update" :class "max-w-md"}
                 (business-fields :business-name (:business/name business)
@@ -184,7 +186,7 @@
 
 (defn- vat-section [{:business/keys [vat-registered vat-number vat-category]} owner?]
   [:section {:class card :aria-labelledby "vat-h"}
-   [:h2 {:id "vat-h" :class "text-sm font-semibold text-zinc-900"} "VAT"]
+   [:h2 {:id "vat-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "VAT"]
    [:p {:class "mt-0.5 max-w-[70ch] text-xs text-zinc-500"}
     (str "Registering is compulsory once taxable sales pass "
          (utilities/whole->rands (vat/compulsory-threshold)) " in 12 months, and allowed from "
@@ -214,7 +216,7 @@
 
 (defn- tax-section [{:business/keys [year-end-month sbc]} owner?]
   [:section {:class card :aria-labelledby "tax-h"}
-   [:h2 {:id "tax-h" :class "text-sm font-semibold text-zinc-900"} "Company tax"]
+   [:h2 {:id "tax-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Company tax"]
    [:p {:class "mt-0.5 max-w-[70ch] text-xs text-zinc-500"}
     "Used for the Tax page: the financial year sets the provisional tax dates. A small business corporation pays tax on a sliding scale instead of a flat 27%. It qualifies with gross income up to R20 million, shareholders who are all people, and when it is not a personal service provider."]
    (if owner?
@@ -240,7 +242,7 @@
   (let [owners (filter #(= :owner (:business-member/role %)) members)
         shares (data/profit-shares members)]
     [:section {:class card :aria-labelledby "shares-h"}
-     [:h2 {:id "shares-h" :class "text-sm font-semibold text-zinc-900"} "Partners' shares"]
+     [:h2 {:id "shares-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Partners' shares"]
      [:p {:class "mt-0.5 max-w-[70ch] text-xs text-zinc-500"}
       "Each partner's share of the profit, which is taxed in their own personal return. Owners are the partners; until shares are set, the profit is split equally."]
      (if owner?
@@ -260,7 +262,7 @@
 
 (defn- members-section [members uid owner?]
   [:section {:class card :aria-labelledby "members-h"}
-   [:h2 {:id "members-h" :class "text-sm font-semibold text-zinc-900"} "Members"]
+   [:h2 {:id "members-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Members"]
    [:p {:class "mt-0.5 text-xs text-zinc-500"}
     "Members use the Budget and Spending pages. Owners also manage members and the business's details."]
    [:ul {:class "mt-4 divide-y divide-zinc-100"}
@@ -290,7 +292,7 @@
 
 (defn- invites-section [invites]
   [:section {:class card :aria-labelledby "invite-h"}
-   [:h2 {:id "invite-h" :class "text-sm font-semibold text-zinc-900"} "Invite someone"]
+   [:h2 {:id "invite-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Invite someone"]
    (biff/form {:action "/app/business/invite" :class "mt-1 grid max-w-xl grid-cols-1 gap-x-3 sm:grid-cols-[minmax(0,1fr)_9rem_auto] sm:items-end"}
               (shared/modal-input :id "email" :type "email" :label "Email address" :required? true)
               [:div {:class "mt-3"}
@@ -313,7 +315,7 @@
 
 (defn- delete-section [business]
   [:section {:class "rounded-lg border border-rose-200 bg-white p-6" :aria-labelledby "delete-h"}
-   [:h2 {:id "delete-h" :class "text-sm font-semibold text-zinc-900"} "Delete this business"]
+   [:h2 {:id "delete-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Delete this business"]
    [:p {:class "mt-1 max-w-[60ch] text-sm text-zinc-600"}
     "Deletes the business for every member, with its budget, statement months and invitations. This cannot be undone."]
    (biff/form {:action "/app/business/delete" :class "mt-4"}
@@ -322,7 +324,8 @@
                           "Delete business"))])
 
 (defn settings-page
-  "GET /app/business: the chosen business's details, members and invitations."
+  "GET /app/settings while a business is chosen: its details, VAT, tax,
+   members and invitations."
   [{:keys [session params] :as ctx}]
   (if-let [business (data/session-business ctx)]
     (let [uid    (:uid session)
@@ -330,15 +333,16 @@
           owner? (data/business-owner? ctx uid id)]
       (ui/app
        ctx
-       [:div {:class "space-y-6"}
-        (when (:alert params) (alerts/info params))
-        (headers/pages-heading ["Business settings"] (:business/name business))
+       [:div {:class "space-y-7"}
+        (headers/pages-heading ["Settings"] (str (:business/name business) ": its details, VAT, tax and members."))
         (problem params)
-        (details-section business owner?)
-        (vat-section business owner?)
-        (when (= :pty-ltd (:business/entity-type business)) (tax-section business owner?))
-        (when (= :partnership (:business/entity-type business))
-          (shares-section (data/get-business-members ctx id) owner?))
+        ;; forms side by side, as on Personal's Settings
+        [:div {:class "grid grid-cols-1 items-start gap-4 lg:grid-cols-2"}
+         (details-section business owner?)
+         (vat-section business owner?)
+         (when (= :pty-ltd (:business/entity-type business)) (tax-section business owner?))
+         (when (= :partnership (:business/entity-type business))
+           (shares-section (data/get-business-members ctx id) owner?))]
         (members-section (data/get-business-members ctx id) uid owner?)
         (when owner? (invites-section (data/get-business-invites ctx id)))
         (when owner? (delete-section business))]))
@@ -353,8 +357,8 @@
 
 (defn- back [result ok-alert]
   (redirect (if (= :ok result)
-              (str "/app/business?alert=" ok-alert)
-              (str "/app/business?error=" (name result)))))
+              (str "/app/settings?alert=" ok-alert)
+              (str "/app/settings?error=" (name result)))))
 
 (defn update-details
   "POST /app/business/update."

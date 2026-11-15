@@ -45,7 +45,7 @@
         with    (:net-tax (tax/calculate-income-tax (max 0 (+ salary profit)) age))]
     {:without without :with with :extra (- with without)}))
 
-(def ^:private card "rounded-lg border border-zinc-200 bg-white p-6")
+(def ^:private card "rounded-lg bg-white ring-1 ring-zinc-200/70 p-6")
 
 (defn section
   "The personal Tax page's Business income section, or nil for someone with
@@ -58,7 +58,7 @@
             {:keys [extra with without]} (tax-with-business (or annual-salary 0) profit age)
             {first-due :first second-due :second third-due :third} (ct/provisional-dates (ct/financial-year 2 (LocalDate/now)))]
         [:section {:class card :aria-labelledby "biz-tax-h"}
-         [:h2 {:id "biz-tax-h" :class "text-sm font-semibold text-zinc-900"} "Business income"]
+         [:h2 {:id "biz-tax-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Business income"]
          [:p {:class "mt-0.5 text-xs text-zinc-500"} "How your businesses reach your personal tax, from their budgets."]
          [:ul {:class "mt-4 divide-y divide-zinc-100 text-sm"}
           (for [{:keys [business kind profit share pay]} rows]

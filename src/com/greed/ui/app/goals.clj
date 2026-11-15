@@ -102,7 +102,7 @@
        [:span {:class "text-lg font-semibold text-zinc-900 tabular-nums"} (utilities/amount->rands saved)]
        [:span {:class "text-xs text-zinc-500 tabular-nums"} (str "of " (utilities/amount->rands target))]]
       [:div {:class "overflow-hidden h-2 w-full bg-zinc-100 rounded-full"}
-       [:div {:class "h-full overflow-hidden rounded-full" :style {:width (str p "%")}}
+       [:div {:class "h-full overflow-hidden rounded-full greed-bar-grow" :style {:width (str p "%")}}
         [:div {:class (str "h-full w-full rounded-full greed-bar-grow "
                            (if complete? "bg-brand-500" "bg-brand-400"))}]]]
       [:div {:class "flex items-center justify-between mt-2"}
@@ -121,15 +121,18 @@
                :attrs {"_" (shared/open-actions "goal-add-modal")}
                "Create your first goal")])
 
-(defn page [{:keys [session params] :as ctx}]
-  (let [user-id (:uid session)
-        goals   (data/get-goals ctx user-id)]
+(defn page
+  "GET /app/goals: the current profile's goals (Personal's or a business's)."
+  [{:keys [params] :as ctx}]
+  (let [business (data/session-business ctx)
+        goals    (data/get-goals ctx (data/owner ctx))]
     (ui/app
      ctx
      [:div {:class "space-y-7"}
-      (when (:alert params) (alerts/info params))
       [:div {:class "flex items-start justify-between gap-4"}
-       (headers/pages-heading ["Goals"])
+       (headers/pages-heading ["Goals"] (if business
+                                          (str (:business/name business) "'s goals, such as a tax reserve or an equipment fund.")
+                                          "What you are saving towards, and how far along you are."))
        [:div {:class "mt-1 flex-shrink-0"}
         (shared/btn :variant :dark :size :md
                     :attrs {"_" (shared/open-actions "goal-add-modal")}

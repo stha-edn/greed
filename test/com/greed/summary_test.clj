@@ -161,3 +161,9 @@
              (map (juxt :name :cents :count) ps))))
     (testing "transfers, refunds and payments out are not money in"
       (is (not-any? #(re-find #"(?i)savings|woolworths|engen" (:name %)) ps)))))
+
+(deftest salary-payers-are-marked
+  (is (= [true false]
+         (map :salary? (summary/income-payees
+                        [{:description "ACME HOLDINGS" :type :income :kind :salary :amount-cents 2500000}
+                         {:description "SIDE CLIENT" :type :income :kind :payment-in :amount-cents 100000}])))))

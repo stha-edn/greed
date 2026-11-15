@@ -87,52 +87,58 @@
    [:span {:class "w-5 h-5 flex-shrink-0 [&_svg]:w-full [&_svg]:h-full"} icon]
    label])
 
-(def ^:private primary-links
-  "Primary app destinations, shared by the desktop sidebar, mobile bottom bar,
-   and mobile drawer. Ordered by importance: Dashboard first, then the app's
-   core Tax surface, day-to-day planning (Finances), what's coming (Calendar),
-   and progress (Goals) — Insights is the passive read. Items with :bottom? true
-   live in the mobile bottom bar, so the drawer only lists the remainder."
-  [{:href "/app"           :label "Dashboard" :icon (svgs/squares-2x2)   :bottom? true}
-   {:href "/app/tax"       :label "Tax"       :icon (svgs/percent-badge) :bottom? true}
-   {:href "/app/finances/" :label "Finances"  :icon (svgs/credit-card)   :bottom? true}
-   {:href "/app/calendar"  :label "Calendar"  :icon (svgs/calendar)      :bottom? true}
-   {:href "/app/goals"     :label "Goals"     :icon (svgs/target)        :bottom? true}
-   {:href "/app/spending"  :label "Spending"  :icon (svgs/banknotes)     :bottom? false}
-   {:href "/app/insights"  :label "Insights"  :icon (svgs/chart-bar)     :bottom? false}])
+(def ^:private shared-links
+  "The pages every profile has, with the same names, in the same order.
+   Each page shows the current profile's own money (Personal or a business)."
+  [{:href "/app"           :label "Home"     :icon (svgs/squares-2x2)   :bottom? true}
+   {:href "/app/finances/" :label "Budget"   :icon (svgs/credit-card)   :bottom? true}
+   {:href "/app/spending"  :label "Spending" :icon (svgs/banknotes)     :bottom? true}
+   {:href "/app/banking"   :label "Banking"  :icon (svgs/wallet)        :bottom? false}
+   {:href "/app/tax"       :label "Tax"      :icon (svgs/percent-badge) :bottom? true}])
 
-(def ^:private business-links
-  "A business's destinations: its home, its budget and its spending."
-  [{:href "/app"           :label "Home"     :icon (svgs/squares-2x2) :bottom? true}
-   {:href "/app/finances/" :label "Budget"   :icon (svgs/credit-card) :bottom? true}
-   {:href "/app/spending"  :label "Spending" :icon (svgs/banknotes)   :bottom? true}
-   {:href "/app/company-tax" :label "Tax"    :icon (svgs/percent-badge) :bottom? false}
-   {:href "/app/business"  :label "Business" :icon (svgs/users)       :bottom? true}])
+(def ^:private planning-links
+  "Pages for planning and reading the month."
+  [{:href "/app/calendar"  :label "Calendar" :icon (svgs/calendar)  :bottom? true}
+   {:href "/app/goals"     :label "Goals"    :icon (svgs/target)    :bottom? false}
+   {:href "/app/insights"  :label "Insights" :icon (svgs/chart-bar) :bottom? false}])
 
 (defn- app-links
-  "The app's primary links for the current profile. A VAT-registered
-   business also gets its VAT page, after Spending."
+  "The app's primary links for the current profile: the shared pages first,
+   then a VAT vendor's VAT page, then the planning pages. The mobile bottom
+   bar takes the :bottom? ones (five at most); the drawer lists the rest."
   [business]
-  (cond
-    (nil? business) primary-links
-    (:business/vat-registered business)
-    (let [[before after] (split-at 3 business-links)]
-      (concat before [{:href "/app/vat" :label "VAT" :icon (svgs/percent-badge) :bottom? true}] after))
-    :else business-links))
+  (let [vat (when (:business/vat-registered business)
+              [{:href "/app/vat" :label "VAT" :icon (svgs/percent-badge) :bottom? true}])
+        links (concat shared-links vat planning-links)
+        bottom (set (map :href (take 5 (filter :bottom? links))))]
+    (map #(assoc % :bottom? (contains? bottom (:href %))) links)))
 
 (defn- profile-switcher
-  "Which profile the person is in (Personal or a business), with a link to
-   switch. Only shown to someone who has a business."
+  "Which profile the person is in (Personal or a business), shown to
+   everyone however they signed up: with a business, a link to switch;
+   without one yet, a link to add one."
   [ctx business]
-  (when (seq (data/get-user-businesses ctx (get-in ctx [:session :uid])))
-    [:div {:class "mb-4 flex items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2.5"}
+  (let [has-business? (seq (data/get-user-businesses ctx (get-in ctx [:session :uid])))]
+    [:div {:class "mb-4 flex items-center justify-between gap-2 rounded-lg bg-white ring-1 ring-zinc-200/70 px-3 py-2.5"}
      [:div {:class "min-w-0"}
       [:p {:class "truncate text-sm font-medium text-zinc-900"} (if business (:business/name business) "Personal")]
       [:p {:class "truncate text-xs text-zinc-500"}
        (if business (data/entity-types (:business/entity-type business)) "Your own money")]]
-     [:a {:href "/app/choose"
+     [:a {:href (if has-business? "/app/choose" "/app/choose?add=1#add-business")
           :class "flex-shrink-0 rounded-md px-2 py-1 text-xs font-medium text-zinc-700 underline-offset-4 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"}
-      "Switch"]]))
+      (if has-business? "Switch" "Add a business")]]))
+
+(defn- mobile-profile-link
+  "The current profile in the mobile top bar: a tap opens Continue as, where
+   you switch or add a business."
+  [business]
+  [:a {:href "/app/choose"
+       :aria-label (str "Profile: " (if business (:business/name business) "Personal") ". Switch or add a business")
+       :class "ml-3 mr-auto inline-flex min-w-0 max-w-[45vw] items-center gap-1 rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs font-medium text-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"}
+   [:span {:class "truncate"} (if business (:business/name business) "Personal")]
+   [:svg {:class "h-3 w-3 flex-shrink-0 text-zinc-500" :viewBox "0 0 20 20" :fill "currentColor" :aria-hidden "true"}
+    [:path {:fill-rule "evenodd" :clip-rule "evenodd"
+            :d "M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"}]]])
 
 (defn- sidebar-inner [uri firstname lastname admin? ctx business]
   (let [initials (str (or (first firstname) \?) (or (first lastname) \?))]
@@ -163,7 +169,8 @@
           (str initials)]
          [:div {:class "min-w-0"}
           [:p {:class "text-xs font-medium text-zinc-700 truncate group-hover:text-zinc-900 transition-colors"}
-           (str firstname " " lastname)]]]
+           (str firstname " " lastname)]
+          [:p {:class "text-[11px] text-zinc-500"} "Account"]]]
         [:a {:href "/logout"
              :class "flex-shrink-0 p-1.5 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-md transition-colors"
              :title "Sign out"}
@@ -236,6 +243,7 @@
               :width 648 :height 192
               :class "h-7 w-auto"}]
        [:span {:class "ml-1.5 text-xs font-medium leading-none text-zinc-500"} "beta"]]
+      (mobile-profile-link (data/session-business ctx))
       [:button {:id "mobile-drawer-toggle"
                 :type "button"
                 :aria-label "Open menu"
@@ -283,6 +291,8 @@
          [:a {:href "/app/profile" :class "flex items-center gap-2.5"}
           [:div {:class "w-8 h-8 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-semibold text-zinc-700"}
            (str initials)]
-          [:p {:class "text-xs font-medium text-zinc-700 truncate"} (str firstname " " lastname)]]
+          [:span {:class "min-w-0"}
+           [:span {:class "block text-xs font-medium text-zinc-700 truncate"} (str firstname " " lastname)]
+           [:span {:class "block text-[11px] text-zinc-500"} "Account"]]]
          [:a {:href "/logout" :class "p-1.5 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-md transition-colors"}
           (svgs/logout)]]]]]]))

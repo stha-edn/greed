@@ -35,7 +35,7 @@
 (defn home-heading [& {:keys [user date]}]
   [:div {:class "flex items-end justify-between gap-4"}
    [:div
-    [:h1 {:class "text-2xl font-semibold tracking-tight text-zinc-900"} "Dashboard"]
+    [:h1 {:class "text-2xl font-semibold tracking-tight text-zinc-900"} "Home"]
     [:p {:class "mt-0.5 text-sm text-zinc-500"}
      (str (greeting) ", " (string/capitalize (:user/firstname user)))]]
    (when date

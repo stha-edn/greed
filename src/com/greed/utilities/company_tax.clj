@@ -101,7 +101,8 @@
    Owner's drawings category are left out. A VAT vendor's standard-rated
    amounts are taken without VAT."
   [items vendor?]
-  (let [amount (fn [{:budget-item/keys [type amount vat]}]
+  (let [items  (remove :budget-item/from-statement items) ; once-offs are not monthly
+        amount (fn [{:budget-item/keys [type amount vat]}]
                  (ex-vat (* 100 amount) vendor? (= :standard (or vat (vat/default-vat-type type)))))
         income (reduce + 0 (map amount (filter #(= :income (:budget-item/type %)) items)))
         costs  (reduce + 0 (map amount (filter #(and (= :expenses (:budget-item/type %))

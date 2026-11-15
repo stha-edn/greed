@@ -26,7 +26,7 @@
   [{:keys [session]} owner-id]
   (= (:uid session) owner-id))
 
-(declare session-business get-user-business sync-owner-pay!)
+(declare session-business get-user-business sync-owner-pay! can-change-budget-item?)
 
 (defn owner
   "Whose money the signed-in person is working on: {:user-id uid
@@ -96,6 +96,34 @@
     (if business-id
       (get-business-budget-items ctx business-id)
       (get-budget-items ctx user-id))))
+
+(defn current-month
+  "This month as \"yyyy-MM\"."
+  []
+  (str (java.time.YearMonth/now)))
+
+(defn monthly-items
+  "Items planned for every month: not the ones added from a statement, which
+   are that month's amounts only."
+  [items]
+  (remove :budget-item/from-statement items))
+
+(defn items-for-month
+  "The items that count in `month` (\"yyyy-MM\"): every monthly item, and
+   the items added from that month's statement."
+  [items month]
+  (filter #(let [f (:budget-item/from-statement %)] (or (nil? f) (= f month))) items))
+
+(defn make-monthly!
+  "Turns an item added from a statement into a monthly item. Returns true if
+   the person could change it."
+  [{:keys [params] :as ctx}]
+  (let [id   (utilities/->uuid (:budget-item-id params))
+        item (when id (get-budget-item ctx id))]
+    (when (and item (:budget-item/from-statement item) (can-change-budget-item? ctx item))
+      (biff/submit-tx ctx [{:db/doc-type :budget-item :xt/id id :db/op :update
+                            :budget-item/from-statement :db/dissoc}])
+      true)))
 
 (defn get-budget-data
   "Totals the month's budget items grouped by type."
@@ -238,69 +266,72 @@
                             :user/password (hash-password (:user/password user))}])
           :hashed))))
 
-(defn upsert-finances [{:keys [params] :as ctx}]
-  (let [user-id (get-user-id-from-session ctx)
-        {:user/keys [age]
-         :or {age 21}}   (get-user ctx user-id)
-        salary (utilities/->int (:salary params))
-        annual-income (utilities/income->annual-income salary)
-        {:keys [net-income]} (tax/calculate-income-tax annual-income age)]
-    (logger/info "Creating finances...")
-    (biff/submit-tx ctx
-                    [{:db/doc-type :finances
-                      :xt/id (java.util.UUID/randomUUID)
-                      :finances/user-id user-id
-                      :finances/bank (utilities/->keyword (:bank params))
-                      :finances/account-type (not-empty (:account-type params))
-                      :finances/salary (utilities/->int (:salary params))
-                      :finances/payday (validation/->valid-payday (:payday params))}])
-    (logger/info "Creating budget item...")
-    (biff/submit-tx ctx
-                    [{:db/doc-type :budget-item
-                      :xt/id (java.util.UUID/randomUUID)
-                      :budget-item/user-id user-id
-                      :budget-item/title "Salary"
-                      :budget-item/type :income
-                      :budget-item/amount (-> net-income
-                                              utilities/annual-income->monthly-income
-                                              int)}])))
+(defn- salary-budget-amount
+  "The monthly take-home for the Salary budget item, from a gross monthly salary."
+  [ctx user-id salary]
+  (let [{:user/keys [age] :or {age 21}} (get-user ctx user-id)
+        {:keys [net-income]} (tax/calculate-income-tax (utilities/income->annual-income (or salary 0)) (or age 21))]
+    (-> net-income utilities/annual-income->monthly-income int)))
 
-(defn update-finances [{:keys [params] :as ctx}]
-  (let [user-id (get-user-id-from-session ctx)
+(defn- sync-salary-item!
+  "Keeps the Salary budget item in step with the salary in Settings."
+  [ctx user-id salary]
+  (let [item (get-salary-budget-item ctx user-id)]
+    (logger/info "Syncing the Salary budget item...")
+    (biff/submit-tx ctx
+                    [(cond-> {:db/doc-type :budget-item
+                              :xt/id (or (:xt/id item) (java.util.UUID/randomUUID))
+                              :budget-item/user-id user-id
+                              :budget-item/title "Salary"
+                              :budget-item/type :income
+                              :budget-item/amount (salary-budget-amount ctx user-id salary)}
+                       item (assoc :db/op :update))])))
+
+(defn upsert-finances
+  "Settings: saves salary and payday (creating the finances record if there
+   is none yet), and keeps the Salary budget item in step."
+  [{:keys [params] :as ctx}]
+  (let [user-id  (get-user-id-from-session ctx)
         finances (get-finances ctx user-id)
-        finances-id (:xt/id finances)
-        salary-budget-item (get-salary-budget-item ctx user-id)
-        salary-budget-item-id (:xt/id salary-budget-item)
-        {:user/keys [age]
-         :or {age 21}}   (get-user ctx user-id)
-        salary (utilities/->int (:salary params))
-        annual-income (utilities/income->annual-income salary)
-        {:keys [net-income]} (tax/calculate-income-tax annual-income age)]
-    (if (and finances salary-budget-item)
-      (do (logger/info "Updating finances...")
+        salary   (utilities/->int (:salary params))]
+    (logger/info "Saving salary and payday...")
+    (biff/submit-tx ctx
+                    [(cond-> {:db/doc-type :finances
+                              :xt/id (or (:xt/id finances) (java.util.UUID/randomUUID))
+                              :finances/user-id user-id
+                              :finances/salary salary
+                              :finances/payday (validation/->valid-payday (:payday params))}
+                       finances (assoc :db/op :update
+                                       :finances/card-type :db/dissoc
+                                       :finances/title :db/dissoc
+                                       :finances/type :db/dissoc
+                                       :finances/amount :db/dissoc))])
+    (sync-salary-item! ctx user-id salary)))
+
+(defn update-finances
+  "Same as upsert-finances: salary and payday from Settings."
+  [ctx]
+  (upsert-finances ctx))
+
+(defn save-bank-details!
+  "Banking: saves the person's bank and account type (creating the finances
+   record if there is none yet). Returns :ok or :bank-invalid."
+  [{:keys [params] :as ctx} banks]
+  (let [user-id  (get-user-id-from-session ctx)
+        finances (get-finances ctx user-id)
+        bank     (utilities/->keyword (:bank params))]
+    (if-not (some #{bank} banks)
+      :bank-invalid
+      (do (logger/info "Saving bank details...")
           (biff/submit-tx ctx
-                          [{:db/doc-type :finances
-                            :xt/id finances-id
-                            :db/op :update
-                            :finances/bank (utilities/->keyword (:bank params))
-                            :finances/account-type (not-empty (:account-type params))
-                            :finances/salary (utilities/->int (:salary params))
-                            :finances/payday (validation/->valid-payday (:payday params))
-                            :finances/card-type :db/dissoc
-                            :finances/title :db/dissoc
-                            :finances/type :db/dissoc
-                            :finances/amount :db/dissoc}])
-          (logger/info "Updating budget item...")
-          (biff/submit-tx ctx
-                          [{:db/doc-type :budget-item
-                            :xt/id salary-budget-item-id
-                            :db/op :update
-                            :budget-item/title "Salary"
-                            :budget-item/type :income
-                            :budget-item/amount (-> net-income
-                                                    utilities/annual-income->monthly-income
-                                                    int)}]))
-      (logger/info "Finances not found"))))
+                          [(cond-> {:db/doc-type :finances
+                                    :xt/id (or (:xt/id finances) (java.util.UUID/randomUUID))
+                                    :finances/user-id user-id
+                                    :finances/bank bank
+                                    :finances/account-type (or (not-empty (:account-type params)) :db/dissoc)}
+                             finances (assoc :db/op :update)
+                             (not finances) (update :finances/account-type #(when-not (= :db/dissoc %) %)))])
+          :ok))))
 
 (defn get-tax-profile [{:keys [biff/db]} user-id]
   (first (q db
@@ -424,27 +455,50 @@
                             :xt/id (:xt/id existing)
                             :db/op :delete}])))))
 
-(defn get-events [{:keys [biff/db]} user-id]
-  (sort-by (fn [event] (or (:event/date event) ""))
-           (q db
-              '{:find (pull event [*])
-                :in [user-id]
-                :where [[event :event/user-id user-id]]}
-              user-id)))
+(defn- can-change-owned?
+  "A business's record can be changed by any member of the business; a
+   personal one only by its owner."
+  [{:keys [session] :as ctx} user-id business-id]
+  (if business-id
+    (some? (get-user-business ctx (:uid session) business-id))
+    (owned-by-session? ctx user-id)))
 
-(defn create-event [{:keys [params] :as ctx}]
-  (let [user-id (get-user-id-from-session ctx)
+(defn get-events
+  "Calendar events for an owner (a user id for their personal side, or an
+   owner map, see `owner`), by date."
+  [{:keys [biff/db]} o]
+  (let [{:keys [user-id business-id]} (->owner o)]
+    (sort-by (fn [event] (or (:event/date event) ""))
+             (if business-id
+               (q db
+                  '{:find (pull event [*])
+                    :in [business-id]
+                    :where [[event :event/business-id business-id]]}
+                  business-id)
+               (q db
+                  '{:find (pull event [*])
+                    :in [user-id]
+                    :where [[event :event/user-id user-id]
+                            (not [event :event/business-id])]}
+                  user-id)))))
+
+(defn create-event
+  "Adds an event for whoever the person is working on: their business while
+   one is chosen, else themselves."
+  [{:keys [params] :as ctx}]
+  (let [{:keys [user-id business-id]} (owner ctx)
         type    (or (some-> (:type params) utilities/->keyword) :todo)
         date    (not-empty (:date params))]
     (logger/info "Creating event...")
     (biff/submit-tx ctx
-                    [{:db/doc-type :event
-                      :xt/id (java.util.UUID/randomUUID)
-                      :event/user-id user-id
-                      :event/title (:title params)
-                      :event/date date
-                      :event/type type
-                      :event/done false}])))
+                    [(cond-> {:db/doc-type :event
+                              :xt/id (java.util.UUID/randomUUID)
+                              :event/user-id user-id
+                              :event/title (:title params)
+                              :event/date date
+                              :event/type type
+                              :event/done false}
+                       business-id (assoc :event/business-id business-id))])))
 
 (defn get-event [{:keys [biff/db]} event-id]
   (first (q db
@@ -456,7 +510,7 @@
 (defn toggle-event [{:keys [params] :as ctx}]
   (let [event-id (utilities/->uuid (:event-id params))
         event    (get-event ctx event-id)]
-    (if (and event (owned-by-session? ctx (:event/user-id event)))
+    (if (and event (can-change-owned? ctx (:event/user-id event) (:event/business-id event)))
       (do (logger/info "Toggling event...")
           (biff/submit-tx ctx
                           [{:db/doc-type :event
@@ -468,7 +522,7 @@
 (defn delete-event [{:keys [params] :as ctx}]
   (let [event-id (utilities/->uuid (:event-id params))
         event    (get-event ctx event-id)]
-    (if (and event (owned-by-session? ctx (:event/user-id event)))
+    (if (and event (can-change-owned? ctx (:event/user-id event) (:event/business-id event)))
       (do (logger/info "Deleting event...")
           (biff/submit-tx ctx
                           [{:db/doc-type :event
@@ -503,10 +557,13 @@
       id)))
 
 (defn ->category
-  "A spending category from a form, or nil when blank or unknown."
-  [s]
+  "A spending category from a form, or nil when blank or unknown. Business
+   categories (SARS, salaries, stock...) are only for a business's items."
+  [s business?]
   (let [k (keyword (str s))]
-    (when (some #{k} categorise/spending-categories) k)))
+    (when (and (some #{k} categorise/spending-categories)
+               (or business? (not (categorise/business-only k))))
+      k)))
 
 (defn can-change-budget-item?
   "A business's item can be changed by any member of the business; a
@@ -531,14 +588,17 @@
                               :budget-item/type (utilities/->keyword (:type params))
                               :budget-item/amount (validation/->valid-amount (:amount params))}
                        business-id (assoc :budget-item/business-id business-id)
-                       (and business-id (->category (:category params)))
-                       (assoc :budget-item/category (->category (:category params)))
+                       (->category (:category params) business-id)
+                       (assoc :budget-item/category (->category (:category params) business-id))
                        (and business-id (->vat-type (:vat params)))
                        (assoc :budget-item/vat (->vat-type (:vat params)))
                        (and business-id (->member-id ctx business-id (:paid-to params)))
                        (assoc :budget-item/paid-to (->member-id ctx business-id (:paid-to params)))
                        (->reference (:reference params))
-                       (assoc :budget-item/reference (->reference (:reference params))))])))
+                       (assoc :budget-item/reference (->reference (:reference params)))
+                       ;; set by Spending's Add to income / Add to expenses
+                       (re-matches #"\d{4}-\d{2}" (str (:from-statement params)))
+                       (assoc :budget-item/from-statement (:from-statement params)))])))
 
 (defn update-budget-item [{:keys [params] :as ctx}]
   (let [{:keys [budget-item-id]} params
@@ -562,7 +622,7 @@
                                                 amount
                                                 (validation/->valid-amount (:amount params)))
                           :budget-item/reference (or (->reference (:reference params)) :db/dissoc)
-                          :budget-item/category (or (when business-id (->category (:category params))) :db/dissoc)
+                          :budget-item/category (or (->category (:category params) business-id) :db/dissoc)
                           :budget-item/vat (or (when business-id (->vat-type (:vat params))) :db/dissoc)
                           :budget-item/paid-to (or (when business-id (->member-id ctx business-id (:paid-to params))) :db/dissoc)}]))
       (logger/info "Budget item not found or unauthorized"))))
@@ -655,6 +715,54 @@
          (cond-> {:id id :title title :reference reference}
            category (assoc :category category)))))
 
+(defn statement-origins
+  "Budget items that were added from a bank statement before items recorded
+   it, worked out from the saved months: an item counts when its title is a
+   payee's (or payer's) name in a month, its amount is that month's amount,
+   and, for an expense, its statement reference is its own title (Add to
+   expenses set both). Returns {item-id \"yyyy-MM\"}, the newest month that
+   fits. Planned items, auto items and items already tagged are left out."
+  [items summaries]
+  (let [norm      (comp str/lower-case str/trim str)
+        candidate (fn [{:budget-item/keys [type title reference from-statement source-business-id]}]
+                    (and (nil? from-statement) (nil? source-business-id)
+                         (not (contains? auto-titles title))
+                         (case type
+                           :expenses (= (norm title) (norm reference))
+                           :income true
+                           false)))
+        ;; [month name rands] for every payee and payer of every saved month
+        seen (for [{:statement-summary/keys [month payees income-payees]} summaries
+                   :when month
+                   row (concat
+                        (for [{:keys [name text spent-cents refund-cents]} payees
+                              nm (distinct (remove str/blank? [name (summary/merchant-name text)]))]
+                          [:expenses month nm (Math/round (/ (- spent-cents refund-cents) 100.0))])
+                        (for [{:keys [name cents]} income-payees]
+                          [:income month name (Math/round (/ cents 100.0))]))]
+               row)]
+    (into {}
+          (for [{:budget-item/keys [type title amount] :xt/keys [id] :as item} items
+                :when (candidate item)
+                :let [months (for [[t month nm rands] seen
+                                   :when (and (= t type) (= (norm nm) (norm title)) (= rands amount))]
+                               month)]
+                :when (seq months)]
+            [id (last (sort months))]))))
+
+(defn tag-statement-origins!
+  "Tags the owner's budget items that came from a bank statement before
+   items recorded it (see statement-origins). Returns how many were tagged."
+  [ctx o]
+  (let [ctx  (biff/assoc-db ctx)
+        tags (statement-origins (get-owner-budget-items ctx o) (get-statement-summaries ctx o))]
+    (when (seq tags)
+      (logger/info (str "Tagging " (count tags) " budget items added from statements..."))
+      (biff/submit-tx ctx (for [[id month] tags]
+                            {:db/doc-type :budget-item :xt/id id :db/op :update
+                             :budget-item/from-statement month})))
+    (count tags)))
+
 (defn sync-statement-summaries
   "Re-matches every saved month against the budget's current statement
    references, using the payee totals kept with each month. Months saved
@@ -676,6 +784,8 @@
     (when (seq docs)
       (logger/info "Syncing statement summaries with the budget...")
       (biff/submit-tx ctx (vec docs)))
+    ;; items added from statements before they were tagged get their tag
+    (tag-statement-origins! ctx o)
     {:synced (count docs) :needs-upload (count without)}))
 
 (defn delete-statement-summary [{:keys [params] :as ctx}]
@@ -697,12 +807,22 @@
 ;; Goals
 ;; ---------------------------------------------------------------------------
 
-(defn get-goals [{:keys [biff/db]} user-id]
-  (q db
-     '{:find (pull goal [*])
-       :in [user-id]
-       :where [[goal :goal/user-id user-id]]}
-     user-id))
+(defn get-goals
+  "Goals for an owner (a user id for their personal side, or an owner map)."
+  [{:keys [biff/db]} o]
+  (let [{:keys [user-id business-id]} (->owner o)]
+    (if business-id
+      (q db
+         '{:find (pull goal [*])
+           :in [business-id]
+           :where [[goal :goal/business-id business-id]]}
+         business-id)
+      (q db
+         '{:find (pull goal [*])
+           :in [user-id]
+           :where [[goal :goal/user-id user-id]
+                   (not [goal :goal/business-id])]}
+         user-id))))
 
 (defn get-goal [{:keys [biff/db]} goal-id]
   (first (q db
@@ -711,8 +831,11 @@
               :where [[goal :xt/id goal-id]]}
             goal-id)))
 
-(defn upsert-goal [{:keys [params] :as ctx}]
-  (let [user-id     (get-user-id-from-session ctx)
+(defn upsert-goal
+  "Adds a goal for whoever the person is working on: their business while
+   one is chosen, else themselves."
+  [{:keys [params] :as ctx}]
+  (let [{:keys [user-id business-id]} (owner ctx)
         target-date (:target-date params)]
     (logger/info "Creating goal...")
     (biff/submit-tx ctx
@@ -722,6 +845,7 @@
                               :goal/title (:title params)
                               :goal/target (validation/->valid-amount (:target params))
                               :goal/saved (or (utilities/->int (:saved params)) 0)}
+                       business-id (assoc :goal/business-id business-id)
                        (not (str/blank? target-date))
                        (assoc :goal/target-date target-date))])))
 
@@ -729,7 +853,7 @@
   (let [goal-id     (utilities/->uuid (:goal-id params))
         goal        (get-goal ctx goal-id)
         target-date (:target-date params)]
-    (if (and goal (owned-by-session? ctx (:goal/user-id goal)))
+    (if (and goal (can-change-owned? ctx (:goal/user-id goal) (:goal/business-id goal)))
       (do (logger/info "Updating goal...")
           (biff/submit-tx ctx
                           [(cond-> {:db/doc-type :goal
@@ -745,7 +869,7 @@
 (defn delete-goal [{:keys [params] :as ctx}]
   (let [goal-id (utilities/->uuid (:goal-id params))
         goal    (get-goal ctx goal-id)]
-    (if (and goal (owned-by-session? ctx (:goal/user-id goal)))
+    (if (and goal (can-change-owned? ctx (:goal/user-id goal) (:goal/business-id goal)))
       (do (logger/info "Deleting goal...")
           (biff/submit-tx ctx
                           [{:db/doc-type :goal
@@ -798,14 +922,18 @@
                            :where [(or [id :budget-item/business-id b]
                                        [id :statement-summary/business-id b]
                                        [id :business-member/business-id b]
-                                       [id :business-invite/business-id b])]}
+                                       [id :business-invite/business-id b]
+                                       [id :goal/business-id b]
+                                       [id :event/business-id b])]}
                          (vec sole))
             ;; what they added to a business someone else is still in stays
             shared (q db
                       '{:find [id b]
                         :in [user-id]
                         :where [(or (and [id :budget-item/user-id user-id] [id :budget-item/business-id b])
-                                    (and [id :statement-summary/user-id user-id] [id :statement-summary/business-id b]))]}
+                                    (and [id :statement-summary/user-id user-id] [id :statement-summary/business-id b])
+                                    (and [id :goal/user-id user-id] [id :goal/business-id b])
+                                    (and [id :event/user-id user-id] [id :event/business-id b]))]}
                       user-id)
             keep-ids (into #{} (keep (fn [[id b]] (when-not (sole b) id))) shared)
             owned (-> (into #{} (map first) owned)
@@ -1131,7 +1259,8 @@
                 (update m to (fnil + 0) amount)
                 m))
             {}
-            items)))
+            ;; a month's once-off from a statement is not monthly pay
+            (monthly-items items))))
 
 (defn profit-shares
   "Each owner's share of a business's profit, in percent: the shares set on
@@ -1203,7 +1332,9 @@
                                           [id :business-invite/business-id b]
                                           [id :budget-item/business-id b]
                                           [id :budget-item/source-business-id b]
-                                          [id :statement-summary/business-id b])]}
+                                          [id :statement-summary/business-id b]
+                                          [id :goal/business-id b]
+                                          [id :event/business-id b])]}
                             business-id))]
       (logger/info "Deleting a business...")
       (biff/submit-tx ctx (for [id (cons business-id ids)]

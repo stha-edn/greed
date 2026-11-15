@@ -145,9 +145,7 @@
          [:span {:class "text-zinc-500"} (svgs/wallet)]]
         [:p {:class "text-sm font-medium text-zinc-500"} "No salary data yet"]
         [:p {:class "mt-1 max-w-xs text-xs text-zinc-500"}
-         "Add your salary in "
-         [:a {:href "/app/finances/" :class "font-medium text-zinc-900 hover:underline"} "Finances"]
-         " or "
+         "Add your salary and age in "
          [:a {:href "/app/settings" :class "font-medium text-zinc-900 hover:underline"} "Settings"]
          " to enable auto assessment."]]))))
 

@@ -1,5 +1,6 @@
 (ns com.greed.app
   (:require [com.greed.middleware :as mid]
+            [com.greed.data.core :as data]
             [com.greed.ui.app.admin :as admin]
             [com.greed.ui.app.tools :as tools]
             [com.greed.ui.app.goals :as goals]
@@ -7,6 +8,7 @@
             [com.greed.ui.app.settings :as settings]
             [com.greed.ui.app.finances :as finances]
             [com.greed.ui.app.statements :as spending]
+            [com.greed.ui.app.banking :as banking]
             [com.greed.ui.app.profiles :as profiles]
             [com.greed.ui.app.vat :as vat]
             [com.greed.ui.app.company-tax :as company-tax]
@@ -21,17 +23,27 @@
 (defn- redirect-to [location]
   (fn [_] {:status 301 :headers {"location" location}}))
 
+(defn- for-profile
+  "One address for a page every profile has: the business version while a
+   business is chosen, else the personal one."
+  [business-page personal-page]
+  (fn [ctx]
+    (if (data/session-business ctx) (business-page ctx) (personal-page ctx))))
+
 (def module
   {:routes [["/app" {:middleware [mid/wrap-signed-in]}
              ["" {:get dashboard/page}]
              ["/choose" {:get profiles/page :post profiles/choose}]
              ["/vat" {:get vat/page}]
-             ["/company-tax" {:get company-tax/page}]
+             ;; Tax and Settings: one address each, for whichever profile is chosen
+             ["/tax" {:get (for-profile company-tax/page tools/page)}]
+             ["/settings" {:get (for-profile profiles/settings-page settings/page)}]
+             ["/company-tax" {:get (redirect-to "/app/tax")}]
              ["/invites/accept" {:post profiles/accept-invite}]
              ["/invites/decline" {:post profiles/decline-invite}]
              ["/businesses/create" {:post profiles/add-business}]
              ["/business"
-              ["" {:get profiles/settings-page}]
+              ["" {:get (redirect-to "/app/settings")}]
               ["/update" {:post profiles/update-details}]
               ["/vat" {:post profiles/update-vat}]
               ["/tax" {:post profiles/update-tax}]
@@ -47,16 +59,21 @@
               ["/account-type-options" {:get forms/account-type-field}]
               ["/create-budget-item" {:post mid/create-budget-item}]
               ["/update-budget-item" {:post mid/update-budget-item}]
-              ["/delete-budget-item" {:post mid/delete-budget-item}]]
+              ["/delete-budget-item" {:post mid/delete-budget-item}]
+              ["/make-monthly" {:post mid/make-monthly}]]
              ["/spending"
               ["" {:get spending/page}]
-              ["/upload" {:post spending/upload}]
+              ;; uploads moved to Banking; the old address still works
+              ["/upload" {:post banking/upload}]
               ["/sync" {:post spending/sync-budget}]
               ["/add-income" {:post spending/add-income}]
               ["/add-expense" {:post spending/add-expense}]
               ["/delete" {:post spending/delete}]]
-             ;; Personal pages: while a business is chosen they go to its home.
-             ["" {:middleware [profiles/wrap-personal]}
+             ["/banking"
+              ["" {:get banking/page}]
+              ["/upload" {:post banking/upload}]
+              ["/save-bank" {:post banking/save-bank}]]
+             ;; Goals, Insights and Calendar: the current profile's, Personal or a business
              ["/goals"
               ["" {:get goals/page}]
               ["/create-goal" {:post mid/create-goal}]
@@ -68,8 +85,9 @@
              ["/calendar/create-event" {:post calendar/create-event}]
              ["/calendar/delete-event" {:post calendar/delete-event}]
              ["/calendar/toggle-event" {:post calendar/toggle-event}]
+             ;; Personal pages: while a business is chosen they go to its home.
+             ["" {:middleware [profiles/wrap-personal]}
              ["/tax"
-              ["" {:get tools/page}]
               ["/income-tax-calculator" {:get income-tax-calculator/page-get :post income-tax-calculator/page}]
               ["/bonus-tax-calculator" {:get bonus-tax-calculator/page-get :post bonus-tax-calculator/page}]
               ["/tax-returns" {:get tax-returns/page-get :post tax-returns/page}]]
@@ -77,7 +95,6 @@
              ["/tools" {:get (redirect-to "/app/tax")}]
              ["/tools/income-tax-calculator" {:get (redirect-to "/app/tax/income-tax-calculator")}]
              ["/tools/tax-returns" {:get (redirect-to "/app/tax/tax-returns")}]]
-             ["/settings" {:get settings/page}]
              ["/admin" {:middleware [mid/wrap-admin]}
               ["" {:get (redirect-to "/app/admin/users")}]
               ["/users" {:get admin/page}]
@@ -88,5 +105,4 @@
              ["/save-user" {:post mid/save-user}]
              ["/save-finances" {:post mid/save-finances}]
              ["/save-tax-profile" {:post mid/save-tax-profile}]
-             ["/dismiss-finance-tax-prompt" {:post mid/dismiss-finance-tax-prompt}]
              ["/dismiss-app-update-banner" {:post mid/dismiss-app-update-banner}]]]})

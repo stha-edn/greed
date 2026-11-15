@@ -35,11 +35,11 @@
            (str "Expenses and savings are R " (utilities/amount->rands (Math/abs (long leftover)))
              " over your income this month.")]
           [:div {:class "overflow-hidden h-3 w-full bg-zinc-100 rounded-full"}
-           [:div {:class "h-full w-full overflow-hidden rounded-full greed-bar-grow"}
+           [:div {:class "h-full w-full overflow-hidden rounded-full"}
             [:div {:class "flex h-full w-full"}
-             [:div {:class "h-full bg-zinc-700" :style {:width (str (int exp-pct) "%")}}]
-             [:div {:class "h-full bg-brand-600" :style {:width (str (int sav-pct) "%")}}]
-             [:div {:class "h-full bg-zinc-200" :style {:width (str (int rem-pct) "%")}}]]]])
+             [:div {:class "h-full bg-zinc-700 greed-bar-grow" :style {:width (str (int exp-pct) "%")}}]
+             [:div {:class "h-full bg-brand-600 greed-bar-grow" :style {:width (str (int sav-pct) "%")}}]
+             [:div {:class "h-full bg-zinc-200 greed-bar-grow" :style {:width (str (int rem-pct) "%")}}]]]])
         [:div {:class "space-y-2.5 mt-5"}
          (legend-row "bg-zinc-700" "Expenses" expenses (utilities/pct-label exp-pct) nil)
          (legend-row "bg-brand-600" "Savings" savings (utilities/pct-label sav-pct) nil)
@@ -50,7 +50,7 @@
        [:p {:class "text-center py-6 text-sm text-zinc-500"}
         "Add your "
         [:a {:href "/app/finances" :class "font-medium text-zinc-900 hover:underline"} "income"]
-        " in Finances to see this breakdown."])]))
+        " in Budget to see this breakdown."])]))
 
 (defn- expense-breakdown-card [expense-items total-expenses]
   [:div {:class "p-6 bg-white ring-1 ring-zinc-200/70 rounded-lg"}
@@ -74,7 +74,7 @@
              (utilities/pct-label p)]]]))]
      [:p {:class "text-center py-6 text-sm text-zinc-500"}
       "No expenses yet. Add them in "
-      [:a {:href "/app/finances" :class "font-medium text-zinc-900 hover:underline"} "Finances"]
+      [:a {:href "/app/finances" :class "font-medium text-zinc-900 hover:underline"} "Budget"]
       "."])])
 
 (defn- empty-state []
@@ -85,10 +85,17 @@
    [:p {:class "mt-1 text-xs text-zinc-500"} "Add your income and expenses to see where your money goes."]
    (shared/btn :variant :dark :size :md :class "mt-5" :href "/app/finances" "Add your budget")])
 
-(defn page [{:keys [session] :as ctx}]
+(defn page
+  "GET /app/insights: the current profile's month (Personal's or a
+   business's). A business has no payday or savings-rate hero."
+  [{:keys [session] :as ctx}]
   (let [user-id      (:uid session)
-        budget-items (data/get-budget-items ctx user-id)
-        finances     (data/get-finances ctx user-id)
+        owner        (data/owner ctx)
+        business?    (some? (:business-id owner))
+        all-items    (data/get-owner-budget-items ctx owner)
+        ;; this month: monthly items and this month's statement items
+        budget-items (data/items-for-month all-items (data/current-month))
+        finances     (when-not business? (data/get-finances ctx user-id))
         payday       (:finances/payday finances)
         {:keys [total-income total-expenses total-savings]} (data/get-budget-data budget-items)
         expense-items (filterv #(= (:budget-item/type %) :expenses) budget-items)
@@ -98,19 +105,22 @@
     (ui/app
      ctx
      [:div {:class "space-y-7"}
-      (headers/pages-heading ["Insights"])
-      [:p {:class "text-sm text-zinc-500"}
-       "A monthly read on your money: where it comes from, where it goes, and what's left over."]
+      (headers/pages-heading ["Insights"] "A monthly read on the money: where it comes from, where it goes, and what's left over.")
       (if (empty? budget-items)
         (empty-state)
         [:<>
-         (stats/insights-hero total-income total-expenses leftover overspend? savings-rate)
+         (when-not business?
+           (stats/insights-hero total-income total-expenses leftover overspend? savings-rate))
+         ;; the donut and savings ring that used to be on Home
          [:div
-          (stats/section-header "This month" :href "/app/finances/" :link-label "View in Finances")
+          (stats/section-header "At a glance")
+          (stats/cashflow-donut budget-items)]
+         [:div
+          (stats/section-header "This month" :href "/app/finances/" :link-label "View in Budget")
           [:div {:class "grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3"}
            (allocation-card total-income total-expenses total-savings leftover overspend?)
            (expense-breakdown-card expense-items total-expenses)
-           (stats/savings-pace budget-items payday)]]
+           (when-not business? (stats/savings-pace budget-items payday))]]
          [:div
           (stats/section-header "From your bank statements" :href "/app/spending" :link-label "View in Spending")
-          (spending/planned-vs-spent-card (data/get-statement-summaries ctx user-id) budget-items total-expenses)]])])))
+          (spending/planned-vs-spent-card (data/get-statement-summaries ctx owner) all-items total-expenses)]])])))

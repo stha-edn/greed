@@ -66,3 +66,19 @@
                                        :statement-summary/money-in-cents 0
                                        :statement-summary/categories {:fuel 2300 :salaries 5000}}]
                                      items))))))
+
+(deftest sars-due-dates-on-the-calendar
+  (let [due-dates (requiring-resolve 'com.greed.utilities.due-dates/sars-events)
+        biz {:business/entity-type :pty-ltd :business/vat-registered true :business/vat-category :a
+             :business/year-end-month 2}
+        evs (due-dates biz (d "2026-11-01") (d "2027-03-31"))]
+    (testing "each VAT201 and provisional payment in range, by date"
+      (is (= [["2026-11-30" "VAT201 due (Sep–Oct)"]
+              ["2027-01-29" "VAT201 due (Nov–Dec)"]
+              ["2027-02-26" "Second provisional tax payment"]
+              ["2027-03-31" "VAT201 due (Jan–Feb)"]]
+             (map (juxt :event/date :event/title) evs))))
+    (testing "added by greed: bills that cannot be removed"
+      (is (every? #(and (:event/auto %) (= :bill (:event/type %))) evs)))
+    (testing "nothing for a business that is neither a VAT vendor nor a company"
+      (is (empty? (due-dates {:business/entity-type :sole-proprietor} (d "2026-11-01") (d "2027-03-31")))))))

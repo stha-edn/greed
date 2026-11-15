@@ -18,16 +18,17 @@
  :error/entity-type-invalid "Choose what kind of business it is."
  :error/default "There was an error."
 
- :alert/user-saved "Your user has been successfully saved or updated."
- :alert/finances-saved "Your finances have been successfully saved or updated."
- :alert/tax-profile-saved "Your tax assessment profile has been saved."
- :alert/budget-item-saved "Your budget item has been successfully saved or updated."
- :alert/budget-item-deleted "Your budget item has been successfully deleted."
- :alert/goal-saved "Your goal has been successfully saved or updated."
- :alert/goal-deleted "Your goal has been successfully deleted."
- :alert/statement-read "Your statement was read and split by month. The file was not kept, only totals per payee."
- :alert/budget-synced "Your months were matched with your budget's statement references."
- :alert/budget-synced-partly "Months were matched with your budget. Some were read before greed kept payee totals: upload those statements once more."
+ :alert/user-saved "Your account details were saved."
+ :alert/finances-saved "Your salary and payday were saved."
+ :alert/tax-profile-saved "Your tax details were saved."
+ :alert/budget-item-saved "The budget item was saved."
+ :alert/made-monthly "The item is now monthly and counts in every month."
+ :alert/budget-item-deleted "The budget item was deleted."
+ :alert/goal-saved "The goal was saved."
+ :alert/goal-deleted "The goal was deleted."
+ :alert/statement-read "Your statement was read and split by month. The file was not kept."
+ :alert/budget-synced "Your months were matched with your budget."
+ :alert/budget-synced-partly "Your months were matched with your budget. Some were read before greed kept payee totals: upload those statements once more."
  ;; VAT (SARS). Check each February's Budget; thresholds apply from April 2026.
  :vat/rate 15
  :vat/compulsory-threshold 2300000
@@ -52,8 +53,9 @@
 
  :alert/shares-saved "The partners' shares were saved."
  :alert/tax-details-saved "The business's tax details were saved."
- :alert/income-added "Added to the budget's income at this month's amount. You can change it in Budget."
- :alert/expense-added "Added to the budget's expenses at this month's amount, with its name as the statement reference. You can change it in Budget."
+ :alert/income-added "Added to the budget's income at this month's amount."
+ :alert/expense-added "Added to the budget's expenses at this month's amount, and matched from now on."
+ :alert/bank-saved "Your bank details were saved."
  :alert/vat-saved "The business's VAT details were saved."
  :alert/business-added "Your business was added. You are working in it now."
  :alert/business-saved "The business's details were saved."
@@ -66,14 +68,15 @@
  :alert/member-removed "The member was removed from the business."
  :alert/left-business "You left the business."
  :alert/statement-removed "That month has been removed from your history."
- :alert/user-deleted "The user and all of their data has been deleted."
+ :alert/user-deleted "The user and all of their data were deleted."
  :alert/user-not-found "That user could not be found."
  :alert/email-taken "That email is already in use by another account."
  :alert/cannot-delete-self "You can't delete your own account from here."
  :alert/cannot-remove-own-admin-role "You can't remove your own admin role from here."
- :alert/password-hashed "That user's plaintext password has been securely hashed."
+ :alert/password-hashed "That user's password is now securely hashed."
  :alert/password-already-hashed "That user's password was already securely hashed."
- :alert/app-updated "The app has been updated."
+ :alert/app-updated "greed has been updated: Banking, business profiles, and a new Home."
+ :alert/signed-out "You're signed out. See you soon."
 
  :alert/errors #{:alert/email-taken
                  :alert/user-not-found

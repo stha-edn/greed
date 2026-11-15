@@ -161,6 +161,15 @@
       (data/sync-statement-summaries ctx owner)
       (when business-id (data/sync-owner-pay! ctx business-id)))))
 
+(defn make-monthly
+  "POST /app/finances/make-monthly: an item added from a statement counts
+   in every month from now on."
+  [ctx]
+  (let [ok? (data/make-monthly! ctx)]
+    (when ok? (sync-spending! ctx))
+    {:status 303
+     :headers {"location" (if ok? "/app/finances/?alert=made-monthly" "/app/finances/")}}))
+
 (defn create-budget-item [ctx]
   (data/upsert-budget-item ctx)
   (sync-spending! ctx)
@@ -234,17 +243,15 @@
 
 (defn logout [{:keys [session]}]
   {:status 303
-   :headers {"location" "/"}
+   :headers {"location" "/?alert=signed-out"}
    :session (dissoc session :uid :business-id)})
 
-(defn dismiss-finance-tax-prompt [{:keys [session]}]
+(defn dismiss-app-update-banner
+  "Remembers that the update notice was read, and returns to the same page."
+  [{:keys [session params]}]
   {:status 303
-   :headers {"location" "/app"}
-   :session (assoc session :finance-tax-prompt-dismissed-at (System/currentTimeMillis))})
-
-(defn dismiss-app-update-banner [{:keys [session]}]
-  {:status 303
-   :headers {"location" "/app"}
+   :headers {"location" (let [n (str (:next params))]
+                          (if (re-matches #"/app(/[A-Za-z0-9/_-]*)?" n) n "/app"))}
    :session (assoc session :app-update-seen-version (:app/version c/common-config))})
 
 (defn wrap-site-defaults [handler]

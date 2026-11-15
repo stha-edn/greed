@@ -7,6 +7,20 @@
             [com.greed.ui.components.forms :as forms]
             [com.greed.utilities.core :as utilities]))
 
+(defn- source-tag
+  "Where an item came from: added from a bank statement (that month's
+   amount) or planned monthly."
+  [{:budget-item/keys [from-statement]}]
+  (if from-statement
+    [:span {:class "flex-shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700 ring-1 ring-brand-600/20"
+            :title "Added from a bank statement, at that month's amount"}
+     (str "From " (.format (java.time.YearMonth/parse from-statement)
+                           (java.time.format.DateTimeFormatter/ofPattern "MMM yyyy"))
+          " statement")]
+    [:span {:class "flex-shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600"
+            :title "A planned monthly amount"}
+     "Monthly"]))
+
 (defn- budget-row [& {:keys [item protected-titles vat? owners]}]
   (let [{:budget-item/keys [title amount]
          :or {title "Title" amount 0}} item
@@ -23,13 +37,16 @@
     [:li {:class "group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-zinc-50/70"}
      [:div {:class "min-w-0 flex-1"}
       [:p {:class "truncate text-sm font-medium text-zinc-800"} title]
-      (when (or protected? reference category vat-label paid-to)
-        [:p {:class "mt-0.5 truncate text-xs text-zinc-500"}
-         (str/join " · " (remove nil? [(when protected? "Auto")
-                                       vat-label
-                                       category
-                                       (when paid-to (str "Paid to " paid-to))
-                                       (when reference (str "Statement: " reference))]))])]
+      ;; the tag leads the second line, so long titles keep their width
+      [:div {:class "mt-1 flex min-w-0 items-center gap-2"}
+       (source-tag item)
+       (when (or protected? reference category vat-label paid-to)
+         [:p {:class "min-w-0 truncate text-xs text-zinc-500"}
+          (str/join " · " (remove nil? [(when protected? "Auto")
+                                        vat-label
+                                        category
+                                        (when paid-to (str "Paid to " paid-to))
+                                        (when reference (str "Matches: " reference))]))])]]
      [:p {:class "flex-shrink-0 text-sm font-semibold text-zinc-900 tabular-nums"}
       (utilities/amount->rands amount)]
      (when editable?

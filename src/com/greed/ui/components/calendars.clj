@@ -29,7 +29,7 @@
                  (update m day (fnil conj #{}) type))
                {})))
 
-(defn- event-row [{:event/keys [title date type] :xt/keys [id]}]
+(defn- event-row [{:event/keys [title date type auto] :xt/keys [id]}]
   (let [type    (or type :general)
         dot-cls (get type-dot type "bg-zinc-400")]
     [:div {:class "relative flex items-center gap-3 px-5 py-3 border-b border-zinc-100 last:border-0 hover:bg-zinc-50 transition-colors"}
@@ -37,7 +37,9 @@
      [:div {:class "min-w-0 flex-1"}
       [:p {:class "text-sm font-medium text-zinc-800 truncate"} title]
       [:p {:class "text-xs text-zinc-500 mt-0.5"}
-       (str (get type-label type "Event") " · " (u.time/format-event-date date))]]
+       (str (if auto "SARS" (get type-label type "Event")) " · " (u.time/format-event-date date))]]
+     ;; SARS due dates are added by greed and cannot be removed
+     (when-not auto
      (biff/form {:hx-post    "/app/calendar/delete-event"
                  :hx-target  "#calendar-events"
                  :hx-swap    "outerHTML"
@@ -49,7 +51,7 @@
                           :aria-label "Remove event"
                           :data-confirm "Remove this event?"
                           :class   "flex items-center justify-center w-6 h-6 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-md transition active:scale-95 active:text-red-600 active:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"}
-                 (svgs/close {:class "w-4 h-4"})])]))
+                 (svgs/close {:class "w-4 h-4"})]))]))
 
 (defn- todo-row [{:event/keys [title date done] :xt/keys [id]}]
   (let [done? (boolean done)]
@@ -213,9 +215,9 @@
        [:div {:class "flex items-center gap-3"}
         ;; Legend (hidden on mobile)
         [:div {:class "hidden sm:flex items-center gap-4 mr-1"}
-         (for [[dot-color label] [["bg-brand-600" "Payday"]
-                                  ["bg-zinc-700"    "Bill"]
-                                  ["bg-zinc-400"  "To do"]]]
+         ;; no payday (a business, or none set): no Payday key
+         (for [[dot-color label] (cond->> [["bg-zinc-700" "Bill"] ["bg-zinc-400" "To do"]]
+                                   payday (cons ["bg-brand-600" "Payday"]))]
            [:div {:class "flex items-center gap-1.5"}
             [:div {:class (str "w-2 h-2 rounded-full " dot-color)}]
             [:span {:class "text-xs font-medium text-zinc-500"} label]])]

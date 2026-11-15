@@ -104,9 +104,9 @@ on htmx:afterRequest remove .opacity-50 from #tax-result"}
   [:div {:class "mt-4 rounded-md bg-zinc-50 p-5 ring-1 ring-zinc-200/50"}
    [:p {:class "text-xs font-medium text-zinc-500"} "Where your income goes"]
    [:div {:class "mt-3 flex h-2.5 w-full overflow-hidden rounded-full bg-zinc-200/70"}
-    [:div {:class "h-full rounded-l-full bg-brand-500"
+    [:div {:class "h-full rounded-l-full bg-brand-500 greed-bar-grow"
            :style {:width (str take-share "%")}}]
-    [:div {:class "h-full rounded-r-full bg-zinc-400"
+    [:div {:class "h-full rounded-r-full bg-zinc-400 greed-bar-grow"
            :style {:width (str tax-share "%")}}]]
    [:div {:class "mt-3 flex items-center justify-between gap-3 text-sm"}
     [:span {:class "flex items-center gap-2 text-zinc-500"}

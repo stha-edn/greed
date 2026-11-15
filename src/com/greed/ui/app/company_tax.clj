@@ -7,7 +7,8 @@
             [com.greed.data.core :as data]
             [com.greed.ui.components.headers :as headers]
             [com.greed.utilities.core :as utilities]
-            [com.greed.utilities.company-tax :as ct])
+            [com.greed.utilities.company-tax :as ct]
+            [com.greed.ui.components.hero :as hero])
   (:import [java.time LocalDate]
            [java.time.format DateTimeFormatter]))
 
@@ -15,7 +16,7 @@
 (defn- whole [cents] (utilities/whole->rands (/ cents 100.0)))
 (defn- fmt [^LocalDate d] (.format d (DateTimeFormatter/ofPattern "d MMMM yyyy")))
 
-(def ^:private card "rounded-lg border border-zinc-200 bg-white p-6")
+(def ^:private card "rounded-lg bg-white ring-1 ring-zinc-200/70 p-6")
 
 (def ^:private other-entities
   {:sole-proprietor "A sole proprietor's business is not taxed on its own. Its profit is part of the owner's personal income and is taxed in their personal return, with provisional tax if they earn income other than a salary."
@@ -35,7 +36,7 @@
 
 (defn- estimate-card [title sub taxable-cents tax-rands]
   [:section {:class card}
-   [:h2 {:class "text-sm font-semibold text-zinc-900"} title]
+   [:h2 {:class "text-sm font-semibold tracking-tight text-zinc-900"} title]
    [:p {:class "mt-0.5 text-xs text-zinc-500"} sub]
    [:dl {:class "mt-4 space-y-2 text-sm"}
     [:div {:class "flex justify-between"} [:dt {:class "text-zinc-600"} "Taxable income for the year"]
@@ -44,12 +45,12 @@
      [:dd {:class "tabular-nums text-zinc-900"} (rands tax-rands)]]]])
 
 (defn page
-  "GET /app/company-tax."
+  "GET /app/tax while a business is chosen."
   [ctx]
   (if-let [{:business/keys [name entity-type year-end-month sbc vat-registered] :xt/keys [id]} (data/session-business ctx)]
     (ui/app
      ctx
-     [:div {:class "space-y-6"}
+     [:div {:class "space-y-7"}
       (headers/pages-heading ["Tax"] name)
       (if-not (= :pty-ltd entity-type)
         [:section {:class card}
@@ -69,26 +70,32 @@
               set-aside (tax-set-aside items)
               table     (ct/sbc-table (:end fy))]
           [:<>
-           [:section {:class "rounded-lg border border-zinc-200 bg-white p-6 sm:p-8" :aria-labelledby "year-h"}
-            [:h2 {:id "year-h" :class "text-sm font-medium text-zinc-500"}
-             (str "Financial year " (fmt (:start fy)) " to " (fmt (:end fy))
-                  (when-not year-end-month " (February year end until you set it)"))]
-            [:p {:class "mt-3 text-4xl font-semibold tracking-[-0.03em] tabular-nums text-zinc-900"} (rands b-tax)]
-            [:p {:class "mt-1 text-sm text-zinc-600"}
-             (str "Expected income tax for the year from your budget, "
-                  (if sbc "on the small business corporation table." (str "at " (ct/company-rate) "%.")))]
-            (when (and sbc (:latest? table))
-              [:p {:class "mt-2 text-sm text-rose-700"}
-               "greed has no small business corporation table for this year yet, so the newest one is used."])
-            (if (pos? set-aside)
-              (let [gap (- (* 100 b-tax) (* 12 set-aside))]
-                [:p {:class (str "mt-3 text-sm " (if (pos? gap) "text-rose-700" "text-zinc-600"))}
-                 (str "Your tax set-aside items put away " (whole (* 12 set-aside)) " a year"
-                      (if (pos? gap) (str ", " (whole gap) " less than expected.") ", enough to cover it."))])
-              [:p {:class "mt-3 text-sm text-zinc-600"}
-               "Tip: add a set-aside item with \"tax\" in its name, so the provisional payments are ready."])]
+           (let [taxable-r (max 0 (/ b-taxable 100.0))
+                 kept      (max 0 (- taxable-r b-tax))
+                 gap       (- (* 100 b-tax) (* 12 set-aside))]
+             (hero/card
+              {:label (str "Financial year to " (fmt (:end fy)))
+               :badge (hero/badge (if sbc "Small business corporation" (str (ct/company-rate) "% company rate")))
+               :value (rands b-tax)
+               :unit "income tax this year"
+               :reading (str "Expected from your budget"
+                             (when-not year-end-month " (February year end until you set it)") "."
+                             (when (and sbc (:latest? table))
+                               " greed has no small business corporation table for this year yet, so the newest one is used."))
+               :picture (hero/bars
+                         {:title "Where the profit goes"
+                          :of (+ kept b-tax)
+                          :rows [{:label "Kept in the business" :value (rands kept) :amount kept :cls "bg-brand-600"}
+                                  {:label "Income tax" :value (rands b-tax) :amount b-tax :cls "bg-zinc-400"}]
+                          :note (if (pos? set-aside)
+                                  (str "Your tax set-aside items put away " (whole (* 12 set-aside)) " a year"
+                                       (if (pos? gap) (str ", " (whole gap) " less than expected.") ", enough to cover it."))
+                                  "Tip: add a set-aside item with \"tax\" in its name, so the provisional payments are ready.")})
+               :stats [["Taxable income" (whole b-taxable)]
+                       ["Effective rate" (if (pos? taxable-r) (str (Math/round (* 100.0 (/ b-tax taxable-r))) "%") "–")]
+                       ["Set aside a year" (whole (* 12 set-aside))]]}))
            [:section {:class card :aria-labelledby "prov-h"}
-            [:h2 {:id "prov-h" :class "text-sm font-semibold text-zinc-900"} "Provisional tax"]
+            [:h2 {:id "prov-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Provisional tax"]
             [:p {:class "mt-0.5 text-xs text-zinc-500"}
              "Based on the budget estimate. SARS can charge a penalty if the estimate for the year is too low, so update it as the year goes on."]
             [:ol {:class "mt-4 divide-y divide-zinc-100 text-sm"}
@@ -114,9 +121,9 @@
                                   " so far, scaled to a full year. SARS payments, drawings, transfers, cash and loans are left out.")
                              (:year s-est) s-tax)
               [:section {:class card}
-               [:h2 {:class "text-sm font-semibold text-zinc-900"} "From your bank statements"]
+               [:h2 {:class "text-sm font-semibold tracking-tight text-zinc-900"} "From your bank statements"]
                [:p {:class "mt-2 text-sm text-zinc-600"}
-                "No statement months in this financial year yet. Upload the business's statements on the Spending page."]])]
+                "No statement months in this financial year yet. Upload the business's statements on the Banking page."]])]
            [:p {:class "max-w-[75ch] text-xs leading-relaxed text-zinc-500"}
             "These are estimates to plan with, not a tax return. Taxable income here is a rough guide: it does not know about wear-and-tear allowances, assessed losses, non-deductible costs, or income received but not yet banked. Due dates skip weekends but not public holidays. Confirm the figures with your accountant before filing."]]))])
     {:status 303 :headers {"location" "/app/choose"}}))

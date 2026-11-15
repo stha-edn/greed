@@ -7,36 +7,9 @@
             [com.greed.ui.components.stats :as stats]
             [com.greed.ui.components.cards :as cards]
             [com.greed.ui.components.alerts :as alerts]
-            [com.greed.ui.components.headers :as headers]))
-
-(def finance-tax-prompt-interval-ms
-  "How often the finance & tax prompt may appear, in milliseconds."
-  (* 24 60 60 1000))
-
-(defn finance-tax-prompt-due?
-  "True when the prompt should be shown for this session — i.e. it hasn't
-   been dismissed within the last 24 hours."
-  [{:keys [session]}]
-  (let [dismissed-at (:finance-tax-prompt-dismissed-at session)]
-    (or (nil? dismissed-at)
-        (>= (- (System/currentTimeMillis) (long dismissed-at))
-            finance-tax-prompt-interval-ms))))
-
-(defn app-update-banner-due?
-  "True when the signed-in user hasn't acknowledged the current :app/version
-   (common.edn) yet — see middleware/dismiss-app-update-banner. Bumping
-   :app/version re-shows the banner to everyone, including users who'd
-   already dismissed an earlier version."
-  [{:keys [session]}]
-  (not= (:app-update-seen-version session) (:app/version c/common-config)))
-
-(defn- today-str []
-  (.format (java.time.LocalDate/now)
-           (java.time.format.DateTimeFormatter/ofPattern "EEE, d MMM yyyy")))
-
-(defn salary-set? [finances]
-  (let [salary (get finances :finances/salary)]
-    (and (some? salary) (pos? (long (or salary 0))))))
+            [com.greed.ui.components.headers :as headers]
+            [com.greed.ui.components.home :as home]
+            [com.greed.utilities.time :as u.time]))
 
 (defn- personal-page [{:keys [session params] :as ctx}]
   (let [user-id            (:uid session)
@@ -47,53 +20,62 @@
         payday             (:finances/payday finances)
         events             (data/get-events ctx user-id)
         goals              (data/get-goals ctx user-id)
-        show-finance-tax-prompt (and (not (data/admin? user))
-                                     (not (salary-set? finances))
-                                     (finance-tax-prompt-due? ctx))
-        show-app-update-banner (app-update-banner-due? ctx)]
+        summaries          (data/get-statement-summaries ctx user-id)
+        month              (home/latest-month summaries)
+        ;; the plan for this month: monthly items and this month's statement items
+        plan               (data/get-budget-data (data/items-for-month budget-items (data/current-month)))
+        month-items        (when month (data/items-for-month budget-items (:month month)))
+        items-by-id        (into {} (map (juxt :xt/id identity)) month-items)
+        today              (java.time.LocalDate/now)
+        next-pd            (u.time/next-payday today payday)
+        rows               (take 4 (sort-by :due
+                                            (concat
+                                             (when next-pd
+                                               [{:what "Payday" :due next-pd :note "Salary"
+                                                 :amount (some-> (:net-income income-tax-data) double (/ 12) (* 100) Math/round)}])
+                                             (for [{:event/keys [title date type done]} events
+                                                   :when (and date (not done))
+                                                   :let [d (java.time.LocalDate/parse date)]
+                                                   :when (not (.isBefore d today))]
+                                               {:what title :due d
+                                                :note (case type :bill "Bill" :income "Payment in" :todo "To do" "Event")}))))]
     (ui/app
      ctx
      [:div {:class "space-y-7"}
-      (when show-finance-tax-prompt (alerts/finance-tax-prompt-modal))
-      (when (:success params) (alerts/success :type (keyword (:success params))))
-      (when (:alert params) (alerts/info params))
-      (when show-app-update-banner
-        (alerts/info {:alert "app-updated"} :dismiss-href "/app/dismiss-app-update-banner"))
-      (headers/home-heading :user user :date (today-str))
+      (home/heading user "Personal")
 
-      ;; Hero: net take-home feature card + bank card
-      [:div {:class "grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3"}
-       [:div {:class "lg:col-span-2"}
-        (stats/dashboard-hero budget-items payday)]
-       [:div {:class "lg:col-span-1"}
-        [:div {:class "mb-3 lg:hidden"}
-         (stats/section-header "Wallet")]
-        [:div {:class "flex items-center justify-center lg:h-full lg:justify-end"}
-         (cards/bank-card
-          :finances finances
-          :budget-items budget-items
-          :net-monthly-income (when-let [net (:net-income income-tax-data)]
-                                (/ net 12)))]]]
+      ;; The same Home as a business's: hero, plan and what's next, the
+      ;; bank statements, progress and quick actions.
+      (if month
+        (home/month-hero month items-by-id (or (:total-expenses (data/get-budget-data month-items)) 0) home/personal)
+        (home/empty-hero plan home/personal))
 
-      ;; Money at a glance — charts carry the budget/savings story already
-      ;; told by the hero above; the summary row below moves on to the
-      ;; surfaces that don't have a hero-sized treatment of their own.
-      (stats/section-header "Money at a glance")
-      [:div {:class "grid grid-cols-1 items-stretch gap-4 lg:grid-cols-5"}
-       [:div {:class "lg:col-span-3"}
-        (stats/cashflow-donut budget-items)]
-       [:div {:class "lg:col-span-2"}
-        (stats/savings-ring budget-items)]]
+      [:div
+       (stats/section-header "The plan and what's next" :href "/app/finances/" :link-label "Open Budget")
+       [:div {:class "grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2"}
+        (home/plan-card plan home/personal)
+        (home/due-card rows {:sub "Your next payday, and the dates on your calendar."
+                             :empty "Nothing coming up. Set your payday in Settings, or add dates on the Calendar."
+                             :links [["/app/calendar" "Calendar"] ["/app/tax" "Tax"]]})]]
 
-      ;; More to explore — ordered by what's actionable first (what's next),
-      ;; then the two background reads (Tax, Goals). Budget is deliberately
-      ;; not repeated here: the hero and the donut above already cover it
-      ;; twice. Each card shares one uniform grid.
-      (stats/section-header "More to explore")
-      [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-stretch"}
-       (stats/upcoming-summary payday events)
-       (stats/tax-summary income-tax-data)
-       (stats/goals-summary goals)]])))
+      (when month
+        [:div
+         (stats/section-header "From the bank statements" :href "/app/spending" :link-label "Open Spending")
+         [:div {:class "grid grid-cols-1 items-stretch gap-4 lg:grid-cols-5"}
+          [:div {:class "lg:col-span-3"} (home/flow-card (home/monthly-flow summaries 6))]
+          [:div {:class "lg:col-span-2"} (home/costs-card (:summaries month))]]])
+
+      [:div
+       (stats/section-header "Progress")
+       [:div {:class "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch"}
+        (stats/tax-summary income-tax-data)
+        (stats/goals-summary goals)]]
+
+      [:div
+       (stats/section-header "Quick actions")
+       (home/actions [["/app/banking" "Upload a statement" "Read a bank statement PDF"]
+                      ["/app/finances/" "Update the budget" "Income, expenses and savings"]
+                      ["/app/goals" "Add a goal" "Something you are saving towards"]])]])))
 
 (defn page
   "GET /app: the business's home while a business is chosen, else the

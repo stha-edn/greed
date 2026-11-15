@@ -19,10 +19,12 @@
    :finances [:map {:closed true}
               [:xt/id                :finances/id]
               [:finances/user-id     :user/id]
-              [:finances/bank        :keyword]
+              ;; bank and account type are set on Banking; salary and payday
+              ;; in Settings, so either can come first
+              [:finances/bank        {:optional true} :keyword]
               [:finances/account-type {:optional true} [:maybe :string]]
-              [:finances/salary      :int]
-              [:finances/payday      :int]]
+              [:finances/salary      {:optional true} :int]
+              [:finances/payday      {:optional true} :int]]
 
    :tax-profile/id :uuid
    :tax-profile [:map {:closed true}
@@ -39,7 +41,9 @@
            [:event/title    :string]
            [:event/date     {:optional true} [:maybe :string]]
            [:event/type     {:optional true} [:maybe :keyword]]
-           [:event/done     {:optional true} [:maybe :boolean]]]
+           [:event/done     {:optional true} [:maybe :boolean]]
+           ;; Set on a business's events; user-id is then who added it.
+           [:event/business-id {:optional true} :business/id]]
 
    :goal/id :uuid
    :goal [:map {:closed true}
@@ -48,7 +52,9 @@
           [:goal/title       :string]
           [:goal/target      :int]
           [:goal/saved       :int]
-          [:goal/target-date {:optional true} [:maybe :string]]]
+          [:goal/target-date {:optional true} [:maybe :string]]
+          ;; Set on a business's goals; user-id is then who added it.
+          [:goal/business-id {:optional true} :business/id]]
 
    ;; A business a person runs. People are linked to it by :business-member
    ;; docs, so it can have more than one member later (co-founder,
@@ -116,7 +122,10 @@
                  [:budget-item/paid-to {:optional true} :user/id]
                  ;; A personal income item greed keeps in step with what a
                  ;; business pays this person ("From Ngunitek").
-                 [:budget-item/source-business-id {:optional true} :business/id]]
+                 [:budget-item/source-business-id {:optional true} :business/id]
+                 ;; Added from a bank statement on Spending ("2026-10"): the
+                 ;; amount is that month's, not a planned monthly figure.
+                 [:budget-item/from-statement {:optional true} :string]]
 
    ;; Totals from one uploaded bank statement, for the Spending tab. The
    ;; statement's individual lines are never stored. Amounts are in cents.
@@ -158,7 +167,8 @@
                        ;; Totals per payer of money in, so a business can add a
                        ;; regular payer to its budget's income from Spending.
                        [:statement-summary/income-payees {:optional true}
-                        [:vector [:map [:name :string] [:text :string] [:cents :int] [:count :int]]]]
+                        [:vector [:map [:name :string] [:text :string] [:cents :int] [:count :int]
+                                  [:salary? {:optional true} :boolean]]]]
                        [:statement-summary/checks-ok             :boolean]
                        [:statement-summary/uploaded-at           inst?]]})
 

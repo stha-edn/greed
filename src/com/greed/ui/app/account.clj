@@ -6,6 +6,6 @@
 (defn page [ctx]
   (ui/app
    ctx
-   [:div {:class "space-y-4"}
-    (headers/pages-heading ["Account" "Settings"])
+   [:div {:class "space-y-7"}
+    (headers/pages-heading ["Account"] "You, the person: your name, email, password and age. The same for every profile.")
     (forms/user ctx)]))

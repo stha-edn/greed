@@ -74,8 +74,24 @@
   animation: greed-bar-grow 700ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
 }
 
+/* The same reveal for column charts: every column grows up from its base,
+   with the same timing as the bars, so all charts fill in together. */
+@keyframes greed-col-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.greed-col-grow {
+  transform-origin: bottom;
+  animation: greed-col-grow 700ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
+}
+
+/* Ring and donut arcs: each arc sweeps in from its start, clockwise, to the
+   length set on it (its stroke-dasharray), with the same timing as the bars.
+   Only the start is given, so the animation ends on the arc's own value. */
+@keyframes greed-ring-sweep { from { stroke-dasharray: 0 2000; } }
+.greed-ring-sweep {
+  animation: greed-ring-sweep 700ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .greed-alert-in, .greed-alert-out, .greed-scrim-in, .greed-modal-in, .greed-bar-grow {
+  .greed-alert-in, .greed-alert-out, .greed-scrim-in, .greed-modal-in, .greed-bar-grow, .greed-col-grow, .greed-ring-sweep {
     animation: none;
   }
 }

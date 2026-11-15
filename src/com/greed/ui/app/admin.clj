@@ -163,8 +163,7 @@
         unhashed-count (count (remove #(data/hashed-password? (:user/password %)) users))]
     (ui/app
      ctx
-     [:div {:class "space-y-4"}
-      (when (:alert params) (alerts/info params))
+     [:div {:class "space-y-7"}
       (headers/pages-heading [["Admin" "/app/admin"] "Users"])
       (insecure-password-banner unhashed-count)
       (users-table users (:uid session))])))

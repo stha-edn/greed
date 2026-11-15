@@ -75,16 +75,14 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
                           [:span {:class "text-base font-semibold text-zinc-900"} title]
                           [:span {:class "text-xs font-medium text-zinc-500"} subtitle]))])
           [:p {:class "mt-3 text-xs text-zinc-500"}
-           "Uses the salary saved in Finances and your age in Settings."]]))
+           "Uses the salary and age saved in Settings."]]))
       (tools/panel
        [:div {:class "flex flex-col items-center justify-center px-6 py-12 text-center"}
         [:div {:class "mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100"}
          [:span {:class "text-zinc-500"} (svgs/wallet)]]
         [:p {:class "text-sm font-medium text-zinc-500"} "No salary data yet"]
         [:p {:class "mt-1 max-w-xs text-xs text-zinc-500"}
-         "Add your salary in "
-         [:a {:href "/app/finances/" :class "font-medium text-zinc-900 hover:underline"} "Finances"]
-         " or your age in "
+         "Add your salary and age in "
          [:a {:href "/app/settings" :class "font-medium text-zinc-900 hover:underline"} "Settings"]
          " to enable auto assessment."]]))))
 
@@ -175,9 +173,9 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
   [:div {:class "mt-4 rounded-md bg-zinc-50 p-5 ring-1 ring-zinc-200/50"}
    [:p {:class "text-xs font-medium text-zinc-500"} "Where your bonus goes"]
    [:div {:class "mt-3 flex h-2.5 w-full overflow-hidden rounded-full bg-zinc-200/70"}
-    [:div {:class "h-full rounded-l-full bg-brand-500"
+    [:div {:class "h-full rounded-l-full bg-brand-500 greed-bar-grow"
            :style {:width (str take-share "%")}}]
-    [:div {:class "h-full rounded-r-full bg-zinc-400"
+    [:div {:class "h-full rounded-r-full bg-zinc-400 greed-bar-grow"
            :style {:width (str tax-share "%")}}]]
    [:div {:class "mt-3 flex items-center justify-between gap-3 text-sm"}
     [:span {:class "flex items-center gap-2 text-zinc-500"}

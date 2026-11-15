@@ -98,7 +98,8 @@
    input VAT on standard-rated expenses, times the months in the period.
    Amounts include VAT; budget amounts are in rands, results in cents."
   [items months]
-  (let [vat-of (fn [t] (reduce + 0 (for [{:budget-item/keys [type amount vat]} items
+  (let [items  (remove :budget-item/from-statement items) ; once-offs are not monthly
+        vat-of (fn [t] (reduce + 0 (for [{:budget-item/keys [type amount vat]} items
                                          :when (= t type)
                                          :when (= :standard (or vat (default-vat-type type)))]
                                      (vat-in (* 100 amount months)))))

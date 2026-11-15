@@ -1,6 +1,7 @@
 (ns com.greed.ui.components.alerts
   (:require [com.biffweb :as biff]
             [com.core :as c]
+            [com.greed.data.core :as data]
             [com.greed.ui.components.shared :as shared]
             [com.greed.ui.components.svgs :as svgs]))
 
@@ -34,182 +35,85 @@
   [alert-key]
   (contains? (:alert/errors c/common-config) alert-key))
 
-(defn success
-  "Celebratory confirmation card for a just-completed signin/signup — same
-   entrance/exit and dismiss treatment as `info` (greed-alert-in/-out),
-   shown once right after the redirect to /app via ?success=signin|signup."
-  [& {:keys [type]
-      :or {type :signin}}]
-  [:div
-   {:id "success-alert"
-    :_ (str "init\n"
-            "  wait 6s\n"
-            "  add .greed-alert-out\n"
-            "  wait 200ms\n"
-            "  hide #success-alert")
-    :class "flex items-center w-full max-w-sm overflow-hidden rounded-2xl bg-white ring-1 ring-brand-200 shadow-card greed-alert-in"}
-   [:div
-    {:class "flex items-center justify-center w-12 bg-brand-600 text-white"}
-    (svgs/success)]
-   [:div
-    {:class "flex flex-1 items-center justify-between gap-2 px-4 py-3"}
-    [:div
-     {:class "mx-3"}
-     [:p {:class "font-semibold text-lg text-zinc-900"} "Success"]
-     [:p {:class "text-sm text-zinc-500"}
-      (if (= type :signin)
-        "You are signed in!"
-        "Your account was created!")]]
-    [:button
-     {:type "button"
-      :_ (str "on click\n"
-              "  add .greed-alert-out to #success-alert\n"
-              "  wait 200ms\n"
-              "  hide #success-alert")
-      :class "flex-shrink-0 self-start p-1 -m-1 rounded-md text-zinc-500 transition hover:text-zinc-600 hover:bg-zinc-100 active:scale-[0.9]"}
-     (svgs/close)]]])
+(defn app-update-due?
+  "True when the signed-in person hasn't acknowledged the current
+   :app/version (common.edn) yet. Bumping :app/version shows the update
+   notice to everyone again."
+  [{:keys [session]}]
+  (and (:uid session)
+       (not= (:app-update-seen-version session) (:app/version c/common-config))))
 
-(defn info
-  "Dismissible toast, driven by an `:alert` key in `params` (usually the
-   request's query params, e.g. `?alert=goal-saved`, but a synthetic
-   `{:alert \"key\"}` map works too). Non-error alerts auto-hide after 6s —
-   purely visual, the session is never touched by the timeout.
+;; ---------------------------------------------------------------------------
+;; Toasts: every notice (saved, signed in, signed out, updated, and errors)
+;; looks and behaves the same, and sits in the same place on every page.
 
-   Pass `:dismiss-href` for an alert that shouldn't reappear once seen (e.g.
-   dashboard.clj's app-update-banner-due?): the close button then POSTs
-   there instead of just hiding client-side, so dismissal persists. The 6s
-   auto-hide still only hides — acknowledging is an explicit click, not an
-   idle timeout, so an unread banner still greets the user next visit."
-  [params & {:keys [dismiss-href]}]
-  (let [alert     (:alert params)
-        alert-key (when alert (keyword "alert" alert))
-        message   (get c/alert-config alert-key)
-        error?    (alert-error? alert-key)
-        close-btn-class (str "flex-shrink-0 self-start p-1 -m-1 rounded-md transition active:scale-[0.9] "
-                             (if error? "text-rose-400 hover:text-rose-700 hover:bg-rose-100"
-                                 "text-brand-500 hover:text-brand-700 hover:bg-brand-100"))]
-    (when message
-      [:div
-       {:id "info-alert"
-        :_ (when-not error?
-             (str "init\n"
-                  "  wait 6s\n"
-                  "  add .greed-alert-out\n"
-                  "  wait 200ms\n"
-                  "  hide #info-alert"))
-        :class (str "flex items-center gap-3 w-full rounded-md ring-1 p-4 greed-alert-in "
-                    (if error? "bg-rose-50 ring-rose-200" "bg-brand-50 ring-brand-200"))}
-       [:div
-        {:class (str "flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center "
-                     (if error? "bg-rose-100 text-rose-600" "bg-brand-100 text-brand-600"))}
-        (if error? (svgs/close) (svgs/check))]
-       [:div {:class "flex-1 min-w-0"}
-        [:p {:class (str "text-sm font-medium leading-snug "
-                         (if error? "text-rose-900" "text-brand-900"))}
-         message]]
+(def ^:private kinds
+  {:success {:icon (svgs/check) :badge "bg-brand-50 text-brand-700 ring-brand-600/20"}
+   :error   {:icon (svgs/close) :badge "bg-rose-50 text-rose-700 ring-rose-600/20"}
+   :update  {:icon (svgs/success) :badge "bg-zinc-100 text-zinc-700 ring-zinc-900/10"}})
+
+(defn- toast
+  "One notice. Success and update notices that can be dismissed by just
+   closing them hide by themselves after 6 seconds; errors, and an update
+   that must be acknowledged (:dismiss-href), stay until closed."
+  [{:keys [id kind title message dismiss-href next]}]
+  (let [{:keys [icon badge]} (kinds kind)
+        sticky? (or (= :error kind) dismiss-href)
+        hide    (str "add .greed-alert-out to #" id "\n  wait 200ms\n  remove #" id)]
+    [:div {:id id
+           :role (if (= :error kind) "alert" "status")
+           :_ (when-not sticky? (str "init\n  wait 6s\n  " hide))
+           :class "pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg bg-white p-4 shadow-card-md ring-1 ring-zinc-200/70 greed-alert-in"}
+     [:span {:class (str "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ring-1 [&_svg]:h-4 [&_svg]:w-4 " badge)
+             :aria-hidden "true"}
+      icon]
+     [:div {:class "min-w-0 flex-1 pt-0.5"}
+      (when title [:p {:class "text-sm font-semibold text-zinc-900"} title])
+      [:p {:class (str "text-sm leading-snug " (if title "mt-0.5 text-zinc-600" "text-zinc-800"))} message]]
+     (let [cls "flex-shrink-0 rounded-md p-1 -m-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 active:scale-[0.9] [&_svg]:h-4 [&_svg]:w-4"]
        (if dismiss-href
-         (biff/form {:action dismiss-href}
-                    [:button {:type "submit" :class close-btn-class} (svgs/close)])
-         [:button
-          {:type "button"
-           :_ (str "on click\n"
-                   "  add .greed-alert-out to #info-alert\n"
-                   "  wait 200ms\n"
-                   "  hide #info-alert")
-           :class close-btn-class}
-          (svgs/close)])])))
+         ;; acknowledging is remembered, and you stay on the same page
+         (biff/form {:action dismiss-href :hidden {:next (or next "/app")}}
+                    [:button {:type "submit" :class cls :aria-label "Dismiss"} (svgs/close)])
+         [:button {:type "button" :class cls :aria-label "Dismiss" :_ (str "on click\n  " hide)}
+          (svgs/close)]))]))
 
-(defn finance-tax-prompt-modal
-  "Modal prompting the user to complete their finance & tax profile. Rendered
-   only when the prompt is due (see dashboard/finance-tax-prompt-due?), so it
-   is shown directly by the server — no client-side visibility state needed.
-   Escape and a backdrop click both defer it (same effect as \"Later\") —
-   every other dialog in the app (shared/modal, confirm-dialog) offers that
-   same way out, and there's no lighter-weight \"just close it\" here since
-   it would only reappear on the next page load anyway."
-  []
-  [:div
-   {:class "relative flex justify-center"}
-   [:div
-    {:role "dialog"
-     :aria-labelledby "finance-tax-prompt-title"
-     :aria-modal "true"
-     :_ "on keydown[key=='Escape'] from window trigger click on #finance-tax-prompt-later-submit"
-     :class "fixed inset-0 z-10 overflow-y-auto"}
-    [:div {:class "absolute inset-0 z-0 bg-zinc-950/60 backdrop-blur-sm greed-scrim-in"
-           :_ "on click trigger click on #finance-tax-prompt-later-submit"
-           :aria-hidden "true"}]
-    [:div
-     {:class "relative z-10 flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0"}
-     [:span
-      {:class "hidden sm:inline-block sm:h-screen sm:align-middle"
-       :aria-hidden "true"}
-      "\u00A0"]
-     [:div
-      {:class "relative inline-block overflow-hidden text-left align-bottom bg-zinc-900 ring-1 ring-white/10 rounded-2xl shadow-card-md sm:my-8 sm:align-middle sm:max-w-lg sm:w-full greed-modal-in"}
-      [:div
-       {:class "relative px-6 py-5 sm:p-6"}
-       [:div
-        {:class "flex items-start"}
-        [:div
-         {:class "flex items-center justify-center flex-shrink-0 w-12 h-12"}
-         (svgs/percent-badge)]
-        [:div
-         {:class "flex-1 mt-0 ml-4"}
-         [:h3
-          {:id "finance-tax-prompt-title"
-           :class "text-lg font-medium leading-6 text-zinc-300"}
-          "Complete your finance & tax profile"]
-         [:p
-          {:class "mt-2 text-sm text-zinc-500"}
-          "A few details help us personalise your dashboard, bank card, and tax estimates."]]]
-       [:div
-        {:class "mt-5 space-y-3"}
-        [:div
-         {:class "flex items-center gap-3"}
-         [:div
-          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-white/10 text-zinc-300"}
-          (svgs/banknotes)]
-         [:div
-          {:class "min-w-0"}
-          [:p {:class "text-sm font-medium text-zinc-200"} "Banking"]
-          [:p {:class "text-xs text-zinc-500"} "Bank and account type"]]]
-        [:div
-         {:class "flex items-center gap-3"}
-         [:div
-          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-white/10 text-zinc-300"}
-          (svgs/money)]
-         [:div
-          {:class "min-w-0"}
-          [:p {:class "text-sm font-medium text-zinc-200"} "Income"]
-          [:p {:class "text-xs text-zinc-500"} "Monthly gross salary and pay day"]]]
-        [:div
-         {:class "flex items-center gap-3"}
-         [:div
-          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-white/10 text-zinc-300"}
-          (svgs/heart)]
-         [:div
-          {:class "min-w-0"}
-          [:p {:class "text-sm font-medium text-zinc-200"} "Medical aid"]
-          [:p {:class "text-xs text-zinc-500"} "Monthly contributions and dependants"]]]
-        [:div
-         {:class "flex items-center gap-3"}
-         [:div
-          {:class "flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full bg-white/10 text-zinc-300"}
-          (svgs/umbrella)]
-         [:div
-          {:class "min-w-0"}
-          [:p {:class "text-sm font-medium text-zinc-200"} "Retirement annuity"]
-          [:p {:class "text-xs text-zinc-500"} "Annual RA contributions"]]]]
-       [:div
-        {:class "flex justify-end gap-3 mt-6"}
-        (biff/form {:action "/app/dismiss-finance-tax-prompt"}
-                   [:button
-                    {:id "finance-tax-prompt-later-submit"
-                     :type "submit"
-                     :class "px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-md transition hover:bg-zinc-50 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-400"}
-                    "Later"])
-        [:a
-         {:href "/app/settings"
-          :class "inline-flex justify-center px-4 py-2 text-sm font-medium text-zinc-900 bg-white border border-transparent rounded-md transition hover:bg-zinc-200 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"}
-         "Update"]]]]]]])
+(defn- signin-toast [kind user]
+  (let [first-name (some-> (:user/firstname user) not-empty)]
+    (case kind
+      :signin {:kind :success
+               :title "You're signed in"
+               :message (if first-name (str "Welcome back, " first-name ".") "Welcome back.")}
+      :signup {:kind :success
+               :title "Your account is ready"
+               :message (str (if first-name (str "Welcome to greed, " first-name ". ") "Welcome to greed. ")
+                             "Add your salary in Settings, or upload a statement on Banking.")}
+      nil)))
+
+(defn toasts
+  "All of the request's notices, in one stack at the top of the screen
+   (top right on wide screens): ?success=signin|signup, ?alert=<key> from
+   common.edn, and, inside the app, the app-update notice until it is
+   acknowledged."
+  [{:keys [params uri session] :as ctx} & {:keys [in-app?]}]
+  (let [user      (when (:success params) (data/get-user ctx (:uid session)))
+        alert-key (some->> (:alert params) (keyword "alert"))
+        message   (get c/alert-config alert-key)
+        items     (cond-> []
+                    (:success params)
+                    (conj (signin-toast (keyword (:success params)) user))
+                    message
+                    (conj {:kind (if (alert-error? alert-key) :error :success) :message message})
+                    (and in-app? (app-update-due? ctx))
+                    (conj {:kind :update :title "What's new"
+                           :message (:alert/app-updated c/common-config)
+                           :dismiss-href "/app/dismiss-app-update-banner"
+                           :next uri}))
+        items     (keep identity items)]
+    (when (seq items)
+      [:div {:aria-live "polite"
+             :class (str "pointer-events-none fixed inset-x-0 z-40 flex flex-col items-center gap-2 px-4 "
+                         (if in-app?
+                           "top-[calc(3.5rem+env(safe-area-inset-top)+0.75rem)] md:top-6 md:left-auto md:right-6 md:items-end md:px-0"
+                           "top-4 md:left-auto md:right-6 md:items-end md:px-0"))}
+       (map-indexed (fn [i t] (toast (assoc t :id (str "toast-" i)))) items)])))

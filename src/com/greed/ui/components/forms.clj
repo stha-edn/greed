@@ -248,49 +248,54 @@
                                   :hint "The type of account you hold at this bank"
                                   :options (account-type-options (some-> (:bank params) keyword))))
 
-(defn finances [ctx]
+(defn bank-details
+  "Banking: the person's bank and account type, for the bank card."
+  [ctx]
   (let [{:keys [session]} ctx
-        user-id            (:uid session)
-        finances           (data/get-finances ctx user-id)
-        bank-options       (sort (:banking/banks c/common-config))
-        current-bank       (or (:finances/bank finances) (first bank-options))
+        finances             (data/get-finances ctx (:uid session))
+        bank-options         (sort (:banking/banks c/common-config))
+        current-bank         (or (:finances/bank finances) (first bank-options))
         current-account-type (:finances/account-type finances)]
     (shared/card {:class "p-6"}
-                 [:div {:class "mb-6"}
-                  [:h2 {:class "text-base font-semibold text-zinc-900 tracking-tight"} "Financial Details"]
-                  [:p {:class "text-sm text-zinc-500 mt-0.5"} "Personalises your dashboard, bank card, and tax estimates."]]
+                 [:div {:class "mb-5"}
+                  [:h2 {:class "text-sm font-semibold tracking-tight text-zinc-900"} "Your bank"]
+                  [:p {:class "mt-0.5 text-xs text-zinc-500"} "Shown on your bank card."]]
                  (biff/form
-                  {:action "/app/save-finances"}
-
-      ;; Banking
-                  [:div
-                   [:p {:class "text-xs font-medium text-zinc-500 mb-3"} "Banking"]
-                   [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
-                    (shared/app-select ctx :id "bank" :label "Bank" :options bank-options :required? true
-                                       :hint "Your primary banking institution"
-                                       :attrs {"hx-get" "/app/finances/account-type-options"
-                                               "hx-trigger" "change"
-                                               "hx-target" "#account-type-field"
-                                               "hx-swap" "outerHTML"
-                                               "_" "on htmx:beforeRequest add .opacity-50 to #account-type-field
+                  {:action "/app/banking/save-bank"}
+                  [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
+                   (shared/app-select ctx :id "bank" :label "Bank" :options bank-options :required? true
+                                      :hint "Your main bank"
+                                      :attrs {"hx-get" "/app/finances/account-type-options"
+                                              "hx-trigger" "change"
+                                              "hx-target" "#account-type-field"
+                                              "hx-swap" "outerHTML"
+                                              "_" "on htmx:beforeRequest add .opacity-50 to #account-type-field
 on htmx:afterRequest remove .opacity-50 from #account-type-field"})
-                    (shared/app-account-type-select :id "account-type" :label "Account Type"
-                                                    :hint "The type of account you hold at this bank"
-                                                    :options (account-type-options current-bank)
-                                                    :selected current-account-type)]]
-
-      ;; Income
-                  [:div {:class "border-t border-zinc-100 pt-5 mt-5"}
-                   [:p {:class "text-xs font-medium text-zinc-500 mb-3"} "Income"]
-                   [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
-                    (shared/app-input ctx :id "salary" :type "number" :label "Monthly Gross Salary" :required? true
-                                      :prefix "R" :hint "Your salary before any deductions")
-                    (shared/app-input ctx :id "payday" :type "number" :label "Pay Day" :required? true
-                                      :hint "Day of the month you receive your salary (1-31)")]]
-
+                   (shared/app-account-type-select :id "account-type" :label "Account Type"
+                                                   :hint "The type of account you hold at this bank"
+                                                   :options (account-type-options current-bank)
+                                                   :selected current-account-type)]
                   [:div {:class "flex justify-end pt-5 mt-5 border-t border-zinc-100"}
-                   (shared/btn :variant :dark :type "submit"
-                               "Save changes")]))))
+                   (shared/btn :variant :dark :type "submit" "Save bank")]))))
+
+(defn finances
+  "Settings: salary and payday. The bank is on Banking."
+  [ctx]
+  (shared/card {:class "p-6"}
+               [:div {:class "mb-6"}
+                [:h2 {:class "text-sm font-semibold tracking-tight text-zinc-900"} "Salary and payday"]
+                [:p {:class "mt-0.5 text-xs text-zinc-500"}
+                 "For your take-home pay, tax estimates and payday. Your bank is set on "
+                 [:a {:href "/app/banking" :class "font-medium text-zinc-900 underline underline-offset-2"} "Banking"] "."]]
+               (biff/form
+                {:action "/app/save-finances"}
+                [:div {:class "grid grid-cols-1 gap-4 sm:grid-cols-2"}
+                 (shared/app-input ctx :id "salary" :type "number" :label "Monthly Gross Salary" :required? true
+                                   :prefix "R" :hint "Your salary before any deductions")
+                 (shared/app-input ctx :id "payday" :type "number" :label "Pay Day" :required? true
+                                   :hint "Day of the month you receive your salary (1-31)")]
+                [:div {:class "flex justify-end pt-5 mt-5 border-t border-zinc-100"}
+                 (shared/btn :variant :dark :type "submit" "Save changes")])))
 
 (defn tax-profile [{:keys [session] :as ctx}]
   (let [user-id (:uid session)
@@ -339,18 +344,22 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
    :savings  {:title "Add savings" :desc "Add a savings item to your budget."}})
 
 (defn- category-select
-  "A business item's spending category: payments its reference matches are
-   counted there on the Spending tab."
-  [current]
+  "An item's spending category: payments its reference matches are counted
+   there on the Spending page. Business categories are offered to a
+   business's items only."
+  [current business?]
   [:div {:class "mt-3"}
    (shared/form-label "category" "Spending category (optional)")
    [:select {:id "category" :name "category" :class (shared/base-input-class) :aria-describedby "category-hint"}
     [:option {:value ""} "As greed reads it"]
-    (for [k categorise/spending-categories]
+    (for [k categorise/spending-categories
+          :when (or business? (not (categorise/business-only k)))]
       [:option (cond-> {:value (name k)} (= k current) (assoc :selected true))
        (categorise/categories k)])]
    [:p {:id "category-hint" :class "mt-1 text-xs text-zinc-500"}
-    "Payments matched by the reference count in this category, e.g. Stock and suppliers, or Owner's drawings."]])
+    (if business?
+      "Payments matched by the reference count in this category, e.g. Stock and suppliers, or Owner's drawings."
+      "Payments matched by the reference count in this category, e.g. Insurance for a policy's debit order.")]])
 
 (defn- vat-select
   "How VAT applies to a VAT vendor's income or expense item."
@@ -399,8 +408,8 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
       (shared/modal-input :id "amount" :type "number" :label "Amount (R)" :required? true)
       (when (and vat? (#{:income :expenses} type))
         (vat-select type nil))
-      (when (and business? (not= :income type))
-        (category-select nil))
+      (when (not= :income type)
+        (category-select nil business?))
       (when (and business? (= :expenses type))
         (paid-to-select owners nil))
       (when (not= :income type)
@@ -431,8 +440,8 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
        (shared/modal-input :id "amount" :type "number" :label "Amount (R)" :required? true :value (str (:budget-item/amount item)))])
     (when (and vat? (:budget-item/business-id item) (#{:income :expenses} (:budget-item/type item)))
       (vat-select (:budget-item/type item) (:budget-item/vat item)))
-    (when (and (:budget-item/business-id item) (not= :income (:budget-item/type item)))
-      (category-select (:budget-item/category item)))
+    (when (not= :income (:budget-item/type item))
+      (category-select (:budget-item/category item) (some? (:budget-item/business-id item))))
     (when (and (:budget-item/business-id item) (= :expenses (:budget-item/type item)))
       (paid-to-select owners (:budget-item/paid-to item)))
     (when (not= :income (:budget-item/type item))
@@ -448,6 +457,13 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
                  "Cancel")
      (shared/btn :variant :dark :type "submit" :class "flex-1"
                  "Update")])
+   (when (:budget-item/from-statement item)
+     (biff/form
+      {:class "mt-2" :action "/app/finances/make-monthly"}
+      [:input {:type "hidden" :name "budget-item-id" :value (str (:xt/id item))}]
+      (shared/btn :variant :outline :type "submit" :class "w-full" "Make monthly")
+      [:p {:class "mt-1 text-xs text-zinc-500"}
+       "For a cost or income that repeats: it then counts in every month, not only its statement's month."]))
    (when-not auto?
      (biff/form
       {:class "mt-2" :action "/app/finances/delete-budget-item"}

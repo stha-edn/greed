@@ -12,6 +12,7 @@
             [com.greed.statements.summary :as summary]
             [com.greed.statements.categorise :as categorise]
             [com.greed.utilities.vat :as vat]
+            [com.greed.ui.components.hero :as hero]
             [com.greed.ui.components.alerts :as alerts]
             [com.greed.ui.components.shared :as shared]
             [com.greed.ui.components.headers :as headers]
@@ -22,12 +23,12 @@
 ;; ---------------------------------------------------------------------------
 ;; Formatting
 
-(defn- rands
+(defn rands
   "Cents as rands with cents: R7,092.58."
   [cents]
   (utilities/format-currency (/ cents 100.0)))
 
-(defn- whole
+(defn whole
   "Cents as whole rands: R7,093."
   [cents]
   (utilities/whole->rands (/ cents 100.0)))
@@ -38,16 +39,16 @@
 (defn- day-month-year [iso]
   (.format (LocalDate/parse iso) (DateTimeFormatter/ofPattern "d MMM yyyy")))
 
-(defn- period-label [{:statement-summary/keys [period-start period-end]}]
+(defn period-label [{:statement-summary/keys [period-start period-end]}]
   (str (day-month period-start) " to " (day-month-year period-end)))
 
-(defn- month-of [{:statement-summary/keys [month period-end]}]
+(defn month-of [{:statement-summary/keys [month period-end]}]
   (or month (subs period-end 0 7)))
 
-(defn- month-href [m & [bank]]
+(defn month-href [m & [bank]]
   (str "/app/spending?month=" m (when bank (str "&bank=" (name bank)))))
 
-(defn- month-label [s]
+(defn month-label [s]
   (.format (java.time.YearMonth/parse (month-of s)) (DateTimeFormatter/ofPattern "MMMM yyyy")))
 
 (defn- short-month [m]
@@ -60,7 +61,7 @@
     (and (= (str (.atDay ym 1)) period-start)
          (= (str (.atEndOfMonth ym)) period-end))))
 
-(def ^:private bank-names {:fnb "FNB" :standard-bank "Standard Bank"})
+(def bank-names {:fnb "FNB" :standard-bank "Standard Bank"})
 
 (defn- pct [part whole]
   (if (pos? whole) (Math/round (* 100.0 (/ (double part) whole))) 0))
@@ -68,7 +69,7 @@
 ;; ---------------------------------------------------------------------------
 ;; Upload
 
-(def ^:private error-messages
+(def error-messages
   {:not-pdf "That file is not a PDF. Download the statement as a PDF from online banking and try again."
    :too-large "That file is larger than 5 MB. Bank statements are much smaller; check that you picked the right file."
    :too-many-pages "That statement has more than 60 pages. Download a shorter period, a few months at a time."
@@ -78,13 +79,13 @@
    :unsupported-bank "greed can read FNB and Standard Bank statements for now. Other banks are coming."
    :no-file "Choose a statement PDF first."})
 
-(defn- upload-panel [& {:keys [error compact?]}]
-  [:div {:class "rounded-lg border border-zinc-200 bg-white p-5"}
+(defn upload-panel [& {:keys [error compact?]}]
+  [:div {:class "rounded-lg bg-white ring-1 ring-zinc-200/70 p-5"}
    (biff/form
-    {:action "/app/spending/upload" :enctype "multipart/form-data"
+    {:action "/app/banking/upload" :enctype "multipart/form-data"
      :class "flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"}
     [:div {:class "min-w-0"}
-     [:h2 {:class "text-sm font-semibold text-zinc-900"} (if compact? "Add a statement" "Upload a bank statement")]
+     [:h2 {:class "text-sm font-semibold tracking-tight text-zinc-900"} (if compact? "Add a statement" "Upload a bank statement")]
      [:p {:class "mt-0.5 max-w-[60ch] text-sm text-zinc-600"}
       "The PDF from your online banking. greed reads it, keeps only totals per payee, and never stores the file. FNB and Standard Bank for now; a statement covering several months is split by month."]
      [:label {:for "statement" :class "sr-only"} "Statement PDF"]
@@ -127,43 +128,53 @@
      :unplanned unplanned :rest-plan rest-plan
      :over (if linked? (- unplanned rest-plan) (- spent planned))}))
 
-(defn- verdict
+(defn verdict-text
   "One sentence on planned against spent (see compare-with-budget)."
   [{:keys [linked? budgeted unplanned rest-plan planned over]}]
-  [:p {:class (str "mt-1 text-sm " (if (pos? over) "text-rose-700" "text-zinc-600"))}
-   (if linked?
-     (str (whole budgeted) " went to your linked budget items. The other " (whole unplanned) " is "
-          (whole (Math/abs (long over))) (if (pos? over) " more" " less")
-          " than the " (whole rest-plan) " your budget leaves for everything else.")
-     (str (whole (Math/abs (long over))) (if (pos? over) " more" " less")
-          " than the " (whole planned) " your budget plans for expenses."))])
+  (if linked?
+    (str (whole budgeted) " went to your linked budget items. The other " (whole unplanned) " is "
+         (whole (Math/abs (long over))) (if (pos? over) " more" " less")
+         " than the " (whole rest-plan) " your budget leaves for everything else.")
+    (str (whole (Math/abs (long over))) (if (pos? over) " more" " less")
+         " than the " (whole planned) " your budget plans for expenses.")))
 
-(defn- headline [{:statement-summary/keys [bank money-out-cents money-in-cents transfers-in-cents transfers-out-cents
-                                           line-count checks-ok salary-cents budget-matches budgeted-cents] :as s}
-                 planned-expenses items-by-id]
-  [:section {:class "rounded-lg border border-zinc-200 bg-white p-6 sm:p-8" :aria-labelledby "latest-h"}
-   [:h2 {:id "latest-h" :class "text-sm font-medium text-zinc-500"}
-    (str (bank-names bank (name bank)) " · " (month-label s))]
-   [:p {:class "mt-3 flex flex-wrap items-baseline gap-x-3"}
-    [:span {:class "text-4xl font-semibold tracking-[-0.03em] tabular-nums text-zinc-900"} (whole money-out-cents)]
-    [:span {:class "text-sm text-zinc-500"} "spent"]]
-   (when-not (whole-month? s)
-     [:p {:class "mt-1 text-sm text-zinc-600"}
-      (str "Only " (period-label s) " is on your statement, so this is part of the month.")])
-   (when (and (pos? planned-expenses) (whole-month? s))
-     (verdict (compare-with-budget [s] items-by-id planned-expenses)))
-   (when-not checks-ok
-     [:p {:role "alert" :class "mt-4 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800"}
-      "This statement's own totals did not match what greed read, so some lines may be missing. Treat these numbers as a guide."])
-   [:div {:class "mt-6 grid grid-cols-2 gap-6 border-t border-zinc-100 pt-5 sm:grid-cols-4"}
-    (stat "Money in" (whole money-in-cents)
-          (if (pos? (or salary-cents 0)) (str "including " (whole salary-cents) " salary") "own transfers left out"))
-    (if (seq budget-matches)
-      (stat "Budget items paid" (whole (or budgeted-cents 0))
-            (str (count (filter (comp pos? :count) budget-matches)) " of " (count budget-matches) " linked items"))
-      (stat "Planned expenses" (if (pos? planned-expenses) (utilities/whole->rands planned-expenses) "–") "from your budget"))
-    (stat "Between your accounts" (whole (+ transfers-in-cents transfers-out-cents)) "left out of these totals")
-    (stat "Lines read" (str line-count) "none of them stored")]])
+(defn- verdict
+  "The verdict as a line of its own (the Insights card)."
+  [{:keys [over] :as cmp}]
+  [:p {:class (str "mt-1 text-sm " (if (pos? over) "text-rose-700" "text-zinc-600"))} (verdict-text cmp)])
+
+(defn- headline
+  "The month on show, in the same header card as every tab: spent, read
+   against the plan, with planned and spent as bars."
+  [{:statement-summary/keys [bank money-out-cents money-in-cents transfers-in-cents transfers-out-cents
+                             line-count checks-ok salary-cents budget-matches budgeted-cents] :as s}
+   planned-expenses items-by-id]
+  (let [whole?  (whole-month? s)
+        cmp     (when (and whole? (pos? planned-expenses)) (compare-with-budget [s] items-by-id planned-expenses))
+        over?   (and cmp (pos? (:over cmp)))]
+    (hero/card
+     {:label (str (bank-names bank (name bank)) " · " (month-label s))
+      :badge (when-not whole? (hero/badge "Part of the month"))
+      :value (whole money-out-cents)
+      :unit "spent"
+      :reading (cond
+                 (not whole?) (str "Only " (period-label s) " is on your statement, so this is part of the month.")
+                 cmp (verdict-text cmp)
+                 :else "Add your expenses in Budget to compare this month with a plan.")
+      :tone (when over? :rose)
+      :picture (hero/bars {:title "Planned against spent"
+                           :rows [{:label "Planned" :value (if (pos? planned-expenses) (whole planned-expenses) "–")
+                                   :amount (max 0 planned-expenses) :cls "bg-zinc-400"}
+                                  {:label "Spent" :value (whole money-out-cents) :amount money-out-cents
+                                   :cls (if over? "bg-rose-500" "bg-brand-600")}]})
+      :stats [["Money in" (whole money-in-cents)]
+              (if (seq budget-matches)
+                ["Budget items paid" (whole (or budgeted-cents 0))]
+                ["Planned expenses" (if (pos? planned-expenses) (utilities/whole->rands planned-expenses) "–")])
+              ["Between your accounts" (whole (+ transfers-in-cents transfers-out-cents))]]
+      :footer (when-not checks-ok
+                [:p {:role "alert" :class "mt-4 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800"}
+                 "This statement's own totals did not match what greed read, so some lines may be missing. Treat these numbers as a guide."])})))
 
 (defn- sync-button
   "Re-matches every saved month with the budget, then returns to this one."
@@ -179,10 +190,10 @@
   (let [whole? (whole-month? s)]
     (cond
       (seq budget-matches)
-      [:section {:class "rounded-lg border border-zinc-200 bg-white p-6" :aria-labelledby "bud-h"}
+      [:section {:class "rounded-lg bg-white ring-1 ring-zinc-200/70 p-6" :aria-labelledby "bud-h"}
        [:div {:class "flex items-start justify-between gap-4"}
         [:div {:class "min-w-0"}
-         [:h2 {:id "bud-h" :class "text-sm font-semibold text-zinc-900"} "Your budget items"]
+         [:h2 {:id "bud-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Your budget items"]
          [:p {:class "mt-0.5 text-xs text-zinc-500"}
           "Payments matched by each item's statement reference. These are left out of the spending outside your budget. greed syncs when you change a budget item; use the button after changes made elsewhere."]]
         (sync-button s)]
@@ -204,7 +215,7 @@
 
       :else
       [:section {:class "rounded-lg border border-dashed border-zinc-300 bg-white p-6" :aria-labelledby "bud-h"}
-       [:h2 {:id "bud-h" :class "text-sm font-semibold text-zinc-900"} "Link your budget items"]
+       [:h2 {:id "bud-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Link your budget items"]
        [:p {:class "mt-1 max-w-[70ch] text-sm text-zinc-600"}
         (cond
           (and has-references? (nil? payees))
@@ -221,8 +232,8 @@
 (defn- category-chart [{:statement-summary/keys [categories money-out-cents]}]
   (let [rows (->> categories (sort-by (comp - val)))
         top  (or (some-> rows first val) 1)]
-    [:section {:class "rounded-lg border border-zinc-200 bg-white p-6" :aria-labelledby "cat-h"}
-     [:h2 {:id "cat-h" :class "text-sm font-semibold text-zinc-900"} "Where it went"]
+    [:section {:class "rounded-lg bg-white ring-1 ring-zinc-200/70 p-6" :aria-labelledby "cat-h"}
+     [:h2 {:id "cat-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Where it went"]
      [:p {:class "mt-0.5 text-xs text-zinc-500"} "Spending by category, largest first."]
      (if (seq rows)
        [:ul {:class "mt-5 space-y-3"}
@@ -230,7 +241,7 @@
           [:li {:class "grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)_auto] items-center gap-3 text-sm"}
            [:span {:class "truncate text-zinc-700"} (categorise/categories cat (name cat))]
            [:span {:class "h-2 overflow-hidden rounded-full bg-zinc-100"}
-            [:span {:class "block h-full rounded-full bg-brand-600" :style {:width (str (max 2 (pct cents top)) "%")}}]]
+            [:span {:class "block h-full rounded-full bg-brand-600 greed-bar-grow" :style {:width (str (max 2 (pct cents top)) "%")}}]]
            [:span {:class "w-36 text-right tabular-nums"}
             [:span {:class "font-semibold text-zinc-900"} (rands cents)]
             [:span {:class "ml-2 text-xs text-zinc-500"} (str (pct cents money-out-cents) "%")]]])]
@@ -252,8 +263,8 @@
                 (pos? others)
                 (conj ["Money in from others" (str (rands others) " came in besides your salary. If it repeats, add it to your budget's income.")]))]
     (when (seq items)
-      [:section {:class "rounded-lg border border-zinc-200 bg-white p-6" :aria-labelledby "notes-h"}
-       [:h2 {:id "notes-h" :class "text-sm font-semibold text-zinc-900"} "Worth knowing"]
+      [:section {:class "rounded-lg bg-white ring-1 ring-zinc-200/70 p-6" :aria-labelledby "notes-h"}
+       [:h2 {:id "notes-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Worth knowing"]
        [:ul {:class "mt-4 space-y-4"}
         (for [[title body] items]
           [:li
@@ -267,23 +278,27 @@
          (str/lower-case (str/trim (str title))))))
 
 (defn- money-in-card
-  "A business's payers this month, each with a button that adds it to the
-   budget's income at this month's amount."
-  [{:statement-summary/keys [income-payees bank] :as s} items]
+  "The month's payers, each with a button that adds it to the budget's
+   income at this month's amount. On the personal side a salary is already
+   in the budget (the Salary item), so it is marked instead."
+  [{:statement-summary/keys [income-payees bank] :as s} items business?]
   (let [in-budget (income-title-set items)]
-    [:section {:class "rounded-lg border border-zinc-200 bg-white p-6" :aria-labelledby "in-h"}
-     [:h2 {:id "in-h" :class "text-sm font-semibold text-zinc-900"} "Money in"]
-     [:p {:class "mt-0.5 text-xs text-zinc-500"} "Who paid the business this month. Add a regular payer to the budget's income at this month's amount; you can change it in Budget."]
+    [:section {:class "rounded-lg bg-white ring-1 ring-zinc-200/70 p-6" :aria-labelledby "in-h"}
+     [:h2 {:id "in-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Money in"]
+     [:p {:class "mt-0.5 text-xs text-zinc-500"}
+      (str (if business? "Who paid the business this month. " "Who paid you this month. ")
+           "Add a regular payer to the budget's income at this month's amount; you can change it in Budget.")]
      (cond
        (nil? income-payees)
        [:p {:class "mt-4 text-sm text-zinc-600"} "This month was read before greed kept payers. Upload the statement once more to see them here."]
 
        (empty? income-payees)
-       [:p {:class "mt-4 text-sm text-zinc-600"} "No money came in this month, apart from transfers between the business's own accounts."]
+       [:p {:class "mt-4 text-sm text-zinc-600"}
+        (str "No money came in this month, apart from transfers between " (if business? "the business's" "your") " own accounts.")]
 
        :else
        [:ul {:class "mt-4 divide-y divide-zinc-100"}
-        (for [{:keys [name cents count]} income-payees]
+        (for [{:keys [name cents count salary?]} income-payees]
           [:li {:class "flex items-center justify-between gap-4 py-2.5"}
            [:span {:class "min-w-0"}
             [:span {:class "block truncate text-sm text-zinc-900"} name]
@@ -291,6 +306,9 @@
            (cond
              (in-budget (str/lower-case (str/trim name)))
              [:span {:class "flex-shrink-0 text-xs font-medium text-zinc-500"} "In your income"]
+
+             (and salary? (not business?))
+             [:span {:class "flex-shrink-0 text-xs font-medium text-zinc-500"} "Your salary"]
 
              (str/blank? name) nil
 
@@ -313,17 +331,18 @@
    to the budget's expenses, with its name as the statement reference so its
    payments are matched from then on. A payee already matched by an item's
    reference shows that item instead."
-  [{:statement-summary/keys [payees bank] :as s} items]
+  [{:statement-summary/keys [payees bank] :as s} items business?]
   (let [match-items (for [{:budget-item/keys [title type reference category] :xt/keys [id]} items
                           :when (and reference (#{:expenses :savings} type))]
                       (cond-> {:id id :title title :reference reference} category (assoc :category category)))
         linked      (summary/payee-items match-items (take 15 payees))
         titles      (set (for [{:budget-item/keys [type title]} items :when (#{:expenses :savings} type)]
                            (str/lower-case (str/trim (str title)))))]
-    [:section {:class "rounded-lg border border-zinc-200 bg-white p-6" :aria-labelledby "out-h"}
-     [:h2 {:id "out-h" :class "text-sm font-semibold text-zinc-900"} "Money out"]
+    [:section {:class "rounded-lg bg-white ring-1 ring-zinc-200/70 p-6" :aria-labelledby "out-h"}
+     [:h2 {:id "out-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Money out"]
      [:p {:class "mt-0.5 text-xs text-zinc-500"}
-      "Who the business paid this month, largest first. Add a regular cost to the budget's expenses at this month's amount; its name becomes the statement reference, so its payments are matched from then on."]
+      (str (if business? "Who the business paid this month" "Who you paid this month")
+           ", largest first. Add a regular cost to the budget's expenses at this month's amount; its name becomes the statement reference, so its payments are matched from then on.")]
      (if (nil? payees)
        [:p {:class "mt-4 text-sm text-zinc-600"} "This month was read before greed kept payees. Upload the statement once more to see them here."]
        [:ul {:class "mt-4 divide-y divide-zinc-100"}
@@ -350,8 +369,8 @@
 
 (defn- merchants [{:statement-summary/keys [top-merchants]}]
   (when (seq top-merchants)
-    [:section {:class "rounded-lg border border-zinc-200 bg-white p-6" :aria-labelledby "top-h"}
-     [:h2 {:id "top-h" :class "text-sm font-semibold text-zinc-900"} "Top places"]
+    [:section {:class "rounded-lg bg-white ring-1 ring-zinc-200/70 p-6" :aria-labelledby "top-h"}
+     [:h2 {:id "top-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Top places"]
      [:p {:class "mt-0.5 text-xs text-zinc-500"} "Where you spent the most this month."]
      [:ol {:class "mt-4 divide-y divide-zinc-100"}
       (for [{:keys [name category cents count]} top-merchants]
@@ -374,8 +393,8 @@
                     vec)]
     (when (>= (count months) 2)
       (let [top (max 1 (apply max (map second months)))]
-      [:section {:class "rounded-lg border border-zinc-200 bg-white p-6" :aria-labelledby "mom-h"}
-       [:h2 {:id "mom-h" :class "text-sm font-semibold text-zinc-900"} "Month to month"]
+      [:section {:class "rounded-lg bg-white ring-1 ring-zinc-200/70 p-6" :aria-labelledby "mom-h"}
+       [:h2 {:id "mom-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Month to month"]
        [:p {:class "mt-0.5 text-xs text-zinc-500"} "Money spent each month, all your statements together. The month you are looking at is in green; pick a bar to see that month."]
        [:div {:class "mt-6 flex h-40 items-end gap-3"}
         (for [[m cents] months
@@ -383,14 +402,14 @@
           [:a {:href (month-href m) :aria-label (str (short-month m) ": " (whole cents) " spent")
                :class "flex h-full min-w-0 flex-1 flex-col justify-end rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"}
            [:span {:class "mb-1 text-center text-xs tabular-nums text-zinc-700"} (whole cents)]
-           [:span {:class (str "block rounded-t-md " (if latest? "bg-brand-600" "bg-zinc-300"))
+           [:span {:class (str "block rounded-t-md greed-col-grow " (if latest? "bg-brand-600" "bg-zinc-300"))
                    :style {:height (str (max 2 (pct cents top)) "%")}}]
            [:span {:class "mt-2 truncate text-center text-xs text-zinc-500"} (short-month m)]])]]))))
 
-(defn- history [summaries selected]
-  [:section {:class "rounded-lg border border-zinc-200 bg-white" :aria-labelledby "hist-h"}
+(defn history [summaries selected]
+  [:section {:class "rounded-lg bg-white ring-1 ring-zinc-200/70" :aria-labelledby "hist-h"}
    [:div {:class "px-6 py-4"}
-    [:h2 {:id "hist-h" :class "text-sm font-semibold text-zinc-900"} "Your months"]
+    [:h2 {:id "hist-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Your months"]
     [:p {:class "text-xs text-zinc-500"} "Totals only, one row per bank and month. Pick one to see it, or remove it from your history."]]
    [:ul {:class "divide-y divide-zinc-100 border-t border-zinc-100"}
     (for [{:statement-summary/keys [bank money-out-cents money-in-cents] :xt/keys [id] :as s} summaries]
@@ -463,17 +482,20 @@
   [:div {:class "grid grid-cols-[minmax(0,8rem)_minmax(0,1fr)_auto] items-center gap-3 text-sm"}
    [:span {:class "truncate text-zinc-600"} label]
    [:span {:class "h-2.5 overflow-hidden rounded-full bg-zinc-100"}
-    [:span {:class (str "block h-full rounded-full " bar-class) :style {:width (str (max 2 (pct cents top)) "%")}}]]
+    [:span {:class (str "block h-full rounded-full greed-bar-grow " bar-class) :style {:width (str (max 2 (pct cents top)) "%")}}]]
    [:span {:class "w-24 text-right font-semibold tabular-nums text-zinc-900"} (whole cents)]])
 
 (defn planned-vs-spent-card
   "For Insights: the newest full month from the user's bank statements
    against the budget's planned expenses, all banks together. Partial months
    (the edges of a statement) are not compared."
-  [summaries budget-items planned-expenses]
-  (let [items-by-id (into {} (map (juxt :xt/id identity)) budget-items)
-        full        (filter whole-month? summaries)
+  [summaries budget-items _planned-expenses]
+  (let [full        (filter whole-month? summaries)
         month       (some-> (first full) month-of)
+        ;; the plan for that month: monthly items and that month's statement items
+        month-items (data/items-for-month budget-items (or month (data/current-month)))
+        items-by-id (into {} (map (juxt :xt/id identity)) month-items)
+        planned-expenses (:total-expenses (data/get-budget-data month-items))
         in-month    (filter #(= month (month-of %)) full)
         {:keys [spent planned linked? budgeted unplanned over] :as cmp}
         (when month (compare-with-budget in-month items-by-id planned-expenses))
@@ -509,23 +531,33 @@
        month
        [:div
         [:p {:class "mt-5 text-sm text-zinc-600"}
-         (str (whole spent) " spent. Add your expenses in Finances to compare it with a plan.")]
-        (link "/app/finances" "Go to Finances")]
+         (str (whole spent) " spent. Add your expenses in Budget to compare it with a plan.")]
+        (link "/app/finances" "Go to Budget")]
 
        (seq summaries)
        [:div
         [:p {:class "mt-5 text-sm text-zinc-600"}
          "Your statements only cover part of a month so far. Upload one that covers a full month to compare it with your plan."]
-        (link "/app/spending" "Go to Spending")]
+        (link "/app/banking" "Go to Banking")]
 
        :else
        [:div
         [:p {:class "mt-5 text-sm text-zinc-600"}
          "Upload a bank statement to see what you actually spent against this plan, by month and by category."]
-        (link "/app/spending" "Upload a statement")])]))
+        (link "/app/banking" "Upload a statement")])]))
 
 ;; ---------------------------------------------------------------------------
 ;; Page and actions
+
+(defn- manage-link
+  "Uploads and the statement history live on Banking."
+  []
+  [:a {:href "/app/banking"
+       :class "group flex items-center justify-between gap-4 rounded-lg bg-white p-5 ring-1 ring-zinc-200/70 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"}
+   [:span {:class "min-w-0"}
+    [:span {:class "block text-sm font-semibold text-zinc-900"} "Upload or manage statements"]
+    [:span {:class "block text-xs text-zinc-500"} "Statements, the months each bank covers, and bank fees are on Banking."]]
+   [:span {:aria-hidden "true" :class "text-zinc-400 transition-transform group-hover:translate-x-1"} "→"]])
 
 (defn page
   "GET /app/spending: the chosen business's months, or the personal ones."
@@ -535,13 +567,14 @@
         summaries (data/get-statement-summaries ctx owner)
         latest    (selected-summary summaries params)
         items     (data/get-owner-budget-items ctx owner)
-        items-by-id (into {} (map (juxt :xt/id identity)) items)
+        ;; compared with the plan for the month on show
+        month-items (data/items-for-month items (if latest (month-of latest) (data/current-month)))
+        items-by-id (into {} (map (juxt :xt/id identity)) month-items)
         has-references? (boolean (some :budget-item/reference items))
-        {:keys [total-expenses]} (data/get-budget-data items)]
+        {:keys [total-expenses]} (data/get-budget-data month-items)]
     (ui/app
      ctx
-     [:div {:class "space-y-6"}
-      (when (:alert params) (alerts/info params))
+     [:div {:class "space-y-7"}
       (headers/pages-heading ["Spending"]
                              (if business
                                (str "Where " (:business/name business) "'s money actually went, from its bank statements.")
@@ -556,78 +589,58 @@
           [:div {:class "space-y-6"}
            (callouts latest)
            (merchants latest)]]
-         ;; a business can add its payers and payees to its budget from here
-         (when business
-           [:div {:class "grid grid-cols-1 gap-6 lg:grid-cols-2"}
-            (money-in-card latest items)
-            (money-out-card latest items)])
+         ;; add the month's payers and payees to the budget from here
+         [:div {:class "grid grid-cols-1 gap-6 lg:grid-cols-2"}
+          (money-in-card latest items (some? business))
+          (money-out-card latest items (some? business))]
          (month-on-month summaries latest)
-         (upload-panel :error error :compact? true)
-         (history summaries latest)]
+         (manage-link)]
         [:<>
-         [:section {:class "rounded-lg border border-zinc-200 bg-white p-6 sm:p-8"}
-          [:h2 {:class "text-2xl font-semibold tracking-[-0.02em] text-zinc-900"} "See where your money went"]
+         [:section {:class "rounded-lg bg-white ring-1 ring-zinc-200/70 px-6 py-6 sm:px-8 sm:py-7"}
+          [:h2 {:class "text-2xl font-semibold tracking-[-0.02em] text-zinc-900"} (if business "See where the business's money went" "See where your money went")]
           [:p {:class "mt-2 max-w-[60ch] text-[15px] leading-relaxed text-zinc-700"}
            "Your budget is the plan. A bank statement shows what happened. Upload one and greed shows your spending by category, what it cost in fees, where you spent the most, and how it compares with your plan."]]
-         (upload-panel :error error)])])))
-
-(defn upload
-  "POST /app/spending/upload: read, summarise and save; never keep the file."
-  [{:keys [params] :as ctx}]
-  (let [bs (get-in params [:statement :bytes])]
-    (if (or (nil? bs) (zero? (alength ^bytes bs)))
-      (page ctx :error :no-file)
-      (let [owner (data/owner ctx)
-            {:keys [error] :as result} (statements/read-statement-pdf bs :business? (some? (:business-id owner)))]
-        (if error
-          (page ctx :error error)
-          (do (data/save-statement-summaries
-               ctx owner
-               (summary/summarise-months
-                result
-                (data/budget-match-items ctx owner)))
-              {:status 303
-               :headers {"location" "/app/spending?alert=statement-read"}}))))))
+         [:div (shared/btn :variant :dark :size :md :href "/app/banking" "Upload a statement on Banking")]])])))
 
 (defn add-income
-  "POST /app/spending/add-income: a business adds one of the month's payers
-   to its budget's income, at that month's amount. The amount is read from
-   the saved month, not from the form."
+  "POST /app/spending/add-income: add one of the month's payers to the
+   current profile's budget income, at that month's amount. The amount is
+   read from the saved month, not from the form."
   [{:keys [params] :as ctx}]
   (let [owner    (data/owner ctx)
-        s        (when (:business-id owner)
-                   (some #(when (and (= (:month params) (month-of %))
-                                     (= (:bank params) (name (:statement-summary/bank %))))
-                            %)
-                         (data/get-statement-summaries ctx owner)))
+        s        (some #(when (and (= (:month params) (month-of %))
+                                   (= (:bank params) (name (:statement-summary/bank %))))
+                          %)
+                       (data/get-statement-summaries ctx owner))
         payer    (some #(when (= (:payer params) (:name %)) %) (:statement-summary/income-payees s))
         back     (str "/app/spending?month=" (:month params) "&bank=" (:bank params))]
     (if (and payer (not (str/blank? (:name payer))))
       (do (data/upsert-budget-item (assoc ctx :params {:title (subs (:name payer) 0 (min 80 (count (:name payer))))
+                                                       :from-statement (:month params)
                                                        :type "income"
                                                        :amount (str (Math/round (/ (:cents payer) 100.0)))}))
           {:status 303 :headers {"location" (str back "&alert=income-added")}})
       {:status 303 :headers {"location" back}})))
 
 (defn add-expense
-  "POST /app/spending/add-expense: a business adds one of the month's payees
-   to its budget's expenses at that month's amount, with the payee's name as
-   the statement reference, then re-matches its months. A VAT vendor's item
-   is standard-rated when the payee's category usually carries VAT. The
-   amount is read from the saved month, not from the form."
+  "POST /app/spending/add-expense: add one of the month's payees to the
+   current profile's budget expenses at that month's amount, with the
+   payee's name as the statement reference, then re-match its months. For a
+   VAT vendor the item is standard-rated when the payee's category usually
+   carries VAT. The amount is read from the saved month, not from the form."
   [{:keys [params] :as ctx}]
   (let [owner (data/owner ctx)
-        s     (when (:business-id owner)
-                (some #(when (and (= (:month params) (month-of %))
-                                  (= (:bank params) (name (:statement-summary/bank %))))
-                         %)
-                      (data/get-statement-summaries ctx owner)))
+        s     (some #(when (and (= (:month params) (month-of %))
+                                (= (:bank params) (name (:statement-summary/bank %))))
+                       %)
+                    (data/get-statement-summaries ctx owner))
         p     (some #(when (= (:payee params) (:text %)) %) (:statement-summary/payees s))
         nm    (some-> p payee-name)
         back  (str "/app/spending?month=" (:month params) "&bank=" (:bank params))]
     (if (and p (not (str/blank? nm)))
       (do (data/upsert-budget-item
            (assoc ctx :params {:title (subs nm 0 (min 80 (count nm)))
+                               :from-statement (:month params)
                                :type "expenses"
                                :amount (str (max 0 (Math/round (/ (- (:spent-cents p) (:refund-cents p)) 100.0))))
                                :reference nm
@@ -649,4 +662,4 @@
 (defn delete [ctx]
   (data/delete-statement-summary ctx)
   {:status 303
-   :headers {"location" "/app/spending?alert=statement-removed"}})
+   :headers {"location" "/app/banking?alert=statement-removed"}})

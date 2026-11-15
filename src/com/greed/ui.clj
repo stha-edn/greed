@@ -58,6 +58,7 @@ CSS rebuild. */"
 
 (defn page [ctx & body]
   (base ctx [:div {:class "min-h-screen flex flex-col"}
+             (alerts/toasts ctx)
              [:div {:class "marketing-bg flex-1"} body]
              (footer/footer)]))
 
@@ -70,6 +71,7 @@ CSS rebuild. */"
      [:div {:class "p-6 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-6 flex-1 min-w-0"}
       body]
      (footer/app-footer)]
+    (alerts/toasts ctx :in-app? true)
     (alerts/confirm-dialog)]))
 
 (defn on-error [{:keys [status] :as ctx}]
