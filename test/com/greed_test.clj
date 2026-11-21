@@ -7,6 +7,8 @@
             [com.greed.app :as app]
             [com.greed.authentication :as auth]
             [com.greed.data.core :as data]
+            [com.greed.data.plans :as plans]
+            [com.greed.ui.app.plan :as plan]
             [com.greed.home :as home]
             [com.greed.middleware :as mid]
             [com.greed.password :as pwd]
@@ -672,7 +674,9 @@
                                       {:xt/id (random-uuid) :business-member/business-id mine :business-member/user-id uid
                                        :business-member/role :owner :business-member/created-at now}
                                       {:xt/id (random-uuid) :business-member/business-id theirs :business-member/user-id other
-                                       :business-member/role :owner :business-member/created-at now}])]
+                                       :business-member/role :owner :business-member/created-at now}
+                                      {:xt/id (random-uuid) :subscription/user-id uid :subscription/plan :business
+                                       :subscription/status :active :subscription/created-at now :subscription/updated-at now}])]
       (let [ctx (fresh node)]
         (testing "choosing your own business"
           (is (= mine (get-in (profiles/choose (assoc ctx :session {:uid uid} :params {:business-id (str mine)}))
@@ -1143,3 +1147,101 @@
         (is (true? (data/make-monthly! (assoc (fresh node) :session {:uid uid} :params {:budget-item-id (str (:xt/id item))}))))
         (xt/sync node)
         (is (nil? (:budget-item/from-statement (first (data/get-budget-items (fresh node) uid)))))))))
+
+
+;; ---------------------------------------------------------------------------
+;; Plans
+
+(deftest plans-status-test
+  (let [uid   #uuid "eeeeeeee-1000-0000-0000-000000000001"
+        admin #uuid "eeeeeeee-1000-0000-0000-000000000002"
+        now   (java.util.Date.)
+        later (fn [days] (java.util.Date. (+ (.getTime now) (* days 86400000))))]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "plan@example.com" :user/password "x" :user/firstname "P"
+                                       :user/lastname "Q" :user/active true}
+                                      {:xt/id admin :user/email "admin@example.com" :user/password "x" :user/firstname "A"
+                                       :user/lastname "B" :user/active true :user/roles #{:admin}}])]
+      (testing "no plan is Free; an admin has Business"
+        (is (= :free (plans/tier (fresh node) uid)))
+        (is (= :business (plans/tier (fresh node) admin))))
+      (testing "the trial is Business, once"
+        (is (= :started (plans/start-trial! (fresh node) uid now)))
+        (xt/sync node)
+        (is (= :used (plans/start-trial! (fresh node) uid now)))
+        (let [st (plans/status (fresh node) uid now)]
+          (is (= [:business true 14] ((juxt :tier :trial? :days-left) st))))
+        (testing "and it ends"
+          (is (= :free (:tier (plans/status (fresh node) uid (later 15)))))
+          (is (:trial-used? (plans/status (fresh node) uid (later 15)))))))))
+
+(deftest plans-paid-status-test
+  (let [uid #uuid "eeeeeeee-2000-0000-0000-000000000001"
+        now (java.util.Date.)
+        at  (fn [days] (java.util.Date. (+ (.getTime now) (* days 86400000))))
+        sub (fn [status ends] (cond-> {:xt/id (random-uuid) :subscription/user-id uid :subscription/plan :premium
+                                       :subscription/status status :subscription/created-at now :subscription/updated-at now}
+                                ends (assoc :subscription/period-ends ends)))]
+    (doseq [[status ends tier] [[:active (at 10) :premium]
+                                [:non-renewing (at 10) :premium]
+                                [:attention (at 10) :premium]
+                                [:non-renewing (at -1) :free]
+                                [:cancelled nil :free]]]
+      (with-open [node (test-xtdb-node [(sub status ends)])]
+        (is (= tier (plans/tier (fresh node) uid)) (str status))))))
+
+(deftest plans-statements-test
+  (let [uid #uuid "eeeeeeee-3000-0000-0000-000000000001"
+        now (java.util.Date.)]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "st@example.com" :user/password "x" :user/firstname "S"
+                                       :user/lastname "T" :user/active true}])]
+      (testing "Free reads one month"
+        (is (plans/upload-allowed? (fresh node) {:user-id uid} ["2026-10"]))
+        (is (not (plans/upload-allowed? (fresh node) {:user-id uid} ["2026-09" "2026-10"]))))
+      (data/save-statement-summaries (fresh node) uid [(assoc sample-summary :month "2026-10")])
+      (xt/sync node)
+      (testing "the same month again is fine, a new one is not"
+        (is (plans/upload-allowed? (fresh node) {:user-id uid} ["2026-10"]))
+        (is (not (plans/upload-allowed? (fresh node) {:user-id uid} ["2026-11"]))))
+      (testing "Premium reads every month"
+        (xt/await-tx node (xt/submit-tx node [[::xt/put {:xt/id (random-uuid) :subscription/user-id uid :subscription/plan :premium
+                                                         :subscription/status :active :subscription/created-at now
+                                                         :subscription/updated-at now}]]))
+        (is (plans/upload-allowed? (fresh node) {:user-id uid} ["2026-08" "2026-09"]))))))
+
+(deftest plans-business-test
+  (let [owner  #uuid "eeeeeeee-4000-0000-0000-000000000001"
+        member #uuid "eeeeeeee-4000-0000-0000-000000000002"
+        biz    #uuid "eeeeeeee-4000-0000-0000-0000000000b1"
+        now    (java.util.Date.)
+        join   (fn [u role] {:xt/id (random-uuid) :business-member/business-id biz :business-member/user-id u
+                             :business-member/role role :business-member/created-at now})]
+    (with-open [node (test-xtdb-node [{:xt/id biz :business/name "Biz" :business/entity-type :pty-ltd :business/created-at now}
+                                      (join owner :owner) (join member :member)])]
+      (testing "without the Business plan, nobody may work in it"
+        (is (not (plans/business-allowed? (fresh node) member biz)))
+        (let [resp ((mid/wrap-plan (fn [_] {:status 200}))
+                    (assoc (fresh node) :uri "/app/finances/" :session {:uid owner :business-id biz}))]
+          (is (= 303 (:status resp)))
+          (is (= "/app/plan?alert=need-business" (get-in resp [:headers "location"])))
+          (is (nil? (get-in resp [:session :business-id]))))
+        (is (= "/app/plan?alert=need-business"
+               (get-in (profiles/add-business (assoc (fresh node) :session {:uid owner}
+                                                     :params {:business-name "Two" :entity-type "trust"}))
+                       [:headers "location"]))))
+      (testing "the owner's plan covers the people they invite"
+        (plans/start-trial! (fresh node) owner)
+        (xt/sync node)
+        (is (plans/business-allowed? (fresh node) member biz))
+        (is (= 200 (:status ((mid/wrap-plan (fn [_] {:status 200}))
+                             (assoc (fresh node) :uri "/app/finances/" :session {:uid member :business-id biz})))))))))
+
+(deftest plan-page-test
+  (let [uid #uuid "eeeeeeee-5000-0000-0000-000000000001"]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "pp@example.com" :user/password "x" :user/firstname "P"
+                                       :user/lastname "P" :user/active true}])]
+      (let [ctx #(assoc (fresh node) :session {:uid uid} :uri "/app/plan" :params {})]
+        (is (str/includes? (rum/render-static-markup (plan/page (ctx))) "Try free for 14 days"))
+        (is (= "/app?alert=trial-started" (get-in (plan/start-trial (ctx)) [:headers "location"])))
+        (xt/sync node)
+        (is (= "/app/plan?alert=trial-used" (get-in (plan/start-trial (ctx)) [:headers "location"])))
+        (is (str/includes? (rum/render-static-markup (plan/page (ctx))) "Business trial"))))))

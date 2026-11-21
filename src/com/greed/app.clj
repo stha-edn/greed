@@ -10,6 +10,7 @@
             [com.greed.ui.app.statements :as spending]
             [com.greed.ui.app.banking :as banking]
             [com.greed.ui.app.profiles :as profiles]
+            [com.greed.ui.app.plan :as plan]
             [com.greed.ui.app.vat :as vat]
             [com.greed.ui.app.company-tax :as company-tax]
             [com.greed.ui.app.calendar :as calendar]
@@ -31,9 +32,13 @@
     (if (data/session-business ctx) (business-page ctx) (personal-page ctx))))
 
 (def module
-  {:routes [["/app" {:middleware [mid/wrap-signed-in]}
+  {:routes [["/app" {:middleware [mid/wrap-signed-in mid/wrap-plan]}
              ["" {:get dashboard/page}]
              ["/choose" {:get profiles/page :post profiles/choose}]
+             ["/plan"
+              ["" {:get plan/page}]
+              ["/trial" {:post plan/start-trial}]
+              ["/checkout" {:post plan/checkout}]]
              ["/vat" {:get vat/page}]
              ;; Tax and Settings: one address each, for whichever profile is chosen
              ["/tax" {:get (for-profile company-tax/page tools/page)}]

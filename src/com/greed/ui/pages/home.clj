@@ -103,7 +103,7 @@
   [:dl {:class "enter grid grid-cols-2 gap-x-6 gap-y-8 border-y border-zinc-200 py-10 lg:grid-cols-4"}
    (for [[k v] [["FNB & Standard Bank" "PDF statements, read for you"]
                 ["SARS 2026/27" "tables for income, VAT and company tax"]
-                ["Free" "to use, for you and your business"]
+                ["Free to start" "Premium from R49 a month, and a 14-day trial with no card"]
                 ["Never" "sells your data, and never keeps your statements"]]]
      [:div
       [:dt {:class "text-lg font-semibold tracking-[-0.02em] text-zinc-900"} k]
@@ -242,7 +242,7 @@
     [:div {:class "grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-end"}
      [:h2 {:id "business-h" :class (str "enter text-white lg:col-span-7 " h2-class)} "Run your business from the same account."]
      [:p {:class "enter max-w-[44ch] text-lg leading-relaxed text-zinc-300 lg:col-span-5" :style {"--d" "80ms"}}
-      "Add a sole proprietorship, a (Pty) Ltd, a partnership, a trust or a non-profit. It gets its own budget, statements and tax, and you switch to it in one click."]]
+      "Add a sole proprietorship, a (Pty) Ltd, a partnership, a trust or a non-profit. It gets its own budget, statements and tax, and you switch to it in one click. Part of the Business plan."]]
     [:div {:class "mt-14 grid grid-cols-1 gap-5 lg:grid-cols-3"}
      [:div {:class "enter" :style {"--d" "0ms"}}
       (m/shot {:label "VAT" :badge "Due 30 Nov" :value "R7,200" :unit "to pay"
@@ -302,7 +302,7 @@
     :heading "Plan your next payday, and your next VAT return."
     :line "Your money and your business, read from your statements and planned in one calm, private place."
     :primary {:href (if signed-in? "/app" "/signup") :label (if signed-in? "Go to your account" "Create your free account")}
-    :secondary {:href (if signed-in? "/app/tax/income-tax-calculator" "#keep") :label "Try the tax calculator"}}))
+    :secondary {:href "/pricing" :label "See pricing"}}))
 
 ;; ---------------------------------------------------------------------------
 ;; Page-local style and behaviour

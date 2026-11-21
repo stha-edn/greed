@@ -32,6 +32,9 @@
              :width 192 :height 192
              :class "h-8 sm:h-9 w-auto"}]]
      [:div {:class "flex items-center gap-1.5 sm:gap-2"}
+      [:a {:href "/pricing"
+           :class "hidden sm:inline-block whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
+       "Pricing"]
       [:a {:href "/about"
            :class "hidden sm:inline-block whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
        "About"]
@@ -66,6 +69,7 @@
                 :d "M4 6h16M4 12h16M4 18h16"}]]]]
      [:div {:id "public-nav-menu"
             :class "sm:hidden absolute right-0 top-full z-50 mt-2 w-48 origin-top-right rounded-xl bg-white py-1.5 shadow-lg ring-1 ring-zinc-200/70 opacity-0 scale-95 -translate-y-1 pointer-events-none transition duration-150 ease-out [&[open]]:opacity-100 [&[open]]:scale-100 [&[open]]:translate-y-0 [&[open]]:pointer-events-auto"}
+      [:a {:href "/pricing" :class "block px-4 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors active:scale-[0.98]"} "Pricing"]
       [:a {:href "/about" :class "block px-4 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors active:scale-[0.98]"} "About"]
       [:a {:href "/contact" :class "block px-4 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors active:scale-[0.98]"} "Contact"]]]))
 
@@ -159,6 +163,7 @@
          (nav-link "/app/admin/users" "Users" (svgs/users) (link-active? uri "/app/admin/users")))]
       [:div {:class "mt-auto pt-4 border-t border-zinc-200"}
        [:nav {:class "space-y-0.5 mb-4"}
+        (nav-link "/app/plan" "Plan" (svgs/gift) (link-active? uri "/app/plan"))
         [:a {:href "/app/settings"
              :class "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors duration-150 active:opacity-70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400"}
          [:span {:class "w-5 h-5 flex-shrink-0 [&_svg]:w-full [&_svg]:h-full"} (svgs/cog)]
@@ -284,6 +289,7 @@
           (nav-link "/app/admin/users" "Users" (svgs/users) (link-active? uri "/app/admin/users")))]
        [:div {:class "mt-auto pt-4 border-t border-zinc-200"}
         [:nav {:class "space-y-0.5 mb-4"}
+         (nav-link "/app/plan" "Plan" (svgs/gift) (link-active? uri "/app/plan"))
          [:a {:href "/app/settings"
               :class "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors duration-150 active:opacity-70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400"}
           [:span {:class "w-5 h-5 flex-shrink-0 [&_svg]:w-full [&_svg]:h-full"} (svgs/cog)] "Settings"]]

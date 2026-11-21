@@ -901,6 +901,7 @@
                                    [id :goal/user-id user-id]
                                    [id :statement-summary/user-id user-id]
                                    [id :business-member/user-id user-id]
+                                   [id :subscription/user-id user-id]
                                    [id :session/uid user-id])]}
                      user-id)
             ;; businesses with no other member go too

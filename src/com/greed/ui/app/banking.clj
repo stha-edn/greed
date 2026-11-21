@@ -7,6 +7,7 @@
             [com.greed.ui :as ui]
             [com.greed.core :as c.greed]
             [com.greed.data.core :as data]
+            [com.greed.data.plans :as plans]
             [com.greed.statements.core :as statements]
             [com.greed.statements.summary :as summary]
             [com.greed.ui.app.statements :as spending]
@@ -128,9 +129,29 @@
          "Fewer small payments, or a cheaper account, can lower these."]]
        [:p {:class "mt-4 text-sm text-zinc-600"} "No statements yet."])]))
 
-(defn- upload-card [error business?]
+(defn- plan-note
+  "On the Free plan, how much of the statement allowance is used."
+  [ctx summaries]
+  (let [uid (get-in ctx [:session :uid])]
+    (when-not (plans/at-least? ctx uid :premium)
+      (let [used  (count (distinct (keep :statement-summary/month summaries)))
+            limit (plans/free-statement-months)]
+        [:div {:class "mt-3 flex flex-col gap-3 rounded-lg bg-brand-50 px-4 py-3 text-sm ring-1 ring-brand-600/20 sm:flex-row sm:items-center sm:justify-between"}
+         [:p {:class "text-brand-900"}
+          [:span {:class "font-semibold"}
+           (if (> used limit)
+             (str "Free plan: " used " months read. ")
+             (str "Free plan: " used " of " limit " statement month" (when (not= 1 limit) "s") " used. "))]
+          (cond
+            (> used limit) "They stay here; reading new months needs Premium."
+            (= used limit) "Statements for other months need Premium."
+            :else "Premium reads every month you upload.")]
+         [:a {:href "/app/plan" :class "flex-shrink-0 font-semibold text-brand-800 underline underline-offset-4"} "See plans"]]))))
+
+(defn- upload-card [ctx error business? summaries]
   [:div
    (spending/upload-panel :error error)
+   (when-not business? (plan-note ctx summaries))
    [:p {:class "mt-2 px-1 text-xs text-zinc-500"}
     (if business?
       "Statements uploaded here belong to the business, kept apart from your own."
@@ -190,7 +211,7 @@
       [:div
        (stats/section-header "Statements" :href "/app/spending" :link-label "See them in Spending")
        [:div {:class "space-y-4"}
-        (upload-card error (some? business))
+        (upload-card ctx error (some? business) summaries)
         (when (seq summaries)
           [:div {:class "grid grid-cols-1 items-stretch gap-4 lg:grid-cols-5"}
            [:div {:class "lg:col-span-3"} (coverage-card summaries)]
@@ -218,8 +239,10 @@
             {:keys [error] :as result} (statements/read-statement-pdf bs :business? (some? (:business-id owner)))]
         (if error
           (page ctx :error error)
-          (do (data/save-statement-summaries
-               ctx owner
-               (summary/summarise-months result (data/budget-match-items ctx owner)))
+          (let [months (summary/summarise-months result (data/budget-match-items ctx owner))]
+            (if (plans/upload-allowed? ctx owner (keep :month months))
+              (do (data/save-statement-summaries ctx owner months)
+                  {:status 303
+                   :headers {"location" "/app/spending?alert=statement-read"}})
               {:status 303
-               :headers {"location" "/app/spending?alert=statement-read"}}))))))
+               :headers {"location" "/app/plan?alert=need-premium"}})))))))

@@ -62,7 +62,7 @@
          "greed was started by a small South African team who got tired of guessing their way through tax, budgets and payday. So we built one calm, private place that reads your bank statements, shows what you earn and what SARS takes, and plans the rest. Then we built the same for the businesses we run."]
         [:dl {:class "enter grid grid-cols-3 gap-6 lg:col-span-5 lg:col-start-8" :style {"--d" "160ms"}}
          (for [[k v] [["2" "founders, both in South Africa"]
-                      ["R0" "to use, for you and your business"]
+                      ["R0" "to start, with a free trial of everything"]
                       ["0" "rands made selling your data"]]]
            [:div
             [:dt {:class "font-semibold tracking-[-0.03em] text-zinc-900 [font-size:clamp(36px,4vw,56px)] leading-none tabular-nums"} k]
@@ -133,7 +133,7 @@
         [:ul {:class "mt-6 max-w-[52ch] space-y-3 text-[17px] leading-relaxed text-zinc-800"}
          [:li [:span {:class "font-semibold text-zinc-900"} "Statements are read, then let go. "] "greed keeps the monthly totals it needs. The PDF itself is never stored."]
          [:li [:span {:class "font-semibold text-zinc-900"} "Profiles stay apart. "] "People you invite to a business see that business, never your personal budget."]
-         [:li [:span {:class "font-semibold text-zinc-900"} "No ads, no trackers. "] "Nothing on greed is there to sell you something."]]
+         [:li [:span {:class "font-semibold text-zinc-900"} "No ads. "] "Nothing on greed is there to sell you something, and we never sell your data."]]
         [:p {:class "mt-6 text-[24px] font-semibold tracking-[-0.02em] text-zinc-900"} "We will never sell your data."]
         [:p {:class "mt-6 max-w-[52ch] text-[17px] leading-relaxed text-zinc-800"}
          "Read our " [:a {:href "/privacy" :class m/link-ink} "privacy policy"]

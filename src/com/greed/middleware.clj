@@ -8,6 +8,7 @@
             [ring.middleware.multipart-params.byte-array :refer [byte-array-store]]
             [com.core :as c]
             [com.greed.data.core :as data]
+            [com.greed.data.plans :as plans]
             [com.greed.utilities.core :as utilities]
             [com.greed.authentication :as auth]))
 
@@ -72,6 +73,21 @@
       (handler ctx)
       {:status 303
        :headers {"location" "/signin?error=not-signed-in"}})))
+
+(defn wrap-plan
+  "A business needs the Business plan (the person's, or an owner's). When a
+   trial or plan has ended while a business is chosen, return to Personal
+   and show the plans. The plan and profile pages themselves stay open."
+  [handler]
+  (fn [{:keys [session uri] :as ctx}]
+    (let [bid (:business-id session)]
+      (if (and bid
+               (not (re-find #"^/app/(plan|choose)" (str uri)))
+               (not (plans/business-allowed? ctx (:uid session) bid)))
+        {:status 303
+         :headers {"location" "/app/plan?alert=need-business"}
+         :session (dissoc session :business-id)}
+        (handler ctx)))))
 
 (defn wrap-admin [handler]
   (fn [{:keys [session] :as ctx}]

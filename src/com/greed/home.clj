@@ -11,8 +11,10 @@
             [com.greed.ui.pages.home :as p.home]
             [com.greed.ui.pages.legal :as p.legal]
             [com.greed.ui.pages.team :as p.team]
+            [com.greed.ui.pages.pricing :as p.pricing]
             [com.greed.ui.pages.signin :as p.signin]
             [com.greed.ui.pages.signup :as p.signup]
+            [com.greed.data.plans :as plans]
             [com.greed.ui.components.headers :as headers]
             [com.greed.password :as password]))
 
@@ -27,6 +29,12 @@
    ctx
    (headers/pages ctx)
    (p.team/page)))
+
+(defn pricing-page [ctx]
+  (ui/page
+   ctx
+   (headers/pages ctx)
+   (p.pricing/page ctx)))
 
 (defn about-page [ctx]
   (ui/page
@@ -84,6 +92,8 @@
                            :to (:email params)
                            :firstname (:firstname params)
                            :app-url (str base-url "/app")})
+    ;; every new account starts with the free trial (Business, no card)
+    (plans/start-trial! (assoc ctx :biff/db (xt/db node)) user-id)
     ;; a business sign-up starts in its new business
     (let [ctx         (assoc ctx :biff/db (xt/db node))
           business-id (when (auth/business-signup? params)
@@ -99,6 +109,7 @@
 (def module
   {:routes [["/"                  {:get home-page}]
             ["/about"             {:get about-page}]
+            ["/pricing"           {:get pricing-page}]
             ["/contact"           {:get contact-page}]
             ["/team"              {:get team-page}]
             ["/privacy"           {:get privacy-page}]

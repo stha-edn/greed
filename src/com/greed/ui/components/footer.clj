@@ -14,6 +14,7 @@
       [:img {:src "/img/greed-symbol-green-tight.svg" :alt "greed" :width 192 :height 192 :class "block h-5 w-5"}]]
      "Money and business finance for South Africans"]
     [:nav {:aria-label "Footer" :class "flex flex-wrap gap-x-6 gap-y-1"}
+     [:a {:href "/pricing" :class link} "Pricing"]
      [:a {:href "/about" :class link} "About"]
      [:a {:href "/team" :class link} "Team"]
      [:a {:href "/contact" :class link} "Contact"]

@@ -77,15 +77,28 @@
  :alert/password-already-hashed "That user's password was already securely hashed."
  :alert/app-updated "greed has been updated: Banking, business profiles, and a new Home."
  :alert/signed-out "You're signed out. See you soon."
+ :alert/trial-started "Your 14-day trial has started. Everything is unlocked, including businesses."
+ :alert/trial-used "Your trial has already been used. Choose a plan to keep going."
+ :alert/need-premium "Free accounts can read one statement month. Upgrade to Premium to add more."
+ :alert/need-business "Businesses are part of the Business plan. Start a trial or upgrade to use them."
+ :alert/payments-soon "Paid plans open soon. Start the free trial in the meantime."
 
  :alert/errors #{:alert/email-taken
                  :alert/user-not-found
                  :alert/cannot-delete-self
-                 :alert/cannot-remove-own-admin-role}
+                 :alert/cannot-remove-own-admin-role
+                 :alert/trial-used}
 
  :user/fields #{"firstname" "lastname" "age" "email" "password"}
 
  :finances/fields #{"bank" "account-type" "salary" "payday"}
+
+ ;; Plans (com.greed.data.plans). Prices in cents (R49.00 = 4900).
+ ;; Yearly is ten months' price: two months free.
+ :plans {:trial-days 14
+         :free-statement-months 1
+         :tiers {:premium  {:name "Premium"  :monthly 4900  :yearly 49000}
+                 :business {:name "Business" :monthly 14900 :yearly 149000}}}
 
  :banking/banks #{:absa :capitec :discovery-bank :fnb :nedbank :standard-bank}
  :banking/card-colours {:absa "from-red-500 to-red-800"

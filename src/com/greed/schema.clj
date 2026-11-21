@@ -170,7 +170,24 @@
                         [:vector [:map [:name :string] [:text :string] [:cents :int] [:count :int]
                                   [:salary? {:optional true} :boolean]]]]
                        [:statement-summary/checks-ok             :boolean]
-                       [:statement-summary/uploaded-at           inst?]]})
+                       [:statement-summary/uploaded-at           inst?]]
+
+   ;; A person's plan (com.greed.data.plans). Paystack fields arrive with
+   ;; payments; a trial has none.
+   :subscription/id :uuid
+   :subscription [:map {:closed true}
+                  [:xt/id                               :subscription/id]
+                  [:subscription/user-id                :user/id]
+                  [:subscription/plan                   [:enum :premium :business]]
+                  [:subscription/status                 [:enum :trialing :active :non-renewing :attention :cancelled]]
+                  [:subscription/interval {:optional true} [:enum :monthly :yearly]]
+                  [:subscription/trial-ends {:optional true} inst?]
+                  [:subscription/period-ends {:optional true} inst?]
+                  [:subscription/paystack-code {:optional true} :string]
+                  [:subscription/paystack-email-token {:optional true} :string]
+                  [:subscription/paystack-customer {:optional true} :string]
+                  [:subscription/created-at             inst?]
+                  [:subscription/updated-at             inst?]]})
 
 (def module
   {:schema schema})

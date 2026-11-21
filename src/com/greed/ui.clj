@@ -23,7 +23,7 @@
        (merge #:base{:title settings/app-name
                      :lang "en-US"
                      :description (str settings/app-name
-                                       " brings your salary, tax, spending and savings into one clear place,"
+                                       " brings your salary, tax, spending, savings and your business into one clear place,"
                                        " so you always know what you earn, what SARS takes, and what you keep.")
                      :image (str (or (:biff/base-url ctx) "https://mygreed.co.za") "/icon-512.png")})
        (update :base/head (fn [head]

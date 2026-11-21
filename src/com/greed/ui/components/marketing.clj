@@ -100,9 +100,9 @@
     (when-not (= :none facts)
       [:dl {:class "enter mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3 lg:mt-24" :style {"--d" "160ms"}}
      (for [[k v] (or facts
-                     [["Free" "to use, for you and your business"]
+                     [["Free" "to start, with a 14-day trial of everything"]
                       ["SARS 2026/27" "tables, the same ones the calculators use"]
-                      ["Never" "sells your data, to anyone"]])]
+                      ["R49" "a month for Premium, cancel any time"]])]
        [:div
         [:dt {:class "text-[28px] font-semibold tracking-[-0.02em] text-zinc-900"} k]
         [:dd {:class "mt-1 max-w-[30ch] text-[17px] leading-relaxed text-zinc-700"} v]])])]])

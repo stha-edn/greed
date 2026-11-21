@@ -6,6 +6,7 @@
             [com.biffweb :as biff]
             [com.greed.ui :as ui]
             [com.greed.data.core :as data]
+            [com.greed.data.plans :as plans]
             [com.greed.email :as email]
             [com.greed.ui.components.alerts :as alerts]
             [com.greed.ui.components.headers :as headers]
@@ -96,14 +97,26 @@
 
 (defn- add-business-form
   "Open when asked for (?add=1, from the switcher) or when there is no
-   business yet to choose."
-  [open?]
+   business yet to choose. Without the Business plan it offers the trial,
+   or the plans, instead of the form."
+  [open? {:keys [tier trial-used?]}]
   [:details (cond-> {:class (str card " mt-8") :id "add-business"} open? (assoc :open true))
    [:summary {:class "cursor-pointer text-sm font-semibold text-zinc-900"} "Add a business"]
    [:p {:class "mt-2 text-sm text-zinc-600"} "A business you run. Its budget and spending are kept apart from your own, and you can invite others to it."]
-   (biff/form {:action "/app/businesses/create" :class "mt-2"}
-              (business-fields)
-              [:div {:class "mt-5"} (shared/btn :variant :dark :size :md :type "submit" "Add business")])])
+   (if (= :business tier)
+     (biff/form {:action "/app/businesses/create" :class "mt-2"}
+                (business-fields)
+                [:div {:class "mt-5"} (shared/btn :variant :dark :size :md :type "submit" "Add business")])
+     [:div {:class "mt-4 rounded-md bg-zinc-50 p-4 ring-1 ring-zinc-200/70"}
+      [:p {:class "text-sm text-zinc-700"}
+       (if trial-used?
+         "Businesses are part of the Business plan."
+         (str "Businesses are part of the Business plan. Try it free for " (plans/trial-days) " days, no card needed."))]
+      [:div {:class "mt-3 flex flex-wrap gap-2"}
+       (when-not trial-used?
+         (biff/form {:action "/app/plan/trial"}
+                    (shared/btn :variant :dark :size :sm :type "submit" "Start free trial")))
+       (shared/btn :variant :outline :size :sm :href "/app/plan" "See plans")]])])
 
 (defn page
   "GET /app/choose: continue as Personal or as one of the person's
@@ -111,7 +124,8 @@
   [{:keys [session params] :as ctx}]
   (let [businesses (data/get-user-businesses ctx (:uid session))
         invites    (data/get-user-invites ctx (:uid session))
-        current    (data/session-business ctx)]
+        current    (data/session-business ctx)
+        status     (plans/status ctx (:uid session))]
     (ui/app
      ctx
      [:div {:class "mx-auto max-w-lg"}
@@ -121,15 +135,19 @@
       [:ul {:class "space-y-3"}
        (choice {:title "Personal" :sub "Your salary, tax, budget and goals" :current? (nil? current)})
        (for [{:business/keys [name entity-type] :business-member/keys [role] :xt/keys [id]} businesses]
-         (choice {:title name :sub (str (data/entity-types entity-type) " · " (data/roles role))
+         (choice {:title name
+                  :sub (str (data/entity-types entity-type) " · " (data/roles role)
+                            (when-not (plans/business-allowed? ctx (:uid session) id) " · Needs the Business plan"))
                   :business-id id :current? (= id (:xt/id current))}))]
-      (add-business-form (or (= "1" (:add params)) (empty? businesses) (some? (:error params))))])))
+      (add-business-form (or (= "1" (:add params)) (empty? businesses) (some? (:error params))) status)])))
 
 (defn accept-invite
   "POST /app/invites/accept: join the business and switch to it."
   [{:keys [session params] :as ctx}]
   (if-let [business-id (data/accept-invite! ctx (:uid session) (parse-uuid (str (:invite-id params))))]
-    (redirect "/app?alert=invite-accepted" (assoc session :business-id business-id))
+    (if (plans/business-allowed? ctx (:uid session) business-id)
+      (redirect "/app?alert=invite-accepted" (assoc session :business-id business-id))
+      (redirect "/app/plan?alert=need-business" (dissoc session :business-id)))
     (redirect "/app/choose?error=invite-gone")))
 
 (defn decline-invite
@@ -142,10 +160,14 @@
 (defn add-business
   "POST /app/businesses/create: add a business the person runs, and switch to it."
   [{:keys [session params] :as ctx}]
-  (let [{:keys [business-id error]} (data/add-business! ctx (:uid session) params)]
-    (if error
+  (let [{:keys [business-id error]} (if (plans/at-least? ctx (:uid session) :business)
+                                      (data/add-business! ctx (:uid session) params)
+                                      {:error :needs-plan})]
+    (if (= :needs-plan error)
+      (redirect "/app/plan?alert=need-business")
+      (if error
       (redirect (str "/app/choose?error=" (name error) "#add-business"))
-      (redirect "/app?alert=business-added" (assoc session :business-id business-id)))))
+      (redirect "/app?alert=business-added" (assoc session :business-id business-id))))))
 
 (defn choose
   "POST /app/choose: switch to the chosen profile. A business the person is
@@ -153,11 +175,13 @@
   [{:keys [session params] :as ctx}]
   (let [id       (parse-uuid (str (:business-id params)))
         business (data/get-user-business ctx (:uid session) id)]
-    {:status 303
-     :headers {"location" "/app"}
-     :session (if business
-                (assoc session :business-id (:xt/id business))
-                (dissoc session :business-id))}))
+    (if (and business (not (plans/business-allowed? ctx (:uid session) (:xt/id business))))
+      (redirect "/app/plan?alert=need-business" (dissoc session :business-id))
+      {:status 303
+       :headers {"location" "/app"}
+       :session (if business
+                  (assoc session :business-id (:xt/id business))
+                  (dissoc session :business-id))})))
 
 (defn wrap-personal
   "For pages that belong to the personal side only: while a business is
