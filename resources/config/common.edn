@@ -85,7 +85,9 @@
  :alert/plan-active "Payment received. Your plan is active. Thank you for supporting greed."
  :alert/payment-failed "The payment did not go through, so your plan has not changed. Try again, or use another card."
  :alert/already-subscribed "You already have a paid plan. To change it, cancel in Manage billing first."
- :alert/billing-unavailable "Billing could not be opened just now. Try again in a minute."
+ :alert/billing-unavailable "Billing opens once Paystack confirms your subscription, usually within a minute. Try again shortly."
+ :alert/trials-granted "Every account without a plan now has the free trial."
+ :alert/no-trials-needed "Every account already has a trial or a plan."
 
  :alert/errors #{:alert/email-taken
                  :alert/user-not-found

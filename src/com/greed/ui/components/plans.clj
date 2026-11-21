@@ -59,7 +59,9 @@
    (for [tier plans/tiers
          :let [{:keys [line items]} (features tier)
                [big small] (price-line tier interval)
-               featured? (= :premium tier)]]
+               ;; a paid plan of your own is the one picked out; otherwise Premium
+               own-paid? (contains? #{:premium :business} current)
+               featured? (if own-paid? (= tier current) (= :premium tier))]]
      [:section {:aria-labelledby (str "tier-" (name tier))
                 :class (str "flex flex-col rounded-lg bg-white p-6 ring-1 "
                             (if featured? "ring-2 ring-zinc-900" "ring-zinc-200/70"))}
@@ -68,7 +70,7 @@
        [:div {:class "flex-1"}]
        (cond
          (= tier current) [:span {:class "rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 ring-1 ring-brand-600/20"} "Your plan"]
-         featured? [:span {:class "rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-900 ring-1 ring-zinc-200"} "Most popular"])]
+         (and featured? (not own-paid?)) [:span {:class "rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-900 ring-1 ring-zinc-200"} "Most popular"])]
       [:p {:class "mt-1 text-sm text-zinc-600"} line]
       [:p {:class "mt-5 flex items-baseline gap-1.5"}
        [:span {:class "text-4xl font-semibold tracking-[-0.03em] tabular-nums text-zinc-900"} big]

@@ -1,7 +1,8 @@
 (ns com.greed.worker
   (:require [clojure.tools.logging :as log]
             [com.biffweb :as biff :refer [q]]
-            [xtdb.api :as xt]))
+            [xtdb.api :as xt]
+            [com.greed.payments.notices :as notices]))
 
 (defn every-n-minutes [n]
   (iterate #(biff/add-seconds % (* 60 n)) (java.util.Date.)))
@@ -34,7 +35,10 @@
 
 (def module
   {:tasks [{:task #'print-usage
-            :schedule #(every-n-minutes 5)}]
+            :schedule #(every-n-minutes 5)}
+           ;; a reminder email a few days before a free trial ends
+           {:task #'notices/remind-trials
+            :schedule #(every-n-minutes 60)}]
    :on-tx alert-new-user
    :queues [{:id :echo
              :consumer #'echo-consumer}]})

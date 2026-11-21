@@ -128,10 +128,13 @@
 
 (defn paid?
   "True when the person's plan is billed through Paystack and has not
-   been cancelled for good."
+   been cancelled for good. A plan just paid for counts from the return
+   from checkout (which gives the customer), before the webhook brings the
+   subscription's code, so nobody can buy a second plan in between."
   [sub]
-  (and (:subscription/paystack-code sub)
-       (#{:active :non-renewing :attention} (:subscription/status sub))))
+  (boolean
+   (and (or (:subscription/paystack-code sub) (:subscription/paystack-customer sub))
+        (#{:active :non-renewing :attention} (:subscription/status sub)))))
 
 (defn subscription-by
   "The subscription whose `attr` is `value`, e.g.
@@ -177,3 +180,50 @@
     user-id (assoc :payment-event/user-id user-id)
     reference (assoc :payment-event/reference reference)
     summary (assoc :payment-event/summary summary)))
+
+;; ---------------------------------------------------------------------------
+;; Reminders and the move to plans
+
+(def reminder-days
+  "How many days before a trial ends its reminder goes out."
+  3)
+
+(defn trials-to-remind
+  "Trials that end within reminder-days and have not been reminded."
+  [{:keys [biff/db]} ^Date now]
+  (let [soon (Date. (+ (.getTime now) (.toMillis TimeUnit/DAYS reminder-days)))]
+    (->> (q db
+            '{:find [(pull s [*])]
+              :where [[s :subscription/status :trialing]]})
+         (map first)
+         (filter #(let [^Date ends (:subscription/trial-ends %)]
+                    (and ends (.after ends now) (not (.after ends soon))
+                         (nil? (:subscription/trial-reminded-at %))))))))
+
+(defn users-without-plan
+  "Ids of people who have never had a trial or a plan (accounts from
+   before plans existed)."
+  [{:keys [biff/db] :as ctx}]
+  (let [with (set (map first (q db '{:find [u] :where [[s :subscription/user-id u]]})))]
+    (->> (q db '{:find [u] :where [[u :user/email]]})
+         (map first)
+         (remove with))))
+
+(defn grant-trials!
+  "Gives everyone without a plan their free trial, from `now`. Returns how
+   many trials started. Safe to run again: it skips anyone with a plan."
+  ([ctx] (grant-trials! ctx (Date.)))
+  ([ctx ^Date now]
+   (let [ids (users-without-plan ctx)]
+     (when (seq ids)
+       (biff/submit-tx ctx
+                       (for [uid ids]
+                         {:db/doc-type :subscription
+                          :xt/id (random-uuid)
+                          :subscription/user-id uid
+                          :subscription/plan :business
+                          :subscription/status :trialing
+                          :subscription/trial-ends (Date. (+ (.getTime now) (.toMillis TimeUnit/DAYS (trial-days))))
+                          :subscription/created-at now
+                          :subscription/updated-at now})))
+     (count ids))))

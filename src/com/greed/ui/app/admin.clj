@@ -2,6 +2,7 @@
   (:require [com.biffweb :as biff]
             [com.greed.ui :as ui]
             [com.greed.data.core :as data]
+            [com.greed.data.plans :as plans]
             [com.greed.ui.components.shared :as shared]
             [com.greed.ui.components.svgs :as svgs]
             [com.greed.ui.components.alerts :as alerts]
@@ -158,6 +159,19 @@
          [:td {:class "px-4 py-3"} (row-actions user (= (:xt/id user) current-user-id))]])]]]
    (for [user users] (edit-modal user (= (:xt/id user) current-user-id)))])
 
+(defn- trials-banner
+  "Accounts from before plans have no trial or plan, so they are on Free.
+   One button gives them all the trial; it can safely be pressed again."
+  [n]
+  (when (pos? n)
+    [:div {:class "flex flex-col gap-3 rounded-md border border-brand-600/20 bg-brand-50 px-4 py-3 text-brand-900 sm:flex-row sm:items-center sm:justify-between"}
+     [:p {:class "text-sm font-medium"}
+      (str n " account" (when (> n 1) "s") " " (if (> n 1) "have" "has")
+           " no plan yet, so " (if (> n 1) "they are" "it is") " on Free. Give "
+           (if (> n 1) "them" "it") " the " (plans/trial-days) "-day trial of everything?")]
+     (biff/form {:action "/app/admin/users/grant-trials" :class "flex-shrink-0"}
+                (shared/btn :variant :dark :size :sm :type "submit" "Give the trial"))]))
+
 (defn page [{:keys [session params] :as ctx}]
   (let [users (data/get-users ctx)
         unhashed-count (count (remove #(data/hashed-password? (:user/password %)) users))]
@@ -166,4 +180,12 @@
      [:div {:class "space-y-7"}
       (headers/pages-heading [["Admin" "/app/admin"] "Users"])
       (insecure-password-banner unhashed-count)
+      (trials-banner (count (plans/users-without-plan ctx)))
       (users-table users (:uid session))])))
+
+(defn grant-trials
+  "POST /app/admin/users/grant-trials."
+  [ctx]
+  (let [n (plans/grant-trials! ctx)]
+    {:status 303
+     :headers {"location" (str "/app/admin/users?alert=" (if (pos? n) "trials-granted" "no-trials-needed"))}}))

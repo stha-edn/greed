@@ -122,13 +122,71 @@
 "
               "The invitation can be accepted for 14 days. If you were not expecting it, you can ignore this email.")})
 
+;; ---------------------------------------------------------------------------
+;; Plans and billing (com.greed.data.plans, com.greed.payments.billing)
+
+(defn- plan-email
+  "One short email about the person's plan: a greeting, `lines`, one link,
+   and the sign-off. Each line is plain text."
+  [{:keys [to firstname subject lines link-label url]}]
+  {:to [{:email to}]
+   :subject subject
+   :html (rum/render-static-markup
+          [:html
+           [:body
+            [:p "Hi " firstname ","]
+            (for [l lines] [:p l])
+            [:p [:a {:href url :target "_blank"} link-label]]
+            [:p "If you have any questions, just reply to this email."]
+            [:p "The " settings/app-name " team"]]])
+   :text (str "Hi " firstname ",\n\n"
+              (apply str (map #(str % "\n\n") lines))
+              link-label ": " url "\n\n"
+              "If you have any questions, just reply to this email.\n\n"
+              "The " settings/app-name " team")})
+
+(defn trial-ending
+  "A few days before the free trial ends. `ends` is a date as text."
+  [{:keys [ends] :as opts}]
+  (plan-email
+   (assoc opts
+          :subject (str "Your " settings/app-name " trial ends on " ends)
+          :lines [(str "Your free trial ends on " ends ". After that you move to Free: your budget, goals, calendar, insights and the tax tools stay, and so does everything you added.")
+                  "Reading more statements, and your businesses, need a plan. Premium is R49 a month and Business is R149 a month. You can cancel at any time."]
+          :link-label "Choose a plan")))
+
+(defn payment-failed
+  "A renewal could not be charged."
+  [{:keys [tier-name] :as opts}]
+  (plan-email
+   (assoc opts
+          :subject (str "Your " settings/app-name " payment did not go through")
+          :lines [(str "We could not charge your card for " tier-name ". Your plan stays on for now.")
+                  "Update your card in Manage billing so it keeps going. Nothing else needs to change."]
+          :link-label "Open your plan")))
+
+(defn plan-cancelled
+  "The plan will not renew. `ends` is a date as text."
+  [{:keys [tier-name ends] :as opts}]
+  (plan-email
+   (assoc opts
+          :subject (str "Your " settings/app-name " " tier-name " plan is cancelled")
+          :lines [(str "Your " tier-name " plan is cancelled and will not renew. You keep it"
+                       (if ends (str " until " ends) " until the end of the period you paid for")
+                       ", then you move to Free. Nothing you added is deleted.")
+                  "Changed your mind? You can choose a plan again at any time."]
+          :link-label "Open your plan")))
+
 (defn template [k opts]
   ((case k
      :signin-link signin-link
      :signin-code signin-code
      :welcome welcome
      :password-reset password-reset
-     :business-invite business-invite)
+     :business-invite business-invite
+     :trial-ending trial-ending
+     :payment-failed payment-failed
+     :plan-cancelled plan-cancelled)
    opts))
 
 (defn send-mailersend [{:keys [biff/secret

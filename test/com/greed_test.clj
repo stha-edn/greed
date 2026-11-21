@@ -11,6 +11,7 @@
             [com.greed.ui.app.plan :as plan]
             [com.greed.payments.billing :as billing]
             [com.greed.payments.paystack :as paystack]
+            [com.greed.payments.notices :as notices]
             [com.greed.home :as home]
             [com.greed.middleware :as mid]
             [com.greed.password :as pwd]
@@ -1363,3 +1364,98 @@
 (deftest csp-allows-paystack-checkout-test
   (testing "the plan form may redirect to Paystack's checkout, and nowhere else outside greed"
     (is (str/includes? mid/csp-header "form-action 'self' https://checkout.paystack.com;"))))
+
+
+;; ---------------------------------------------------------------------------
+;; Plan emails and the move to plans
+
+(deftest trial-reminder-test
+  (let [soon  #uuid "eeeeeeee-8000-0000-0000-000000000001"
+        later #uuid "eeeeeeee-8000-0000-0000-000000000002"
+        now   (java.util.Date.)
+        in    (fn [days] (java.util.Date. (+ (.getTime now) (* days 86400000))))
+        user  (fn [id email] {:xt/id id :user/email email :user/password "x" :user/firstname "T" :user/lastname "R" :user/active true})
+        trial (fn [id ends] {:xt/id (random-uuid) :subscription/user-id id :subscription/plan :business :subscription/status :trialing
+                             :subscription/trial-ends ends :subscription/created-at now :subscription/updated-at now})
+        sent  (atom [])]
+    (with-open [node (test-xtdb-node [(user soon "soon@example.com") (user later "later@example.com")
+                                      (trial soon (in 2)) (trial later (in 10))])]
+      (with-redefs [email/send-email (fn [_ opts] (swap! sent conj opts) true)]
+        (testing "only a trial ending within a few days is reminded"
+          (is (= [soon] (map :subscription/user-id (plans/trials-to-remind (fresh node) now))))
+          (notices/remind-trials (assoc (fresh node) :biff/base-url "https://mygreed.co.za"))
+          (xt/sync node)
+          (is (= [["soon@example.com" :trial-ending "https://mygreed.co.za/app/plan"]]
+                 (map (juxt :to :template :url) @sent))))
+        (testing "and only once"
+          (notices/remind-trials (fresh node))
+          (is (= 1 (count @sent))))))))
+
+(deftest plan-emails-follow-webhook-test
+  (let [uid  #uuid "eeeeeeee-9000-0000-0000-000000000001"
+        now  (java.util.Date.)
+        sent (atom [])]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "renew@example.com" :user/password "x" :user/firstname "R"
+                                       :user/lastname "N" :user/active true}
+                                      {:xt/id (random-uuid) :subscription/user-id uid :subscription/plan :premium
+                                       :subscription/status :active :subscription/paystack-code "SUB_9"
+                                       :subscription/paystack-customer "CUS_9" :subscription/created-at now :subscription/updated-at now}])]
+      (with-redefs [email/send-email (fn [_ opts] (swap! sent conj opts) true)]
+        (let [hook! (fn [payload]
+                      (let [body (cheshire/generate-string payload)]
+                        (billing/webhook (billing-ctx node {:raw-body body
+                                                            :headers {"x-paystack-signature" (paystack/signature test-key body)}}))
+                        (xt/sync node)))]
+          (hook! {:event "invoice.payment_failed" :data {:id 1 :subscription {:subscription_code "SUB_9"} :customer {:customer_code "CUS_9"}}})
+          (hook! {:event "invoice.payment_failed" :data {:id 1 :subscription {:subscription_code "SUB_9"} :customer {:customer_code "CUS_9"}}})
+          (hook! {:event "subscription.not_renew" :data {:subscription_code "SUB_9" :status "non-renewing"
+                                                         :next_payment_date "2026-12-21T07:00:00.000Z"
+                                                         :customer {:customer_code "CUS_9"}}})
+          (is (= [:payment-failed :plan-cancelled] (map :template @sent)) "a repeated event sends no second email")
+          (is (= "21 December 2026" (:ends (last @sent))))
+          (is (= "Premium" (:tier-name (last @sent)))))))))
+
+(deftest grant-trials-test
+  (let [old #uuid "eeeeeeee-a000-0000-0000-000000000001"
+        had #uuid "eeeeeeee-a000-0000-0000-000000000002"
+        now (java.util.Date.)]
+    (with-open [node (test-xtdb-node [{:xt/id old :user/email "old@example.com" :user/password "x" :user/firstname "O"
+                                       :user/lastname "L" :user/active true}
+                                      {:xt/id had :user/email "had@example.com" :user/password "x" :user/firstname "H"
+                                       :user/lastname "D" :user/active true}
+                                      {:xt/id (random-uuid) :subscription/user-id had :subscription/plan :premium
+                                       :subscription/status :active :subscription/created-at now :subscription/updated-at now}])]
+      (is (= [old] (plans/users-without-plan (fresh node))))
+      (is (= 1 (plans/grant-trials! (fresh node))))
+      (xt/sync node)
+      (is (true? (:trial? (plans/status (fresh node) old))))
+      (is (= :premium (plans/tier (fresh node) had)) "a paid plan is left alone")
+      (is (= 0 (plans/grant-trials! (fresh node))) "pressing it again does nothing"))))
+
+(deftest email-templates-test
+  (doseq [[k opts] [[:trial-ending {:ends "21 December 2026"}]
+                    [:payment-failed {:tier-name "Premium"}]
+                    [:plan-cancelled {:tier-name "Business" :ends "21 December 2026"}]]]
+    (let [{:keys [subject text html]} (email/template k (merge {:to "a@example.com" :firstname "Ayanda"
+                                                                 :url "https://mygreed.co.za/app/plan"} opts))]
+      (is (string? subject))
+      (is (str/includes? text "Hi Ayanda"))
+      (is (str/includes? text "https://mygreed.co.za/app/plan"))
+      (is (str/includes? html "https://mygreed.co.za/app/plan")))))
+
+(deftest paid-plan-blocks-a-second-checkout-test
+  (testing "a plan paid for counts from the return, before the webhook brings its code"
+    (is (plans/paid? {:subscription/status :active :subscription/paystack-customer "CUS_1"}))
+    (is (not (plans/paid? {:subscription/status :trialing})))
+    (is (not (plans/paid? {:subscription/status :cancelled :subscription/paystack-code "SUB_1"}))))
+  (testing "so choosing another plan goes back to Plan instead of to Paystack"
+    (let [uid #uuid "eeeeeeee-b000-0000-0000-000000000001"
+          now (java.util.Date.)]
+      (with-open [node (test-xtdb-node [{:xt/id uid :user/email "two@example.com" :user/password "x" :user/firstname "T"
+                                         :user/lastname "W" :user/active true}
+                                        {:xt/id (random-uuid) :subscription/user-id uid :subscription/plan :premium
+                                         :subscription/status :active :subscription/paystack-customer "CUS_1"
+                                         :subscription/created-at now :subscription/updated-at now}])]
+        (is (= "/app/plan?alert=already-subscribed"
+               (get-in (billing/checkout (billing-ctx node {:session {:uid uid} :params {:tier "business"}}))
+                       [:headers "location"])))))))

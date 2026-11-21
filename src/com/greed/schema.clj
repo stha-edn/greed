@@ -182,6 +182,7 @@
                   [:subscription/status                 [:enum :trialing :active :non-renewing :attention :cancelled]]
                   [:subscription/interval {:optional true} [:enum :monthly :yearly]]
                   [:subscription/trial-ends {:optional true} inst?]
+                  [:subscription/trial-reminded-at {:optional true} inst?]
                   [:subscription/period-ends {:optional true} inst?]
                   [:subscription/paystack-code {:optional true} :string]
                   [:subscription/paystack-email-token {:optional true} :string]

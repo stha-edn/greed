@@ -14,7 +14,9 @@
             [com.biffweb :as biff]
             [com.greed.data.core :as data]
             [com.greed.data.plans :as plans]
-            [com.greed.payments.paystack :as paystack])
+            [com.greed.payments.notices :as notices]
+            [com.greed.payments.paystack :as paystack]
+            [xtdb.api :as xt])
   (:import (java.time Instant ZoneOffset)
            (java.util Date)))
 
@@ -150,7 +152,12 @@
         {:status 401 :body "bad signature"})
     (let [payload (try (json/parse-string raw-body true) (catch Exception _ nil))]
       (when payload
-        (try (log/info "Paystack" (:event payload) (apply-event! ctx payload))
+        (try (let [result (apply-event! ctx payload)]
+               (log/info "Paystack" (:event payload) result)
+               (when (= :applied result)
+                 (let [ctx (assoc ctx :biff/db (xt/db (:biff.xtdb/node ctx)))]
+                   (when-let [uid (user-for ctx (:data payload))]
+                     (notices/after-event! ctx (:event payload) uid)))))
              (catch Exception e (log/error e "Paystack webhook failed" (:event payload)))))
       {:status 200 :body "ok"})))
 
