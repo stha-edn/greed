@@ -1,7 +1,7 @@
 (ns com.greed.ui.app.plan
   "GET /app/plan: the person's plan in the same header card as every tab,
    then the three plans with one action each. Starting the trial is here;
-   paying arrives with Paystack (stage 2)."
+   paying is com.greed.payments.billing (Paystack)."
   (:require [com.biffweb :as biff]
             [com.greed.ui :as ui]
             [com.greed.data.plans :as plans]
@@ -22,7 +22,10 @@
     (hero/card
      {:label "Your plan"
       :badge (cond admin? (hero/badge "Admin")
-                   trial? (hero/badge "Trial" :tone :brand))
+                   trial? (hero/badge "Trial" :tone :brand)
+                   (= :attention (:subscription/status subscription)) (hero/badge "Payment failed" :tone :rose)
+                   (= :non-renewing (:subscription/status subscription)) (hero/badge "Cancelled")
+                   (#{:premium :business} tier) (hero/badge (if (= :yearly (:subscription/interval subscription)) "Yearly" "Monthly")))
       :value (str (plans/tier-name tier) (when trial? " trial"))
       :unit (cond trial? (str days-left " day" (when (not= 1 days-left) "s") " left")
                   (= :free tier) "for ever"
@@ -32,7 +35,9 @@
                  trial? (str "Everything is unlocked until " (date (:subscription/trial-ends subscription))
                              ". No card needed: afterwards you are on Free unless you choose a plan.")
                  (= :free tier) "Budget, goals, calendar, insights and the tax tools are free. Statements beyond one month, and businesses, need a plan."
-                 :else "Thank you for supporting greed.")
+                 (= :attention (:subscription/status subscription)) "Your last payment did not go through. Update your card in Manage billing to keep your plan."
+                 (= :non-renewing (:subscription/status subscription)) "Cancelled: your plan stays until the date above, then you move to Free."
+                 :else "Thank you for supporting greed. Your plan renews by itself.")
       :picture (cond
                  trial? (hero/bars {:title "Your trial" :of total
                                     :rows [{:label "Days used" :value (str (- total days-left) " of " total)
@@ -48,11 +53,14 @@
               ["Statements" (if (#{:premium :business} tier) "Unlimited" (str limit " month"))]
               ["Businesses" (if (= :business tier) "Included" "Business plan")]]})))
 
-(defn- action [{:keys [tier trial-used? admin?]} interval]
+(defn- action [{:keys [tier trial-used? admin? subscription]} interval]
   (fn [t]
     (cond
       admin? nil
+      (and (plans/paid? subscription) (= t tier))
+      (shared/btn :variant :outline :size :md :class "w-full" :href "/app/plan/manage" "Manage billing")
       (= t tier) (shared/btn :variant :outline :size :md :class "w-full" :attrs {:disabled true} "Your plan")
+      (plans/paid? subscription) nil
       (= :free t) nil
       :else
       [:div {:class "space-y-2"}
@@ -80,7 +88,9 @@
         (plan-cards/interval-switch "/app/plan" interval)]
        (plan-cards/cards {:interval interval :current (when-not (:trial? st) (:tier st)) :action (action st interval)})
        [:p {:class "mt-4 text-xs text-zinc-500"}
-        "Prices in rand. Paid plans renew by themselves until you cancel, and you can cancel at any time."]]])))
+        (if (plans/paid? (:subscription st))
+          "To change plan, cancel in Manage billing. You keep this plan until the end of the period you paid for, then choose the new one."
+          "Prices in rand. Paid by card through Paystack. Plans renew by themselves until you cancel, and you can cancel at any time.")]]])))
 
 (defn start-trial
   "POST /app/plan/trial: the one free trial."
@@ -88,8 +98,3 @@
   (let [result (plans/start-trial! ctx (:uid session))]
     {:status 303
      :headers {"location" (if (= :started result) "/app?alert=trial-started" "/app/plan?alert=trial-used")}}))
-
-(defn checkout
-  "POST /app/plan/checkout: Paystack arrives in stage 2."
-  [_ctx]
-  {:status 303 :headers {"location" "/app/plan?alert=payments-soon"}})

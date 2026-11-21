@@ -26,6 +26,9 @@
  :mailersend/from-name  #or [#biff/env MAILERSEND_FROM_NAME "Greed"]
  :mailersend/reply-to   #or [#biff/env MAILERSEND_REPLY_TO "support@mygreed.co.za"]
 
+ ;; Paystack: sk_test_... in dev, sk_live_... in production.
+ :paystack/secret-key #biff/secret PAYSTACK_SECRET_KEY
+
  :recaptcha/secret-key #biff/secret RECAPTCHA_SECRET_KEY
  :recaptcha/site-key   #biff/env RECAPTCHA_SITE_KEY
 

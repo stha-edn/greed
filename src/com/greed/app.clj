@@ -11,6 +11,7 @@
             [com.greed.ui.app.banking :as banking]
             [com.greed.ui.app.profiles :as profiles]
             [com.greed.ui.app.plan :as plan]
+            [com.greed.payments.billing :as billing]
             [com.greed.ui.app.vat :as vat]
             [com.greed.ui.app.company-tax :as company-tax]
             [com.greed.ui.app.calendar :as calendar]
@@ -38,7 +39,9 @@
              ["/plan"
               ["" {:get plan/page}]
               ["/trial" {:post plan/start-trial}]
-              ["/checkout" {:post plan/checkout}]]
+              ["/checkout" {:post billing/checkout}]
+              ["/return" {:get billing/return}]
+              ["/manage" {:get billing/manage}]]
              ["/vat" {:get vat/page}]
              ;; Tax and Settings: one address each, for whichever profile is chosen
              ["/tax" {:get (for-profile company-tax/page tools/page)}]
@@ -110,4 +113,6 @@
              ["/save-user" {:post mid/save-user}]
              ["/save-finances" {:post mid/save-finances}]
              ["/save-tax-profile" {:post mid/save-tax-profile}]
-             ["/dismiss-app-update-banner" {:post mid/dismiss-app-update-banner}]]]})
+             ["/dismiss-app-update-banner" {:post mid/dismiss-app-update-banner}]]]
+   ;; Paystack's webhook: no session or CSRF token; checked by its signature
+   :webhook-routes [["/paystack/webhook" {:post billing/webhook}]]})

@@ -187,7 +187,19 @@
                   [:subscription/paystack-email-token {:optional true} :string]
                   [:subscription/paystack-customer {:optional true} :string]
                   [:subscription/created-at             inst?]
-                  [:subscription/updated-at             inst?]]})
+                  [:subscription/updated-at             inst?]]
+
+   ;; One payment event from Paystack (a webhook, or a checkout return),
+   ;; kept as an audit trail and so the same event is never applied twice.
+   :payment-event/id :uuid
+   :payment-event [:map {:closed true}
+                   [:xt/id                         :payment-event/id]
+                   [:payment-event/key             :string]
+                   [:payment-event/event           :string]
+                   [:payment-event/user-id {:optional true} :user/id]
+                   [:payment-event/reference {:optional true} :string]
+                   [:payment-event/summary {:optional true} :string]
+                   [:payment-event/received-at     inst?]]})
 
 (def module
   {:schema schema})

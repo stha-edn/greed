@@ -9,6 +9,8 @@
             [com.greed.data.core :as data]
             [com.greed.data.plans :as plans]
             [com.greed.ui.app.plan :as plan]
+            [com.greed.payments.billing :as billing]
+            [com.greed.payments.paystack :as paystack]
             [com.greed.home :as home]
             [com.greed.middleware :as mid]
             [com.greed.password :as pwd]
@@ -1245,3 +1247,119 @@
         (xt/sync node)
         (is (= "/app/plan?alert=trial-used" (get-in (plan/start-trial (ctx)) [:headers "location"])))
         (is (str/includes? (rum/render-static-markup (plan/page (ctx))) "Business trial"))))))
+
+
+;; ---------------------------------------------------------------------------
+;; Paystack billing (no network: Paystack calls are redefined)
+
+(def ^:private test-key "sk_test_greed")
+
+(defn- billing-ctx [node & [extra]]
+  (merge (assoc (fresh node) :biff/secret {:paystack/secret-key test-key}) extra))
+
+(def ^:private paystack-plans
+  [{:name "greed Premium monthly" :plan_code "PLN_pm" :amount 4900 :interval "monthly" :currency "ZAR"}
+   {:name "greed Business yearly" :plan_code "PLN_by" :amount 149000 :interval "annually" :currency "ZAR"}])
+
+(deftest paystack-signature-test
+  (let [body "{\"event\":\"charge.success\"}"
+        sig  (paystack/signature test-key body)]
+    (is (= 128 (count sig)))
+    (is (paystack/valid-signature? {:biff/secret {:paystack/secret-key test-key}} body sig))
+    (is (paystack/valid-signature? {:biff/secret {:paystack/secret-key test-key}} body (str/upper-case sig)))
+    (is (not (paystack/valid-signature? {:biff/secret {:paystack/secret-key test-key}} (str body " ") sig)))
+    (is (not (paystack/valid-signature? {:biff/secret {:paystack/secret-key "other"}} body sig)))
+    (is (not (paystack/valid-signature? {:biff/secret {:paystack/secret-key test-key}} body nil)))))
+
+(deftest paystack-events-test
+  (let [uid #uuid "eeeeeeee-6000-0000-0000-000000000001"
+        now (java.util.Date.)]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "payer@example.com" :user/password "x" :user/firstname "Pay"
+                                       :user/lastname "Er" :user/active true}])]
+      (with-redefs [paystack/list-plans (constantly {:ok paystack-plans})]
+        (let [ctx   #(billing-ctx node)
+              sub   #(plans/get-subscription (ctx) uid)
+              apply! (fn [payload] (let [r (billing/apply-event! (ctx) payload now)] (xt/sync node) r))]
+          (testing "the first charge, from checkout, unlocks the plan"
+            (is (= :applied (apply! {:event "charge.success"
+                                     :data {:id 101 :reference "ref1" :status "success" :paid_at "2026-11-21T10:00:00.000Z"
+                                            :metadata "{\"user_id\":\"eeeeeeee-6000-0000-0000-000000000001\"}"
+                                            :plan {:plan_code "PLN_pm" :name "greed Premium monthly"}
+                                            :customer {:customer_code "CUS_1" :email "payer@example.com"}}})))
+            (is (= [:premium :active :monthly "CUS_1"]
+                   ((juxt :subscription/plan :subscription/status :subscription/interval :subscription/paystack-customer) (sub))))
+            (is (= :premium (plans/tier (ctx) uid))))
+          (testing "the same event again is not applied twice"
+            (is (= :seen (apply! {:event "charge.success"
+                                  :data {:id 101 :reference "ref1" :status "success"
+                                         :plan {:plan_code "PLN_pm"} :customer {:customer_code "CUS_1"}}}))))
+          (testing "the subscription's code and token arrive, found by customer"
+            (apply! {:event "subscription.create"
+                     :data {:subscription_code "SUB_1" :email_token "tok" :status "active"
+                            :next_payment_date "2026-12-21T07:00:00.000Z"
+                            :plan {:plan_code "PLN_pm"} :customer {:customer_code "CUS_1" :email "payer@example.com"}}})
+            (is (= ["SUB_1" "tok"] ((juxt :subscription/paystack-code :subscription/paystack-email-token) (sub))))
+            (is (plans/paid? (sub))))
+          (testing "a failed renewal keeps the plan, marked for attention"
+            (apply! {:event "invoice.payment_failed"
+                     :data {:id 7 :subscription {:subscription_code "SUB_1"} :customer {:customer_code "CUS_1"}}})
+            (is (= :attention (:subscription/status (sub))))
+            (is (= :premium (plans/tier (ctx) uid))))
+          (testing "cancelling keeps it to the end of the period"
+            (apply! {:event "subscription.not_renew"
+                     :data {:subscription_code "SUB_1" :status "non-renewing" :next_payment_date "2026-12-21T07:00:00.000Z"
+                            :customer {:customer_code "CUS_1"}}})
+            (is (= :non-renewing (:subscription/status (sub))))
+            (is (= :premium (plans/tier (ctx) uid))))
+          (testing "then it is disabled, and the person is on Free"
+            (apply! {:event "subscription.disable"
+                     :data {:subscription_code "SUB_1" :status "complete" :customer {:customer_code "CUS_1"}}})
+            (is (= :free (plans/tier (ctx) uid))))
+          (testing "every event is kept as an audit record"
+            (is (= 5 (count (biff/q (xt/db node) '{:find [e] :where [[e :payment-event/key]]})))))
+          (testing "an event for nobody greed knows is recorded and ignored"
+            (is (= :ignored (apply! {:event "charge.success"
+                                     :data {:id 999 :plan {:plan_code "PLN_pm"} :customer {:email "stranger@example.com"}}})))))))))
+
+(deftest paystack-webhook-test
+  (with-open [node (test-xtdb-node [])]
+    (let [body "{\"event\":\"transfer.success\",\"data\":{\"id\":1}}"]
+      (is (= 401 (:status (billing/webhook (billing-ctx node {:raw-body body :headers {"x-paystack-signature" "nope"}})))))
+      (is (= 200 (:status (billing/webhook (billing-ctx node {:raw-body body
+                                                              :headers {"x-paystack-signature" (paystack/signature test-key body)}}))))))))
+
+(deftest paystack-checkout-test
+  (let [uid #uuid "eeeeeeee-7000-0000-0000-000000000001"
+        sent (atom nil)]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "buyer@example.com" :user/password "x" :user/firstname "B"
+                                       :user/lastname "Y" :user/active true}])]
+      (with-redefs [paystack/ensure-plan! (fn [_ nm cents interval] (reset! sent [nm cents interval]) {:ok "PLN_pm"})
+                    paystack/initialize! (fn [_ opts] (swap! sent conj opts) {:ok {:authorization_url "https://checkout.paystack.com/x"}})]
+        (let [resp (billing/checkout (billing-ctx node {:session {:uid uid} :biff/base-url "http://localhost:8080"
+                                                         :params {:tier "premium" :interval "monthly"}}))]
+          (is (= "https://checkout.paystack.com/x" (get-in resp [:headers "location"])))
+          (is (= ["greed Premium monthly" 4900 :monthly] (take 3 @sent)))
+          (is (= {:user_id (str uid) :tier "premium" :interval "monthly"} (:metadata (last @sent))))
+          (is (= "http://localhost:8080/app/plan/return" (:callback-url (last @sent))))))
+      (testing "an unknown tier goes back to the plans"
+        (is (= "/app/plan" (get-in (billing/checkout (billing-ctx node {:session {:uid uid} :params {:tier "gold"}}))
+                                   [:headers "location"]))))
+      (testing "the return is checked with Paystack, and must be the same person's"
+        (with-redefs [paystack/verify (constantly {:ok {:id 5 :status "success" :reference "r"
+                                                         :metadata {:user_id "someone-else"}
+                                                         :plan_object {:plan_code "PLN_pm" :name "greed Premium monthly"}}})]
+          (is (= "/app/plan?alert=payment-failed"
+                 (get-in (billing/return (billing-ctx node {:session {:uid uid} :params {:reference "r"}})) [:headers "location"]))))
+        (with-redefs [paystack/verify (constantly {:ok {:id 6 :status "success" :reference "r2"
+                                                         :metadata {:user_id (str uid)}
+                                                         :customer {:customer_code "CUS_9"}
+                                                         :plan_object {:plan_code "PLN_pm" :name "greed Premium monthly"}}})]
+          (is (= "/app?alert=plan-active"
+                 (get-in (billing/return (billing-ctx node {:session {:uid uid} :params {:reference "r2"}})) [:headers "location"])))
+          (xt/sync node)
+          (is (= :premium (plans/tier (fresh node) uid))))))))
+
+
+(deftest csp-allows-paystack-checkout-test
+  (testing "the plan form may redirect to Paystack's checkout, and nowhere else outside greed"
+    (is (str/includes? mid/csp-header "form-action 'self' https://checkout.paystack.com;"))))

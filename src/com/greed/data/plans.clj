@@ -122,3 +122,58 @@
                            :subscription/created-at now
                            :subscription/updated-at now}])
          :started))))
+
+;; ---------------------------------------------------------------------------
+;; Paid plans (Paystack). See com.greed.payments.billing.
+
+(defn paid?
+  "True when the person's plan is billed through Paystack and has not
+   been cancelled for good."
+  [sub]
+  (and (:subscription/paystack-code sub)
+       (#{:active :non-renewing :attention} (:subscription/status sub))))
+
+(defn subscription-by
+  "The subscription whose `attr` is `value`, e.g.
+   (subscription-by ctx :subscription/paystack-code \"SUB_x\")."
+  [{:keys [biff/db]} attr value]
+  (when value
+    (first (q db
+              {:find '(pull s [*])
+               :in '[v]
+               :where [['s attr 'v]]}
+              value))))
+
+(defn subscription-tx
+  "The tx doc that sets `changes` on the person's subscription, creating it
+   when there is none. Fields not in `changes` are kept."
+  [ctx user-id changes ^Date now]
+  (let [sub (get-subscription ctx user-id)]
+    (merge (dissoc sub :xt/id)
+           {:db/doc-type :subscription
+            :xt/id (or (:xt/id sub) (random-uuid))
+            :subscription/user-id user-id
+            :subscription/created-at (or (:subscription/created-at sub) now)
+            :subscription/updated-at now}
+           changes)))
+
+(defn event-seen?
+  "True when this payment event (see payment-event-doc) was already handled."
+  [{:keys [biff/db]} event-key]
+  (some? (first (q db
+                   '{:find [e]
+                     :in [k]
+                     :where [[e :payment-event/key k]]}
+                   event-key))))
+
+(defn payment-event-doc
+  "An audit record of one payment event: what happened, to whom, when."
+  [{:keys [event-key event user-id reference summary]} ^Date now]
+  (cond-> {:db/doc-type :payment-event
+           :xt/id (random-uuid)
+           :payment-event/key event-key
+           :payment-event/event event
+           :payment-event/received-at now}
+    user-id (assoc :payment-event/user-id user-id)
+    reference (assoc :payment-event/reference reference)
+    summary (assoc :payment-event/summary summary)))

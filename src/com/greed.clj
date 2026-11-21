@@ -25,7 +25,10 @@
 (def routes [["" {:middleware [mid/wrap-site-defaults]}
               (keep :routes modules)]
              ["" {:middleware [mid/wrap-api-defaults]}
-              (keep :api-routes modules)]])
+              (keep :api-routes modules)]
+             ;; Signed webhooks read the raw body, so nothing parses it first
+             ["" {:middleware [mid/wrap-raw-body]}
+              (keep :webhook-routes modules)]])
 
 (def handler (-> (biff/reitit-handler {:routes routes})
                  mid/wrap-base-defaults))

@@ -9,6 +9,7 @@
             [com.core :as c]
             [com.greed.data.core :as data]
             [com.greed.data.plans :as plans]
+            [com.greed.payments.billing :as billing]
             [com.greed.utilities.core :as utilities]
             [com.greed.authentication :as auth]))
 
@@ -51,7 +52,9 @@
        "https://www.google.com https://www.gstatic.com https://www.google-analytics.com "
        "https://region1.google-analytics.com ws://mygreed.co.za wss://mygreed.co.za; "
        "frame-src https://www.google.com https://www.gstatic.com; "
-       "base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'none'"))
+       ;; Choosing a plan posts to greed, which redirects to Paystack's checkout;
+       ;; browsers apply form-action to that redirect too.
+       "base-uri 'self'; object-src 'none'; form-action 'self' https://checkout.paystack.com; frame-ancestors 'none'"))
 
 (defn wrap-security-headers [handler]
   (fn [ctx]
@@ -248,7 +251,12 @@
     {:status 303
      :headers {"location" (str "/app/admin/users?alert=" alert)}}))
 
-(defn admin-delete-user [ctx]
+(defn admin-delete-user [{:keys [params] :as ctx}]
+  ;; stop a paid plan renewing before the account goes (best effort)
+  (when-let [uid (utilities/->uuid (:user-id params))]
+    (when (and (not= uid (get-in ctx [:session :uid])) (data/get-user ctx uid))
+      (when-not (billing/cancel-for-deletion! ctx uid)
+        (logger/warn "Could not cancel the Paystack subscription of a deleted user" uid))))
   (let [result (data/admin-delete-user ctx)
         alert (case result
                 :self "cannot-delete-self"
@@ -286,6 +294,16 @@
                             (assoc-in [:params :multipart] {:store (byte-array-store)})
                             (assoc :session false)
                             (assoc :static false)))))
+
+(defn wrap-raw-body
+  "For signed webhooks: the request body as a string, in :raw-body, before
+   anything parses it. Bodies over 64 KB are refused."
+  [handler]
+  (fn [{:keys [body] :as ctx}]
+    (let [raw (when body (slurp body :encoding "UTF-8"))]
+      (if (and raw (> (count raw) 65536))
+        {:status 413 :body "too large"}
+        (handler (assoc ctx :raw-body raw))))))
 
 (defn wrap-api-defaults [handler]
   (-> handler
