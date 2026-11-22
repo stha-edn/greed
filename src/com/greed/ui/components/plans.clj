@@ -8,19 +8,20 @@
   {:free     {:line "Plan your month and your tax."
               :items ["Budget, goals and calendar"
                       "Insights and your savings rate"
-                      "Income tax, bonus and ITR12 calculators"
+                      "Income tax and bonus calculators"
                       "One statement month in Spending"]}
    :premium  {:line "See where every rand went, every month."
               :items ["Everything in Free"
                       "Unlimited statements: FNB and Standard Bank"
+                      "ITR12 return simulator: refund or amount owed"
                       "Spending and Banking for every month"
                       "Planned against spent, month by month"]}
    :business {:line "Your money and your business, in one account."
-              :items ["Everything in Premium"
-                      "Businesses: budget, statements, VAT and company tax"
+              :items ["Businesses: budget, statements, VAT and company tax"
                       "Owner's pay on your personal Tax page"
                       "Invite a partner or bookkeeper"
-                      "SARS dates on the calendar"]}})
+                      "SARS dates on the calendar"
+                      "Everything in Premium for your own money too"]}})
 
 (defn rands
   "4900 -> \"R49\", 49050 -> \"R490.50\"."
@@ -40,11 +41,11 @@
 (defn interval-switch
   "Monthly or yearly, as two links (works without script)."
   [href interval]
-  [:div {:role "group" :aria-label "Billing period" :class "inline-flex gap-1 rounded-lg bg-white p-1 ring-1 ring-zinc-200/70"}
+  [:div {:role "group" :aria-label "Billing period" :class "inline-flex gap-1 rounded-full bg-white p-1 ring-1 ring-zinc-200/70"}
    (for [[k label] [[:monthly "Monthly"] [:yearly "Yearly · 2 months free"]]]
      [:a {:href (str href "?interval=" (name k))
           :aria-current (when (= k interval) "true")
-          :class (str "rounded-md px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 "
+          :class (str "rounded-full px-4 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 "
                       (if (= k interval) "bg-zinc-900 text-white" "text-zinc-600 hover:text-zinc-900"))}
       label])])
 
@@ -53,24 +54,29 @@
 
 (defn cards
   "One card per tier. `action` is (fn [tier] hiccup-or-nil) for its button;
-   `current` the tier to mark as the person's own."
-  [{:keys [interval current action]}]
-  [:div {:class "grid grid-cols-1 gap-5 lg:grid-cols-3"}
-   (for [tier plans/tiers
+   `current` the tier to mark as the person's own; `tiers` which tiers to
+   show (all of them unless given, e.g. only Business inside a business)."
+  [{:keys [interval current action tiers]}]
+  [:div {:class (if (= 1 (count (or tiers plans/tiers)))
+                  "grid max-w-md grid-cols-1 gap-5"
+                  "grid grid-cols-1 gap-5 lg:grid-cols-3")}
+   (for [tier (or tiers plans/tiers)
          :let [{:keys [line items]} (features tier)
                [big small] (price-line tier interval)
                ;; a paid plan of your own is the one picked out; otherwise Premium
                own-paid? (contains? #{:premium :business} current)
                featured? (if own-paid? (= tier current) (= :premium tier))]]
      [:section {:aria-labelledby (str "tier-" (name tier))
-                :class (str "flex flex-col rounded-lg bg-white p-6 ring-1 "
-                            (if featured? "ring-2 ring-zinc-900" "ring-zinc-200/70"))}
+                :class (str "relative flex flex-col rounded-3xl bg-white p-7 transition duration-300 "
+                            (if featured?
+                              "ring-2 ring-brand-600 shadow-[0_30px_60px_-30px_rgba(15,107,79,.45)]"
+                              "ring-1 ring-zinc-200/70 hover:shadow-card-hover"))}
       [:div {:class "flex items-center gap-2"}
        [:h3 {:id (str "tier-" (name tier)) :class "text-lg font-semibold tracking-[-0.01em] text-zinc-900"} (plans/tier-name tier)]
        [:div {:class "flex-1"}]
        (cond
          (= tier current) [:span {:class "rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 ring-1 ring-brand-600/20"} "Your plan"]
-         (and featured? (not own-paid?)) [:span {:class "rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-900 ring-1 ring-zinc-200"} "Most popular"])]
+         (and featured? (not own-paid?)) [:span {:class "rounded-full bg-brand-600 px-2.5 py-1 text-xs font-semibold text-white"} "Most popular"])]
       [:p {:class "mt-1 text-sm text-zinc-600"} line]
       [:p {:class "mt-5 flex items-baseline gap-1.5"}
        [:span {:class "text-4xl font-semibold tracking-[-0.03em] tabular-nums text-zinc-900"} big]
@@ -81,6 +87,6 @@
       [:ul {:class "mt-6 flex-1 space-y-2.5 text-sm text-zinc-700"}
        (for [i items]
          [:li {:class "flex gap-2.5"}
-          [:span {:aria-hidden "true" :class "mt-0.5 font-semibold text-brand-600"} "✓"]
+          [:span {:aria-hidden "true" :class "mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-brand-50 text-[10px] font-bold text-brand-700"} "✓"]
           i])]
       [:div {:class "mt-7"} (action tier)]])])

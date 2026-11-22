@@ -87,7 +87,7 @@
       :signup {:kind :success
                :title "Your account is ready"
                :message (str (if first-name (str "Welcome to greed, " first-name ". ") "Welcome to greed. ")
-                             "Add your salary in Settings, or upload a statement on Banking.")}
+                             "Add your salary on Budget, or upload a statement on Banking.")}
       nil)))
 
 (defn toasts

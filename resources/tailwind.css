@@ -119,7 +119,8 @@
    (materials & depth) rather than an opaque bar. Falls back to a solid
    background when the platform can't do backdrop blur, or when the user
    has asked for less transparency. */
-.site-header { background-color: #ffffff; }
+.site-header { background-color: rgb(255 255 255 / 0.82); -webkit-backdrop-filter: saturate(1.6) blur(16px); backdrop-filter: saturate(1.6) blur(16px); border-bottom: 1px solid rgb(228 228 231 / 0.6); }
+@media (prefers-reduced-transparency: reduce) { .site-header { background-color: #ffffff; -webkit-backdrop-filter: none; backdrop-filter: none; } }
 
 /* Dark scrims (confirm dialog, shared modal, finance-tax prompt) are also
    translucent chrome — same fallback as .site-header above: go solid and

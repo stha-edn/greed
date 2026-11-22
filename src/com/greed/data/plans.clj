@@ -1,9 +1,10 @@
 (ns com.greed.data.plans
   "Plans: Free, Premium and Business, and what each one unlocks.
 
-   Free:     Budget, Goals, Calendar, Insights, the tax tools, and one
-             statement month.
-   Premium:  unlimited statements (Spending, Banking).
+   Free:     Budget, Goals, Calendar, Insights, the income tax and bonus
+             calculators, and one statement month.
+   Premium:  unlimited statements (Spending, Banking), and the ITR12
+             return simulator.
    Business: Premium, plus businesses (VAT, company tax, owner's pay, team).
 
    One :subscription doc per person holds their plan. A trial is a
@@ -227,3 +228,61 @@
                           :subscription/created-at now
                           :subscription/updated-at now})))
      (count ids))))
+
+;; ---------------------------------------------------------------------------
+;; Admin: revoking a plan
+
+(defn revocable?
+  "True when the person has a trial or a plan that an admin can take away.
+   Admins are not revoked: they have every feature by their role."
+  [{:keys [admin? tier]}]
+  (and (not admin?) (not= :free tier)))
+
+(defn revoke-tx
+  "The tx that ends the person's trial or plan now, moving them to Free,
+   with an audit record naming the admin who did it. Their trial stays
+   used. Billing with Paystack is stopped separately (see billing)."
+  [ctx user-id admin-id ^Date now]
+  (let [sub (get-subscription ctx user-id)]
+    [(merge (dissoc sub :xt/id)
+            {:db/doc-type :subscription
+             :xt/id (:xt/id sub)
+             :subscription/status :cancelled
+             :subscription/updated-at now}
+            (when (:subscription/trial-ends sub) {:subscription/trial-ends now})
+            (when (:subscription/period-ends sub) {:subscription/period-ends now}))
+     (payment-event-doc {:event-key (str "admin.revoke:" user-id ":" (.getTime now))
+                         :event "admin.revoke"
+                         :user-id user-id
+                         :summary (pr-str {:revoked-by admin-id
+                                           :plan (:subscription/plan sub)
+                                           :status (:subscription/status sub)})}
+                        now)]))
+
+;; ---------------------------------------------------------------------------
+;; Free: which months of a statement to keep
+
+(defn- days-covered [{:keys [period-start period-end]}]
+  (try (inc (.between java.time.temporal.ChronoUnit/DAYS
+                      (java.time.LocalDate/parse period-start) (java.time.LocalDate/parse period-end)))
+       (catch Exception _ 0)))
+
+(defn months-to-save
+  "Of a statement's monthly summaries, the ones this owner may save:
+   all of them on Premium and up (or for a business they may work in).
+   On Free, the months already read (re-reading them is fine), and, while
+   the allowance is not used up, the best covered new months (the most
+   days, then the latest), up to the allowance."
+  [ctx {:keys [user-id business-id] :as o} summaries]
+  (if (or (and business-id (business-allowed? ctx user-id business-id))
+          (and (nil? business-id) (at-least? ctx user-id :premium)))
+    (vec summaries)
+    (let [have  (statement-months ctx o)
+          room  (max 0 (- (free-statement-months) (count have)))
+          again (filter #(have (:month %)) summaries)
+          fresh (->> summaries
+                     (remove #(have (:month %)))
+                     (sort-by (juxt days-covered :month))
+                     reverse
+                     (take room))]
+      (vec (sort-by :month (concat again fresh))))))

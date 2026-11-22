@@ -9,6 +9,7 @@
             [com.greed.data.core :as data]
             [com.greed.data.plans :as plans]
             [com.greed.ui.app.plan :as plan]
+            [com.greed.ui.app.settings :as settings]
             [com.greed.payments.billing :as billing]
             [com.greed.payments.paystack :as paystack]
             [com.greed.payments.notices :as notices]
@@ -1247,7 +1248,12 @@
         (is (= "/app?alert=trial-started" (get-in (plan/start-trial (ctx)) [:headers "location"])))
         (xt/sync node)
         (is (= "/app/plan?alert=trial-used" (get-in (plan/start-trial (ctx)) [:headers "location"])))
-        (is (str/includes? (rum/render-static-markup (plan/page (ctx))) "Business trial"))))))
+        (let [html (rum/render-static-markup (plan/page (ctx)))]
+          (is (str/includes? html "Business trial"))
+          (testing "during the trial, both paid plans can be subscribed to, and the trial is not offered again"
+            (is (str/includes? html "Subscribe to Premium"))
+            (is (str/includes? html "Subscribe to Business"))
+            (is (not (str/includes? html "Try free for 14 days")))))))))
 
 
 ;; ---------------------------------------------------------------------------
@@ -1459,3 +1465,136 @@
         (is (= "/app/plan?alert=already-subscribed"
                (get-in (billing/checkout (billing-ctx node {:session {:uid uid} :params {:tier "business"}}))
                        [:headers "location"])))))))
+
+
+(deftest admin-revoke-plan-test
+  (let [admin  #uuid "eeeeeeee-c000-0000-0000-000000000001"
+        trial  #uuid "eeeeeeee-c000-0000-0000-000000000002"
+        payer  #uuid "eeeeeeee-c000-0000-0000-000000000003"
+        now    (java.util.Date.)
+        later  (java.util.Date. (+ (.getTime now) (* 10 86400000)))
+        user   (fn [id email & [roles]] (cond-> {:xt/id id :user/email email :user/password "x" :user/firstname "U"
+                                                 :user/lastname "V" :user/active true}
+                                          roles (assoc :user/roles roles)))
+        disabled (atom [])]
+    (with-open [node (test-xtdb-node [(user admin "admin@example.com" #{:admin}) (user trial "trial@example.com")
+                                      (user payer "payer@example.com")
+                                      {:xt/id (random-uuid) :subscription/user-id trial :subscription/plan :business
+                                       :subscription/status :trialing :subscription/trial-ends later
+                                       :subscription/created-at now :subscription/updated-at now}
+                                      {:xt/id (random-uuid) :subscription/user-id payer :subscription/plan :premium
+                                       :subscription/status :active :subscription/period-ends later
+                                       :subscription/paystack-code "SUB_r" :subscription/paystack-email-token "tok"
+                                       :subscription/paystack-customer "CUS_r"
+                                       :subscription/created-at now :subscription/updated-at now}])]
+      (let [revoke! (fn [uid]
+                      (let [r (billing/admin-revoke (billing-ctx node {:session {:uid admin} :params {:user-id (str uid)}}))]
+                        (xt/sync node)
+                        (get-in r [:headers "location"])))]
+        (testing "a trial ends now, and stays used"
+          (is (= "/app/admin/users?alert=plan-revoked" (revoke! trial)))
+          (is (= :free (plans/tier (fresh node) trial)))
+          (is (= :used (plans/start-trial! (fresh node) trial))))
+        (testing "when Paystack cannot cancel, the plan is left as it is"
+          (with-redefs [paystack/disable! (constantly {:error "down"})]
+            (is (= "/app/admin/users?alert=revoke-billing-failed" (revoke! payer)))
+            (is (= :premium (plans/tier (fresh node) payer)))))
+        (testing "a paid plan is stopped in Paystack, then revoked"
+          (with-redefs [paystack/disable! (fn [_ code token] (swap! disabled conj [code token]) {:ok {}})]
+            (is (= "/app/admin/users?alert=plan-revoked" (revoke! payer)))
+            (is (= [["SUB_r" "tok"]] @disabled))
+            (is (= :free (plans/tier (fresh node) payer)))))
+        (testing "an admin, or someone on Free, has nothing to revoke"
+          (is (= "/app/admin/users?alert=nothing-to-revoke" (revoke! admin)))
+          (is (= "/app/admin/users?alert=nothing-to-revoke" (revoke! payer))))
+        (testing "each revoke is kept as an audit record, naming the admin"
+          (let [events (map first (biff/q (xt/db node) '{:find [(pull e [*])] :where [[e :payment-event/event "admin.revoke"]]}))]
+            (is (= #{trial payer} (set (map :payment-event/user-id events))))
+            (is (every? #(str/includes? (:payment-event/summary %) (str admin)) events))))))))
+
+
+(deftest itr12-needs-premium-test
+  (let [uid #uuid "eeeeeeee-d000-0000-0000-000000000001"]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "itr@example.com" :user/password "x" :user/firstname "I"
+                                       :user/lastname "T" :user/active true}])]
+      (let [wrapped (mid/wrap-premium (fn [_] {:status 200}))
+            ctx     #(assoc (fresh node) :session {:uid uid} :headers %)]
+        (testing "on Free, the simulator sends you to the plans"
+          (is (= "/app/plan?alert=need-premium-returns" (get-in (wrapped (ctx {})) [:headers "location"])))
+          (is (= "/app/plan?alert=need-premium-returns" (get-in (wrapped (ctx {"hx-request" "true"})) [:headers "HX-Redirect"]))))
+        (testing "with the trial (or Premium) it opens"
+          (plans/start-trial! (fresh node) uid)
+          (xt/sync node)
+          (is (= 200 (:status (wrapped (ctx {}))))))))))
+
+
+(deftest free-plan-keeps-one-month-of-a-statement-test
+  (let [uid #uuid "eeeeeeee-f000-0000-0000-000000000001"
+        now (java.util.Date.)
+        m   (fn [month start end] (assoc sample-summary :month month :period-start start :period-end end))
+        three [(m "2026-08" "2026-08-20" "2026-08-31") (m "2026-09" "2026-09-01" "2026-09-30") (m "2026-10" "2026-10-01" "2026-10-19")]]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "free@example.com" :user/password "x" :user/firstname "F"
+                                       :user/lastname "R" :user/active true}])]
+      (testing "a three-month statement on Free keeps its best covered month"
+        (is (= ["2026-09"] (map :month (plans/months-to-save (fresh node) {:user-id uid} three)))))
+      (data/save-statement-summaries (fresh node) uid [(second three)])
+      (xt/sync node)
+      (testing "once the allowance is used, the same month can be read again, but no new one"
+        (is (= ["2026-09"] (map :month (plans/months-to-save (fresh node) {:user-id uid} three))))
+        (is (empty? (plans/months-to-save (fresh node) {:user-id uid} [(m "2026-11" "2026-11-01" "2026-11-20")]))))
+      (testing "Premium keeps every month"
+        (xt/await-tx node (xt/submit-tx node [[::xt/put {:xt/id (random-uuid) :subscription/user-id uid :subscription/plan :premium
+                                                         :subscription/status :active :subscription/created-at now
+                                                         :subscription/updated-at now}]]))
+        (is (= 3 (count (plans/months-to-save (fresh node) {:user-id uid} three))))))))
+
+
+(deftest delete-own-profile-test
+  (let [uid #uuid "eeeeeeee-1100-0000-0000-000000000001"]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "leaving@example.com" :user/password (data/hash-password "right-pass")
+                                       :user/firstname "L" :user/lastname "V" :user/active true}])]
+      (let [delete! #(settings/delete-profile (assoc (fresh node) :session {:uid uid} :params {:password %}))]
+        (testing "the wrong password deletes nothing"
+          (is (= "/app/settings?error=wrong-password#delete" (get-in (delete! "nope") [:headers "location"])))
+          (is (some? (data/get-user (fresh node) uid))))
+        (testing "when Paystack cannot stop the plan, nothing is deleted"
+          (with-redefs [billing/cancel-for-deletion! (constantly false)]
+            (is (= "/app/settings?alert=delete-billing-failed#delete" (get-in (delete! "right-pass") [:headers "location"])))))
+        (testing "the right password deletes the profile and signs out"
+          (let [resp (delete! "right-pass")]
+            (xt/sync node)
+            (is (= "/?alert=profile-deleted" (get-in resp [:headers "location"])))
+            (is (nil? (get-in resp [:session :uid])))
+            (is (nil? (data/get-user (fresh node) uid)))))))))
+
+
+(deftest cancel-and-resume-subscription-test
+  (let [uid #uuid "eeeeeeee-1200-0000-0000-000000000001"
+        now (java.util.Date.)
+        ends (java.util.Date. (+ (.getTime now) (* 20 86400000)))
+        calls (atom [])]
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "sub@example.com" :user/password "x" :user/firstname "S"
+                                       :user/lastname "B" :user/active true}
+                                      {:xt/id (random-uuid) :subscription/user-id uid :subscription/plan :premium
+                                       :subscription/status :active :subscription/period-ends ends
+                                       :subscription/paystack-code "SUB_c" :subscription/paystack-email-token "tok"
+                                       :subscription/paystack-customer "CUS_c"
+                                       :subscription/created-at now :subscription/updated-at now}])]
+      (with-redefs [paystack/disable! (fn [_ c t] (swap! calls conj [:disable c t]) {:ok {}})
+                    paystack/enable!  (fn [_ c t] (swap! calls conj [:enable c t]) {:ok {}})]
+        (let [go! (fn [h] (let [r (h (billing-ctx node {:session {:uid uid}}))] (xt/sync node) (get-in r [:headers "location"])))
+              status #(:subscription/status (plans/get-subscription (fresh node) uid))]
+          (testing "cancelling stops renewal, and keeps the plan to the end of the period"
+            (is (= "/app/settings?alert=subscription-cancelled#subscription" (go! billing/cancel)))
+            (is (= :non-renewing (status)))
+            (is (= :premium (plans/tier (fresh node) uid))))
+          (testing "cancelling twice does nothing more"
+            (is (= "/app/settings?alert=already-cancelled#subscription" (go! billing/cancel))))
+          (testing "keeping the plan undoes it"
+            (is (= "/app/settings?alert=subscription-resumed#subscription" (go! billing/resume)))
+            (is (= :active (status))))
+          (is (= [[:disable "SUB_c" "tok"] [:enable "SUB_c" "tok"]] @calls))
+          (testing "when Paystack fails, nothing changes"
+            (with-redefs [paystack/disable! (constantly {:error "down"})]
+              (is (= "/app/settings?alert=cancel-failed#subscription" (go! billing/cancel)))
+              (is (= :active (status))))))))))

@@ -168,7 +168,12 @@
     (hero/card
      {:label "Statements"
       :value (str (count months))
-      :unit (if (= 1 (count months)) "month read" "months read")
+      :unit (if (= 1 (count months)) "month of statements" "months of statements")
+      :verdict (when latest
+                 (let [last-month (str (.minusMonths (YearMonth/now) 1))]
+                   (if (neg? (compare latest last-month))
+                     {:text (str "Last month's statement is missing") :tone :warn}
+                     {:text "Up to date" :tone :good})))
       :reading (if latest
                  (str "Latest: " (home/month-name latest "MMMM yyyy") ". Only totals are kept, never the files.")
                  "Upload a PDF statement below. Only totals are kept, never the files.")
@@ -180,8 +185,8 @@
                                      {:label (spending/bank-names bank (name bank)) :value (str n " of 12")
                                       :amount n :cls "bg-brand-600"})}))
       :stats [["Banks" (str (count cov))]
-              ["Bank fees" (spending/whole (reduce + 0 (map :cents fees)))]
-              ["Fee charges" (str (reduce + 0 (map :count fees)))]]})))
+              ["Fees, 6 months" (spending/whole (reduce + 0 (map :cents fees))) nil :bank-fees]
+              ["Times charged" (str (reduce + 0 (map :count fees)))]]})))
 
 ;; ---------------------------------------------------------------------------
 ;; Page and actions
@@ -239,10 +244,16 @@
             {:keys [error] :as result} (statements/read-statement-pdf bs :business? (some? (:business-id owner)))]
         (if error
           (page ctx :error error)
-          (let [months (summary/summarise-months result (data/budget-match-items ctx owner))]
-            (if (plans/upload-allowed? ctx owner (keep :month months))
-              (do (data/save-statement-summaries ctx owner months)
+          (let [months (summary/summarise-months result (data/budget-match-items ctx owner))
+                ;; on Free, only the allowance is saved, not the whole statement
+                saved  (plans/months-to-save ctx owner months)
+                left   (- (count months) (count saved))]
+            (cond
+              (empty? saved)
+              {:status 303 :headers {"location" "/app/plan?alert=need-premium"}}
+
+              :else
+              (do (data/save-statement-summaries ctx owner saved)
                   {:status 303
-                   :headers {"location" "/app/spending?alert=statement-read"}})
-              {:status 303
-               :headers {"location" "/app/plan?alert=need-premium"}})))))))
+                   :headers {"location" (str "/app/spending?month=" (:month (last saved))
+                                             "&alert=" (if (pos? left) "statement-read-partly" "statement-read"))}}))))))))

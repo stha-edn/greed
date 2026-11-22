@@ -129,7 +129,31 @@
                     [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "2"
                             :d "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"}]]]))]))
 
-(defn- users-table [users current-user-id]
+(defn- plan-cell
+  "The person's plan, and a way for an admin to revoke it."
+  [user {:keys [tier trial? admin? subscription] :as st}]
+  (let [status (:subscription/status subscription)]
+    [:div {:class "flex items-center gap-2 whitespace-nowrap"}
+     (cond
+       admin? (badge "Admin" "bg-zinc-100 text-zinc-700")
+       trial? (badge (str (plans/tier-name tier) " trial") "bg-brand-50 text-brand-700")
+       (= :free tier) (badge "Free" "bg-zinc-100 text-zinc-700")
+       (= :attention status) (badge (str (plans/tier-name tier) " · payment failed") "bg-rose-50 text-rose-700")
+       (= :non-renewing status) (badge (str (plans/tier-name tier) " · cancelled") "bg-amber-50 text-amber-800")
+       :else (badge (plans/tier-name tier) "bg-brand-50 text-brand-700"))
+     (when (plans/revocable? st)
+       (biff/form {:action "/app/admin/users/revoke-plan" :class "flex"}
+                  [:input {:type "hidden" :name "user-id" :value (str (:xt/id user))}]
+                  [:button {:type "submit"
+                            :data-confirm (str "Revoke " (:user/email user) "'s "
+                                               (if trial? "trial" (str (plans/tier-name tier) " plan"))
+                                               "? They move to Free now"
+                                               (when (plans/paid? subscription) ", and their Paystack subscription stops renewing")
+                                               ". Nothing they added is deleted.")
+                            :class "rounded-md px-2 py-1 text-xs font-medium text-zinc-500 transition-colors hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"}
+                   "Revoke"]))]))
+
+(defn- users-table [users current-user-id statuses]
   [:div {:class "flex flex-col overflow-hidden bg-white border border-zinc-200/70 rounded-md"}
    [:div {:class "flex items-center justify-between px-4 py-3 border-b border-zinc-100"}
     [:span {:class "px-2.5 py-1 text-xs font-medium text-zinc-600 bg-zinc-100 rounded-full"}
@@ -137,7 +161,7 @@
     [:span {:class "text-xs font-medium text-zinc-500 tabular-nums"}
      (str (count users) (if (= 1 (count users)) " user" " users"))]]
    [:div {:class "overflow-x-auto min-w-0"}
-    [:table {:class "w-full min-w-[720px]"}
+    [:table {:class "w-full min-w-[860px]"}
      [:thead
       [:tr {:class "border-b border-zinc-100"}
        [:th {:class "sticky left-0 z-20 text-left px-4 py-2.5 text-xs font-medium text-zinc-500 bg-white"} "Name"]
@@ -145,6 +169,7 @@
        [:th {:class "text-left px-4 py-2.5 text-xs font-medium text-zinc-500"} "Age"]
        [:th {:class "text-left px-4 py-2.5 text-xs font-medium text-zinc-500"} "Status"]
        [:th {:class "text-left px-4 py-2.5 text-xs font-medium text-zinc-500"} "Roles"]
+       [:th {:class "text-left px-4 py-2.5 text-xs font-medium text-zinc-500"} "Plan"]
        [:th {:class "text-left px-4 py-2.5 text-xs font-medium text-zinc-500"} "Password"]
        [:th {:class "w-20 px-4 py-2.5"}]]]
      [:tbody {:class "divide-y divide-zinc-100"}
@@ -155,6 +180,7 @@
          [:td {:class "px-4 py-3 text-sm text-zinc-500 tabular-nums"} age]
          [:td {:class "px-4 py-3"} (status-badge active)]
          [:td {:class "px-4 py-3"} (role-badges roles)]
+         [:td {:class "px-4 py-3"} (plan-cell user (get statuses (:xt/id user)))]
          [:td {:class "px-4 py-3"} (password-cell user)]
          [:td {:class "px-4 py-3"} (row-actions user (= (:xt/id user) current-user-id))]])]]]
    (for [user users] (edit-modal user (= (:xt/id user) current-user-id)))])
@@ -181,7 +207,8 @@
       (headers/pages-heading [["Admin" "/app/admin"] "Users"])
       (insecure-password-banner unhashed-count)
       (trials-banner (count (plans/users-without-plan ctx)))
-      (users-table users (:uid session))])))
+      (users-table users (:uid session)
+                   (into {} (for [u users] [(:xt/id u) (plans/status ctx (:xt/id u))])))])))
 
 (defn grant-trials
   "POST /app/admin/users/grant-trials."

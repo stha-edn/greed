@@ -70,11 +70,11 @@
     (let [fy  (ct/financial-year (or year-end-month 2) (LocalDate/now))
           tax (ct/tax (/ (ct/budget-taxable items vat-registered) 100.0) sbc (:end fy))]
       (stats/summary-card :label "Tax" :href "/app/tax" :value (rands tax)
-                          :reading (str "Company income tax for the year to "
+                          :reading (str "Company tax expected for the year to "
                                         (.format ^LocalDate (:end fy) (DateTimeFormatter/ofPattern "MMMM yyyy"))
                                         ", from the budget.")))
-    (stats/summary-card :label "Tax" :href "/app/tax" :value "Personal"
-                        :reading "The profit is taxed in the owners' personal returns.")))
+    (stats/summary-card :label "Tax" :href "/app/tax" :value "On your own return"
+                        :reading "This business's profit is taxed as the owners' own income, so it shows on each owner's personal Tax page.")))
 
 (defn page
   "GET /app while a business is chosen: the same Home as Personal, with

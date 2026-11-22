@@ -92,6 +92,18 @@
          :session (dissoc session :business-id)}
         (handler ctx)))))
 
+(defn wrap-premium
+  "A tool that needs Premium (or better). Without it, show the plans; an
+   htmx request is sent there with HX-Redirect."
+  [handler]
+  (fn [{:keys [session headers] :as ctx}]
+    (if (plans/at-least? ctx (:uid session) :premium)
+      (handler ctx)
+      (let [to "/app/plan?alert=need-premium-returns"]
+        (if (get headers "hx-request")
+          {:status 200 :headers {"HX-Redirect" to} :body ""}
+          {:status 303 :headers {"location" to}})))))
+
 (defn wrap-admin [handler]
   (fn [{:keys [session] :as ctx}]
     (if (data/admin? (data/get-user ctx (:uid session)))
@@ -157,7 +169,7 @@
       (data/update-finances ctx)
       (data/upsert-finances ctx)))
   {:status 303
-   :headers {"location" "/app/settings?alert=finances-saved"}})
+   :headers {"location" "/app/finances/?alert=finances-saved"}})
 
 (defn save-tax-profile [ctx]
   (let [user-id (data/get-user-id-from-session ctx)
@@ -169,7 +181,7 @@
     (data/sync-medical-budget-item ctx)
     (data/sync-retirment-budget-item ctx))
   {:status 303
-   :headers {"location" "/app/settings?alert=tax-profile-saved"}})
+   :headers {"location" "/app/tax?alert=tax-profile-saved"}})
 
 (defn- sync-spending!
   "Keeps the Spending tab's budget matches in step after a budget change,

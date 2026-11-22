@@ -26,8 +26,10 @@
 
 (def categories
   "Tax period categories greed supports, with how SARS describes them."
-  (array-map :a "Category A: every two months, ending Feb, Apr, Jun, Aug, Oct and Dec"
-             :b "Category B: every two months, ending Jan, Mar, May, Jul, Sep and Nov"
+  ;; SARS: Category A periods end in the odd months, B in the even months.
+  ;; https://www.sars.gov.za/types-of-tax/value-added-tax/tax-periods-for-vat-vendors/
+  (array-map :a "Category A: every two months, ending Jan, Mar, May, Jul, Sep and Nov"
+             :b "Category B: every two months, ending Feb, Apr, Jun, Aug, Oct and Dec"
              :c "Category C: every month"))
 
 (def vat-types
@@ -72,10 +74,10 @@
         m      (.getMonthValue ym)
         start  (case category
                  :c ym
-                 ;; A starts in odd months (Jan-Feb ... Nov-Dec)
-                 :a (if (odd? m) ym (.minusMonths ym 1))
-                 ;; B starts in even months (Dec-Jan, Feb-Mar ... Oct-Nov)
-                 :b (if (even? m) ym (.minusMonths ym 1)))
+                 ;; A ends in odd months, so starts in even ones (Dec-Jan, Feb-Mar ... Oct-Nov)
+                 :a (if (even? m) ym (.minusMonths ym 1))
+                 ;; B ends in even months, so starts in odd ones (Jan-Feb ... Nov-Dec)
+                 :b (if (odd? m) ym (.minusMonths ym 1)))
         months (if (= :c category) 1 2)
         end    (.atEndOfMonth (.plusMonths ^YearMonth start (dec months)))]
     {:start (.atDay ^YearMonth start 1) :end end :due (due-date end) :months months}))

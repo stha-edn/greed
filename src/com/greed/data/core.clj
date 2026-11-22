@@ -274,7 +274,7 @@
     (-> net-income utilities/annual-income->monthly-income int)))
 
 (defn- sync-salary-item!
-  "Keeps the Salary budget item in step with the salary in Settings."
+  "Keeps the Salary budget item in step with the salary set on Budget."
   [ctx user-id salary]
   (let [item (get-salary-budget-item ctx user-id)]
     (logger/info "Syncing the Salary budget item...")

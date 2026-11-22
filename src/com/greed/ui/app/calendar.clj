@@ -46,7 +46,11 @@
         day    (.getDayOfMonth today)]
     (hero/card
      {:label "Next SARS date"
-      :badge (when d (hero/badge (.format d (java.time.format.DateTimeFormatter/ofPattern "d MMM")) :tone (when (< days 14) :rose)))
+      :badge (when d (hero/badge (.format d (java.time.format.DateTimeFormatter/ofPattern "d MMM"))))
+      :verdict (cond (nil? d) nil
+                     (<= days 7) {:text (if (zero? days) "Due today" (str "Due in " days " day" (when (not= 1 days) "s"))) :tone :bad}
+                     (<= days 21) {:text (str "Due in " days " days") :tone :warn}
+                     :else {:text "Nothing due soon" :tone :good})
       :value (cond (nil? d) "-" (zero? days) "Today" :else (str days))
       :unit (cond (nil? d) "no SARS dates yet" (zero? days) "is due" :else (str "day" (when (not= 1 days) "s") " to go"))
       :reading (if sars
@@ -56,9 +60,9 @@
                            :of length
                            :rows [{:label "Days gone" :value (str day " of " length) :amount day :cls "bg-zinc-400"}
                                   {:label "Days left" :value (str (- length day)) :amount (- length day) :cls "bg-brand-600"}]})
-      :stats [["SARS dates" (str (count (filter :event/auto ahead)))]
-              ["Bills" (str (count (filter #(and (= :bill (:event/type %)) (not (:event/auto %))) ahead)))]
-              ["Payments in" (str (count (filter #(= :income (:event/type %)) ahead)))]]})))
+      :stats [["SARS dates coming" (str (count (filter :event/auto ahead)))]
+              ["Bills coming" (str (count (filter #(and (= :bill (:event/type %)) (not (:event/auto %))) ahead)))]
+              ["Money coming in" (str (count (filter #(= :income (:event/type %)) ahead)))]]})))
 
 (defn page [ctx]
   (let [pd     (payday ctx)

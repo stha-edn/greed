@@ -3,6 +3,7 @@
             [com.greed.data.core :as data]
             [com.greed.ui.components.stats :as stats]
             [com.greed.ui.components.tables :as tables]
+            [com.greed.ui.components.forms :as forms]
             [com.greed.ui.components.alerts :as alerts]
             [com.greed.ui.components.headers :as headers]
             [com.greed.utilities.core :as utilities]
@@ -37,18 +38,29 @@
         left (- total-income total-expenses total-savings)
         r    utilities/amount->rands]
     (hero/card
-     {:label (if (neg? left) "Planned beyond its income by" "Left after costs and set-aside")
+     {:label (if (neg? left) "Planned beyond its income" "Left over in the plan")
       :value (utilities/whole->rands (Math/abs (double left)))
       :unit (or period "this month")
-      :reading (str "Out of " (r total-income) " in income.")
+      :verdict (cond
+                 (not (pos? total-income)) {:text "No money in planned" :tone :neutral}
+                 (neg? left) {:text "Over its income" :tone :bad}
+                 (< left (* 0.05 total-income)) {:text "Tight" :tone :warn}
+                 :else {:text "Within its income" :tone :good})
+      :reading (cond
+                 (not (pos? total-income)) "Add the money the business expects to come in, then its costs and what it sets aside."
+                 (neg? left) (str "The plan spends and sets aside " (utilities/whole->rands (Math/abs (double left)))
+                                  " more than the " (utilities/whole->rands total-income) " coming in. Trim a cost or a set-aside item.")
+                 :else (str "Of the " (utilities/whole->rands total-income) " coming in, this is what is not yet spent or set aside."))
       :tone (when (neg? left) :rose)
       :picture (hero/bars
-                {:title "Where the income goes"
+                {:title "Where the money goes"
                  :of total-income
-                 :rows [{:label "Expenses" :value (r total-expenses) :amount total-expenses :cls "bg-zinc-700"}
+                 :rows [{:label "Money out" :value (r total-expenses) :amount total-expenses :cls "bg-zinc-700"}
                          {:label "Set aside" :value (r total-savings) :amount total-savings :cls "bg-zinc-400"}
-                         {:label "Left" :value (r (max 0 left)) :amount (max 0 left) :cls "bg-brand-600"}]})
-      :stats [["Income" (r total-income)] ["Expenses" (r total-expenses)] ["Set aside" (r total-savings)]]})))
+                         {:label "Left over" :value (r (max 0 left)) :amount (max 0 left) :cls "bg-brand-600"}]})
+      :stats [["Money in" (r total-income) nil :money-in]
+              ["Money out" (r total-expenses) nil :money-out]
+              ["Set aside" (r total-savings) nil :set-aside]]})))
 
 (defn- chosen-month
   "The budget period in the address (?month=2026-10), else this month."
@@ -124,6 +136,8 @@
       (period-bar month all-items)
       (stats/finance-hero budget-items payday
                           :period (when-not (= month (data/current-month)) (str "in " (month-label month "MMMM yyyy"))))
+      ;; the salary feeds the Income list, and payday sets the pay period
+      (forms/salary-strip ctx)
       (budget-lists :budget-items budget-items)])))
 
 (defn page

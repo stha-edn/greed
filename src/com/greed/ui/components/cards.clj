@@ -28,7 +28,7 @@
          [:<>
           [:p {:class "text-xs font-medium text-zinc-500 lg:text-zinc-300"} (utilities/->string bank)]
           [:p {:class "mt-0.5 text-xs text-zinc-500 lg:text-zinc-500"} (or account-type "Debit Card")]]
-         [:a {:href "/app/settings"
+         [:a {:href "/app/banking"
               :class "inline-flex items-center gap-1 rounded-sm text-xs font-medium text-zinc-900 transition hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400 active:scale-[0.97] lg:text-zinc-400 lg:hover:text-zinc-200"}
           "Add your bank"
           (svgs/->next {:class "size-3"})])]]

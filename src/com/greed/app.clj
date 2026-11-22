@@ -98,7 +98,9 @@
              ["/tax"
               ["/income-tax-calculator" {:get income-tax-calculator/page-get :post income-tax-calculator/page}]
               ["/bonus-tax-calculator" {:get bonus-tax-calculator/page-get :post bonus-tax-calculator/page}]
-              ["/tax-returns" {:get tax-returns/page-get :post tax-returns/page}]]
+              ;; the ITR12 simulator is a Premium tool
+              ["/tax-returns" {:middleware [mid/wrap-premium]
+                               :get tax-returns/page-get :post tax-returns/page}]]
              ;; Legacy redirects — Tools was renamed to Tax.
              ["/tools" {:get (redirect-to "/app/tax")}]
              ["/tools/income-tax-calculator" {:get (redirect-to "/app/tax/income-tax-calculator")}]
@@ -109,9 +111,14 @@
               ["/users/update" {:post mid/admin-update-user}]
               ["/users/hash-password" {:post mid/admin-hash-user-password}]
               ["/users/delete" {:post mid/admin-delete-user}]
-              ["/users/grant-trials" {:post admin/grant-trials}]]
+              ["/users/grant-trials" {:post admin/grant-trials}]
+              ["/users/revoke-plan" {:post billing/admin-revoke}]]
+             ;; Account: also on personal Settings; here for every profile
              ["/profile" {:get account/page}]
              ["/save-user" {:post mid/save-user}]
+             ["/settings/delete-profile" {:post settings/delete-profile}]
+             ["/settings/cancel-subscription" {:post billing/cancel}]
+             ["/settings/resume-subscription" {:post billing/resume}]
              ["/save-finances" {:post mid/save-finances}]
              ["/save-tax-profile" {:post mid/save-tax-profile}]
              ["/dismiss-app-update-banner" {:post mid/dismiss-app-update-banner}]]]

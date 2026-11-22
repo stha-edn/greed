@@ -74,28 +74,34 @@
                  kept      (max 0 (- taxable-r b-tax))
                  gap       (- (* 100 b-tax) (* 12 set-aside))]
              (hero/card
-              {:label (str "Financial year to " (fmt (:end fy)))
+              {:label (str "Company tax, year to " (fmt (:end fy)))
                :badge (hero/badge (if sbc "Small business corporation" (str (ct/company-rate) "% company rate")))
                :value (rands b-tax)
-               :unit "income tax this year"
-               :reading (str "Expected from your budget"
-                             (when-not year-end-month " (February year end until you set it)") "."
+               :unit "this year"
+               :verdict (cond
+                          (not (pos? b-tax)) {:text "No tax expected" :tone :good}
+                          (not (pos? set-aside)) {:text "Nothing put away yet" :tone :warn}
+                          (pos? gap) {:text (str (whole gap) " short") :tone :warn}
+                          :else {:text "Enough put away" :tone :good})
+               :reading (str "Expected on " (whole b-taxable) " of taxable income, from the budget"
+                             (when-not year-end-month " (a February year end until you set it in Settings)")
+                             ". It is paid in advance as provisional tax."
                              (when (and sbc (:latest? table))
                                " greed has no small business corporation table for this year yet, so the newest one is used."))
                :picture (hero/bars
                          {:title "Where the profit goes"
                           :of (+ kept b-tax)
-                          :rows [{:label "Kept in the business" :value (rands kept) :amount kept :cls "bg-brand-600"}
-                                  {:label "Income tax" :value (rands b-tax) :amount b-tax :cls "bg-zinc-400"}]
+                          :rows [{:label "The business keeps" :value (rands kept) :amount kept :cls "bg-brand-600"}
+                                  {:label "SARS" :value (rands b-tax) :amount b-tax :cls "bg-zinc-400"}]
                           :note (if (pos? set-aside)
                                   (str "Your tax set-aside items put away " (whole (* 12 set-aside)) " a year"
                                        (if (pos? gap) (str ", " (whole gap) " less than expected.") ", enough to cover it."))
                                   "Tip: add a set-aside item with \"tax\" in its name, so the provisional payments are ready.")})
-               :stats [["Taxable income" (whole b-taxable)]
-                       ["Effective rate" (if (pos? taxable-r) (str (Math/round (* 100.0 (/ b-tax taxable-r))) "%") "–")]
-                       ["Set aside a year" (whole (* 12 set-aside))]]}))
+               :stats [["Taxable income" (whole b-taxable) nil :taxable-income]
+                       ["Tax per R1 of profit" (if (pos? taxable-r) (str (Math/round (* 100.0 (/ b-tax taxable-r))) "c") "–") nil (when sbc :sbc)]
+                       ["Put away a year" (whole (* 12 set-aside)) (when (pos? gap) "text-amber-700") :set-aside]]}))
            [:section {:class card :aria-labelledby "prov-h"}
-            [:h2 {:id "prov-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Provisional tax"]
+            [:h2 {:id "prov-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "Provisional tax" (hero/tip :provisional-tax)]
             [:p {:class "mt-0.5 text-xs text-zinc-500"}
              "Based on the budget estimate. SARS can charge a penalty if the estimate for the year is too low, so update it as the year goes on."]
             [:ol {:class "mt-4 divide-y divide-zinc-100 text-sm"}

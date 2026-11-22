@@ -22,40 +22,34 @@
        "    set the @aria-expanded of #public-nav-toggle to 'false'\n"
        "  end"))
 
-(defn nav [{:keys [session]}]
+(def ^:private public-links
+  [["/#features" "Features"] ["/#business" "Business"] ["/pricing" "Pricing"] ["/about" "About"] ["/contact" "Contact"]])
+
+(defn nav [{:keys [session uri]}]
   (let [signed-in? (some? (:uid session))]
-    [:nav {:class "relative flex items-center justify-between gap-3 py-4" :_ public-menu-escape-actions}
+    [:nav {:class "relative flex items-center justify-between gap-3 py-3.5" :_ public-menu-escape-actions}
      [:a {:href "/" :aria-label "greed home"
-          :class "inline-flex items-center active:scale-[0.97] transition-transform"}
-      [:img {:src "/img/greed-symbol-green-tight.svg"
-             :alt "greed"
-             :width 192 :height 192
-             :class "h-8 sm:h-9 w-auto"}]]
-     [:div {:class "flex items-center gap-1.5 sm:gap-2"}
-      [:a {:href "/pricing"
-           :class "hidden sm:inline-block whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
-       "Pricing"]
-      [:a {:href "/about"
-           :class "hidden sm:inline-block whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
-       "About"]
-      [:a {:href "/contact"
-           :class "hidden sm:inline-block whitespace-nowrap px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-zinc-600 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97]"}
-       "Contact"]
+          :class "inline-flex items-center rounded-xl transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"}
+      [:img {:src "/img/greed-symbol-green-tight.svg" :alt "greed" :width 192 :height 192 :class "h-9 w-auto"}]]
+     [:ul {:class "absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 rounded-full bg-zinc-100/80 p-1 ring-1 ring-zinc-200/70 md:flex"}
+      (for [[href label] public-links]
+        [:li
+         [:a {:href href
+              :class (str "block whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 "
+                          (if (= uri href) "bg-white text-zinc-900 shadow-card" "text-zinc-600 hover:text-zinc-900"))}
+          label]])]
+     [:div {:class "flex items-center gap-2"}
       (if signed-in?
         [:a {:href "/app"
-             :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-700 transition-colors active:scale-[0.97]"}
-         "Dashboard"]
+             :class "whitespace-nowrap rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_-10px_rgba(15,107,79,.8)] transition hover:bg-brand-700 active:scale-[0.97]"}
+         "Your account"]
         [:<>
          [:a {:href "/signin"
-              :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-zinc-700 border border-zinc-300 rounded-lg hover:border-zinc-500 hover:bg-zinc-50 transition-colors active:scale-[0.97]"}
-          "Sign In"]
+              :class "hidden whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-900 active:scale-[0.97] sm:inline-block"}
+          "Sign in"]
          [:a {:href "/signup"
-              :class "whitespace-nowrap px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition-colors active:scale-[0.97]"}
-          "Sign Up"]])
-      ;; Mobile-only entry point to the links that collapse above (About,
-      ;; Contact). Keeps every page reachable from the header itself
-      ;; instead of relying on the footer. Sign In/Sign Up stay visible on
-      ;; the top nav at every width, so they're not repeated here.
+              :class "whitespace-nowrap rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_-10px_rgba(15,107,79,.8)] transition hover:bg-brand-700 active:scale-[0.97]"}
+          "Start free"]])
       [:button {:id "public-nav-toggle"
                 :type "button"
                 :aria-label "Open menu"
@@ -63,15 +57,16 @@
                 :aria-controls "public-nav-menu"
                 :aria-expanded "false"
                 :_ public-menu-toggle-actions
-                :class "sm:hidden p-2 -mr-1 text-zinc-500 hover:text-zinc-900 rounded-lg hover:bg-zinc-100 transition-colors active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500/70"}
-       [:svg {:class "w-5 h-5" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
+                :class "rounded-full p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500/70 md:hidden"}
+       [:svg {:class "h-5 w-5" :fill "none" :stroke "currentColor" :viewBox "0 0 24 24"}
         [:path {:stroke-linecap "round" :stroke-linejoin "round" :stroke-width "1.8"
                 :d "M4 6h16M4 12h16M4 18h16"}]]]]
      [:div {:id "public-nav-menu"
-            :class "sm:hidden absolute right-0 top-full z-50 mt-2 w-48 origin-top-right rounded-xl bg-white py-1.5 shadow-lg ring-1 ring-zinc-200/70 opacity-0 scale-95 -translate-y-1 pointer-events-none transition duration-150 ease-out [&[open]]:opacity-100 [&[open]]:scale-100 [&[open]]:translate-y-0 [&[open]]:pointer-events-auto"}
-      [:a {:href "/pricing" :class "block px-4 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors active:scale-[0.98]"} "Pricing"]
-      [:a {:href "/about" :class "block px-4 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors active:scale-[0.98]"} "About"]
-      [:a {:href "/contact" :class "block px-4 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors active:scale-[0.98]"} "Contact"]]]))
+            :class "absolute right-0 top-full z-50 mt-2 w-56 origin-top-right rounded-2xl bg-white p-2 opacity-0 shadow-card-hover ring-1 ring-zinc-200/70 scale-95 -translate-y-1 pointer-events-none transition duration-150 ease-out md:hidden [&[open]]:pointer-events-auto [&[open]]:translate-y-0 [&[open]]:scale-100 [&[open]]:opacity-100"}
+      (for [[href label] public-links]
+        [:a {:href href :class "block rounded-xl px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:text-zinc-900"} label])
+      (when-not signed-in?
+        [:a {:href "/signin" :class "mt-1 block rounded-xl border-t border-zinc-100 px-4 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-50"} "Sign in"])]]))
 
 (defn- link-active? [uri href]
   "True when the current request path is on the nav item's route.

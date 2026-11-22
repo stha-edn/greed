@@ -55,7 +55,7 @@
        [:div {:class "grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2"}
         (home/plan-card plan home/personal)
         (home/due-card rows {:sub "Your next payday, and the dates on your calendar."
-                             :empty "Nothing coming up. Set your payday in Settings, or add dates on the Calendar."
+                             :empty "Nothing coming up. Set your payday on Budget, or add dates on the Calendar."
                              :links [["/app/calendar" "Calendar"] ["/app/tax" "Tax"]]})]]
 
       (when month

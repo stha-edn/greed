@@ -151,8 +151,8 @@
   (plan-email
    (assoc opts
           :subject (str "Your " settings/app-name " trial ends on " ends)
-          :lines [(str "Your free trial ends on " ends ". After that you move to Free: your budget, goals, calendar, insights and the tax tools stay, and so does everything you added.")
-                  "Reading more statements, and your businesses, need a plan. Premium is R49 a month and Business is R149 a month. You can cancel at any time."]
+          :lines [(str "Your free trial ends on " ends ". After that you move to Free: your budget, goals, calendar, insights and the income tax and bonus calculators stay, and so does everything you added.")
+                  "Reading more statements and the ITR12 return simulator need Premium, and your businesses need Business. Premium is R49 a month and Business is R149 a month. You can cancel at any time."]
           :link-label "Choose a plan")))
 
 (defn payment-failed

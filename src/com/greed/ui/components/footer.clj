@@ -1,28 +1,33 @@
 (ns com.greed.ui.components.footer)
 
 (def ^:private link
-  "text-zinc-900 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 rounded-sm")
+  "text-sm text-zinc-600 transition-colors hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 rounded-sm")
+
+(defn- column [title links]
+  [:div
+   [:p {:class "text-xs font-semibold uppercase tracking-[0.08em] text-zinc-900"} title]
+   [:ul {:class "mt-4 space-y-3"}
+    (for [[href label external?] links]
+      [:li [:a (cond-> {:href href :class link} external? (assoc :target "_blank" :rel "noopener noreferrer")) label]])]])
 
 (defn footer
-  "Marketing close: one quiet line on a single tone step below the page. What this is on the left,
-   the links in the middle, the year and privacy on the right."
+  "Marketing close: what greed is and its promise on the left, then the
+   product, company and legal links, and the year underneath."
   []
-  [:footer {:class "bg-zinc-100"}
-   [:div {:class "container mx-auto grid grid-cols-1 gap-2 px-6 py-10 text-sm sm:grid-cols-[1fr_auto_1fr] sm:items-baseline sm:gap-6 sm:text-[15px]"}
-    [:p {:class "flex items-center gap-2 text-zinc-600"}
-     [:a {:href "/" :class "inline-block"}
-      [:img {:src "/img/greed-symbol-green-tight.svg" :alt "greed" :width 192 :height 192 :class "block h-5 w-5"}]]
-     "Money and business finance for South Africans"]
-    [:nav {:aria-label "Footer" :class "flex flex-wrap gap-x-6 gap-y-1"}
-     [:a {:href "/pricing" :class link} "Pricing"]
-     [:a {:href "/about" :class link} "About"]
-     [:a {:href "/team" :class link} "Team"]
-     [:a {:href "/contact" :class link} "Contact"]
-     [:a {:href "https://www.instagram.com/greed_za/" :target "_blank" :rel "noopener noreferrer" :class link} "Instagram"]]
-    [:p {:class "flex gap-6 text-zinc-600 sm:justify-end"}
-     [:span "© 2026 greed"]
-     [:a {:href "/privacy" :class link} "Privacy"]
-     [:a {:href "/terms" :class link} "Terms"]]]])
+  [:footer {:class "border-t border-zinc-200/70 bg-zinc-50"}
+   [:div {:class "container mx-auto px-6 pb-10 pt-16"}
+    [:div {:class "grid grid-cols-2 gap-10 lg:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))]"}
+     [:div {:class "col-span-2 lg:col-span-1"}
+      [:a {:href "/" :class "inline-block" :aria-label "greed home"}
+       [:img {:src "/img/greed-symbol-green-tight.svg" :alt "greed" :width 192 :height 192 :class "block h-9 w-9"}]]
+      [:p {:class "mt-4 max-w-[34ch] text-sm leading-relaxed text-zinc-600"}
+       "Money and business finance for South Africans. Read your statements, plan your month, and know what SARS takes."]]
+     (column "Product" [["/#features" "Features"] ["/#business" "For business"] ["/pricing" "Pricing"] ["/signup" "Start free"]])
+     (column "Company" [["/about" "About"] ["/team" "Team"] ["/contact" "Contact"] ["https://www.instagram.com/greed_za/" "Instagram" true]])
+     (column "Legal" [["/privacy" "Privacy"] ["/terms" "Terms"]])]
+    [:div {:class "mt-14 flex flex-col gap-2 border-t border-zinc-200/70 pt-6 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between"}
+     [:p "© 2026 greed. Made in South Africa."]
+     [:p "Estimates only, not tax or financial advice."]]]])
 
 (defn app-footer []
   [:footer {:class "border-t border-zinc-200 bg-white"}

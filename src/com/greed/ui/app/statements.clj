@@ -129,14 +129,24 @@
      :over (if linked? (- unplanned rest-plan) (- spent planned))}))
 
 (defn verdict-text
-  "One sentence on planned against spent (see compare-with-budget)."
+  "One sentence on planned against spent (see compare-with-budget), in
+   plain words."
   [{:keys [linked? budgeted unplanned rest-plan planned over]}]
   (if linked?
-    (str (whole budgeted) " went to your linked budget items. The other " (whole unplanned) " is "
+    (str (whole budgeted) " paid items already in your budget. Everything else came to " (whole unplanned) ", "
          (whole (Math/abs (long over))) (if (pos? over) " more" " less")
-         " than the " (whole rest-plan) " your budget leaves for everything else.")
-    (str (whole (Math/abs (long over))) (if (pos? over) " more" " less")
-         " than the " (whole planned) " your budget plans for expenses.")))
+         " than the " (whole rest-plan) " you planned for it.")
+    (str "You spent " (whole (Math/abs (long over))) (if (pos? over) " more" " less")
+         " than the " (whole planned) " you planned.")))
+
+(defn verdict-pill
+  "The short status for planned against spent: on plan, under or over."
+  [{:keys [planned over]}]
+  (let [margin (* 0.02 (or planned 0))]
+    (cond
+      (<= (Math/abs (double over)) margin) {:text "On plan" :tone :good}
+      (neg? over) {:text (str (whole (Math/abs (long over))) " under plan") :tone :good}
+      :else {:text (str (whole over) " over plan") :tone :bad})))
 
 (defn- verdict
   "The verdict as a line of its own (the Insights card)."
@@ -154,24 +164,27 @@
         over?   (and cmp (pos? (:over cmp)))]
     (hero/card
      {:label (str (bank-names bank (name bank)) " · " (month-label s))
-      :badge (when-not whole? (hero/badge "Part of the month"))
       :value (whole money-out-cents)
-      :unit "spent"
+      :unit "money out"
+      :verdict (cond
+                 (not whole?) {:text "Part of the month" :tone :neutral}
+                 cmp (verdict-pill cmp)
+                 :else {:text "No plan to compare" :tone :neutral})
       :reading (cond
-                 (not whole?) (str "Only " (period-label s) " is on your statement, so this is part of the month.")
+                 (not whole?) (str "Only " (period-label s) " is on this statement, so it isn't compared with your plan yet.")
                  cmp (verdict-text cmp)
-                 :else "Add your expenses in Budget to compare this month with a plan.")
+                 :else "Add your expenses on Budget to compare this month with a plan.")
       :tone (when over? :rose)
       :picture (hero/bars {:title "Planned against spent"
                            :rows [{:label "Planned" :value (if (pos? planned-expenses) (whole planned-expenses) "–")
                                    :amount (max 0 planned-expenses) :cls "bg-zinc-400"}
                                   {:label "Spent" :value (whole money-out-cents) :amount money-out-cents
                                    :cls (if over? "bg-rose-500" "bg-brand-600")}]})
-      :stats [["Money in" (whole money-in-cents)]
+      :stats [["Money in" (whole money-in-cents) nil :money-in]
               (if (seq budget-matches)
-                ["Budget items paid" (whole (or budgeted-cents 0))]
-                ["Planned expenses" (if (pos? planned-expenses) (utilities/whole->rands planned-expenses) "–")])
-              ["Between your accounts" (whole (+ transfers-in-cents transfers-out-cents))]]
+                ["Paid to budget items" (whole (or budgeted-cents 0)) nil :in-budget]
+                ["Planned" (if (pos? planned-expenses) (utilities/whole->rands planned-expenses) "–") nil :planned])
+              ["Moved between your accounts" (whole (+ transfers-in-cents transfers-out-cents)) nil :own-accounts]]
       :footer (when-not checks-ok
                 [:p {:role "alert" :class "mt-4 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800"}
                  "This statement's own totals did not match what greed read, so some lines may be missing. Treat these numbers as a guide."])})))
@@ -489,9 +502,12 @@
   "For Insights: the newest full month from the user's bank statements
    against the budget's planned expenses, all banks together. Partial months
    (the edges of a statement) are not compared."
-  [summaries budget-items _planned-expenses]
+  [summaries budget-items _planned-expenses & {:keys [for-month]}]
   (let [full        (filter whole-month? summaries)
-        month       (some-> (first full) month-of)
+        ;; a chosen month (Insights' month tabs) only when it has a full statement
+        month       (if for-month
+                      (when (some #(= for-month (month-of %)) full) for-month)
+                      (some-> (first full) month-of))
         ;; the plan for that month: monthly items and that month's statement items
         month-items (data/items-for-month budget-items (or month (data/current-month)))
         items-by-id (into {} (map (juxt :xt/id identity)) month-items)
@@ -533,6 +549,12 @@
         [:p {:class "mt-5 text-sm text-zinc-600"}
          (str (whole spent) " spent. Add your expenses in Budget to compare it with a plan.")]
         (link "/app/finances" "Go to Budget")]
+
+       for-month
+       [:div
+        [:p {:class "mt-5 text-sm text-zinc-600"}
+         "No bank statement covers all of this month, so there is nothing to compare with the plan yet."]
+        (link "/app/banking" "Go to Banking")]
 
        (seq summaries)
        [:div

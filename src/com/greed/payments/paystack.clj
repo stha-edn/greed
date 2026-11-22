@@ -110,6 +110,11 @@
   [ctx subscription-code email-token]
   (call ctx :post "/subscription/disable" {:code subscription-code :token email-token}))
 
+(defn enable!
+  "Lets a cancelled subscription renew again."
+  [ctx subscription-code email-token]
+  (call ctx :post "/subscription/enable" {:code subscription-code :token email-token}))
+
 ;; ---------------------------------------------------------------------------
 ;; Webhooks
 

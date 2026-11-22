@@ -16,23 +16,24 @@
   (is (not (vat/vat-number? "41234567890"))))
 
 (deftest tax-periods
-  (testing "category A: two months ending in even months"
+  ;; SARS: Category A periods end in the odd months, B in the even months.
+  (testing "category B: two months ending in even months"
     (is (= {:start (d "2026-11-01") :end (d "2026-12-31") :due (d "2027-01-29") :months 2}
-           (vat/period :a (d "2026-11-14")))
+           (vat/period :b (d "2026-11-14")))
         "31 Jan 2027 is a Sunday, so the return is due on Friday the 29th")
-    (is (= (d "2026-11-01") (:start (vat/period :a (d "2026-12-31"))))))
-  (testing "category B: two months ending in odd months, across the new year"
+    (is (= (d "2026-11-01") (:start (vat/period :b (d "2026-12-31"))))))
+  (testing "category A: two months ending in odd months, across the new year"
     (is (= {:start (d "2026-10-01") :end (d "2026-11-30") :due (d "2026-12-31") :months 2}
-           (vat/period :b (d "2026-11-14"))))
+           (vat/period :a (d "2026-11-14"))))
     (is (= {:start (d "2026-12-01") :end (d "2027-01-31") :due (d "2027-02-26") :months 2}
-           (vat/period :b (d "2027-01-10")))))
+           (vat/period :a (d "2027-01-10")))))
   (testing "category C: every month"
     (is (= {:start (d "2026-11-01") :end (d "2026-11-30") :due (d "2026-12-31") :months 1}
            (vat/period :c (d "2026-11-14")))))
   (testing "earlier periods, newest first"
     (is (= ["2026-11-01" "2026-09-01" "2026-07-01"]
-           (map (comp str :start) (vat/periods :a (d "2026-11-14") 3))))
-    (is (= ["2026-11" "2026-12"] (vat/period-months (vat/period :a (d "2026-11-14")))))))
+           (map (comp str :start) (vat/periods :b (d "2026-11-14") 3))))
+    (is (= ["2026-11" "2026-12"] (vat/period-months (vat/period :b (d "2026-11-14")))))))
 
 (deftest from-the-budget
   (let [items [{:budget-item/type :income :budget-item/amount 11500}
@@ -69,7 +70,8 @@
 
 (deftest sars-due-dates-on-the-calendar
   (let [due-dates (requiring-resolve 'com.greed.utilities.due-dates/sars-events)
-        biz {:business/entity-type :pty-ltd :business/vat-registered true :business/vat-category :a
+        ;; category B: periods end in the even months
+        biz {:business/entity-type :pty-ltd :business/vat-registered true :business/vat-category :b
              :business/year-end-month 2}
         evs (due-dates biz (d "2026-11-01") (d "2027-03-31"))]
     (testing "each VAT201 and provisional payment in range, by date"

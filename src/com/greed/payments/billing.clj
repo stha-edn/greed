@@ -213,6 +213,74 @@
       (redirect link)
       (redirect "/app/plan?alert=billing-unavailable"))))
 
+(defn- set-status!
+  "Sets the person's subscription status, with an audit record of who did it."
+  [ctx uid status event]
+  (let [now (Date.)]
+    (biff/submit-tx ctx
+                    [(plans/subscription-tx ctx uid {:subscription/status status} now)
+                     (plans/payment-event-doc {:event-key (str event ":" uid ":" (.getTime now))
+                                               :event event :user-id uid
+                                               :summary (pr-str {:status status})}
+                                              now)])))
+
+(defn cancel
+  "POST /app/settings/cancel-subscription: the person stops their plan from
+   renewing. They keep it until the end of the period they paid for."
+  [{:keys [session] :as ctx}]
+  (let [uid (:uid session)
+        sub (plans/get-subscription ctx uid)
+        back #(redirect (str "/app/settings?alert=" % "#subscription"))]
+    (cond
+      (not (plans/paid? sub)) (back "no-subscription")
+      (= :non-renewing (:subscription/status sub)) (back "already-cancelled")
+      (not (:subscription/paystack-code sub)) (back "billing-unavailable")
+      (not (contains? (paystack/disable! ctx (:subscription/paystack-code sub) (:subscription/paystack-email-token sub)) :ok))
+      (back "cancel-failed")
+      :else
+      ;; the confirmation email follows Paystack's subscription.not_renew webhook
+      (do (set-status! ctx uid :non-renewing "user.cancel")
+          (back "subscription-cancelled")))))
+
+(defn resume
+  "POST /app/settings/resume-subscription: undo a cancellation before the
+   plan ends, so it renews again."
+  [{:keys [session] :as ctx}]
+  (let [uid (:uid session)
+        sub (plans/get-subscription ctx uid)
+        back #(redirect (str "/app/settings?alert=" % "#subscription"))]
+    (cond
+      (not (and (plans/paid? sub) (= :non-renewing (:subscription/status sub)))) (back "no-subscription")
+      (not (contains? (paystack/enable! ctx (:subscription/paystack-code sub) (:subscription/paystack-email-token sub)) :ok))
+      (back "cancel-failed")
+      :else
+      (do (set-status! ctx uid :active "user.resume")
+          (back "subscription-resumed")))))
+
+(defn admin-revoke
+  "POST /app/admin/users/revoke-plan: an admin ends someone's trial or plan
+   now. A plan billed by Paystack is stopped there first; if Paystack
+   cannot be reached, nothing changes, so nobody is billed for a plan they
+   no longer have."
+  [{:keys [session params] :as ctx}]
+  (let [uid (some-> (:user-id params) str parse-uuid)
+        st  (when uid (plans/status ctx uid))
+        sub (:subscription st)
+        back #(redirect (str "/app/admin/users?alert=" %))]
+    (cond
+      (or (nil? uid) (nil? (data/get-user ctx uid))) (back "user-not-found")
+      (not (plans/revocable? st)) (back "nothing-to-revoke")
+      (and (plans/paid? sub) (:subscription/paystack-code sub)
+           (not (contains? (paystack/disable! ctx (:subscription/paystack-code sub)
+                                              (:subscription/paystack-email-token sub))
+                           :ok)))
+      (back "revoke-billing-failed")
+      :else
+      (do (biff/submit-tx ctx (plans/revoke-tx ctx uid (:uid session) (Date.)))
+          (back (if (and (plans/paid? sub) (not (:subscription/paystack-code sub)))
+                  "plan-revoked-check-paystack"
+                  "plan-revoked"))))))
+
 (defn cancel-for-deletion!
   "Stops the person's subscription from renewing, before their account is
    deleted. Returns true when there was nothing to stop or it stopped."

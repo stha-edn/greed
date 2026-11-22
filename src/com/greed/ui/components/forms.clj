@@ -6,7 +6,8 @@
             [com.greed.utilities.core :as tools]
             [com.greed.statements.categorise :as categorise]
             [com.greed.utilities.vat :as vat]
-            [com.greed.ui.components.shared :as shared]))
+            [com.greed.ui.components.shared :as shared]
+            [com.greed.ui.components.svgs :as svgs]))
 
 (defn on-error [{:keys [params]}]
   (let [config c/common-config]
@@ -279,7 +280,7 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
                    (shared/btn :variant :dark :type "submit" "Save bank")]))))
 
 (defn finances
-  "Settings: salary and payday. The bank is on Banking."
+  "Budget: salary and payday. The bank is on Banking."
   [ctx]
   (shared/card {:class "p-6"}
                [:div {:class "mb-6"}
@@ -303,9 +304,9 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
         val     (fn [k] (str (or (k tp) 0)))]
     (shared/card {:class "p-6"}
                  [:div {:class "mb-6"}
-                  [:h2 {:class "text-base font-semibold text-zinc-900 tracking-tight"} "Tax Assessment Profile"]
-                  [:p {:class "text-sm text-zinc-500 mt-0.5"}
-                   "Stored and used automatically in your tax return auto assessment."]]
+                  [:h2 {:class "text-sm font-semibold tracking-tight text-zinc-900"} "Tax assessment profile"]
+                  [:p {:class "mt-0.5 text-xs text-zinc-500"}
+                   "Used in your annual tax estimate and in the ITR12 simulator. Saving it also adds these to your budget."]]
                  (biff/form
                   {:action "/app/save-tax-profile"}
 
@@ -335,6 +336,58 @@ on htmx:afterRequest remove .opacity-50 from #account-type-field"})
                   [:div {:class "flex justify-end pt-5 mt-5 border-t border-zinc-100"}
                    (shared/btn :variant :dark :type "submit"
                                "Save changes")]))))
+
+(defn edit-modal
+  "One of the forms above (finances, tax-profile) in a modal, opened by a
+   button with (shared/open-actions id). Opening the page at #`hash` opens
+   it too, so links from other pages land on the form."
+  [id hash form]
+  [:<>
+   (shared/modal id
+                 [:div {:class "relative w-[min(92vw,36rem)] max-h-[90vh] overflow-y-auto rounded-lg"}
+                  [:button {:type "button" :title "Close" :aria-label "Close"
+                            :class "absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+                            :_ (shared/close-actions id)}
+                   (svgs/close {:class "h-4 w-4"})]
+                  form])
+   [:script (biff/unsafe (str "if(location.hash==='#" hash "'){var m=document.getElementById('" id "');if(m){m.setAttribute('open','true');}}"))]])
+
+(defn- edit-strip
+  "A slim card: what is set now, and the button that opens its modal."
+  [title items modal-id label]
+  [:div {:class "flex flex-col gap-3 rounded-lg bg-white px-5 py-4 ring-1 ring-zinc-200/70 sm:flex-row sm:items-center sm:justify-between"}
+   [:div {:class "min-w-0"}
+    [:p {:class "text-sm font-semibold tracking-tight text-zinc-900"} title]
+    [:p {:class "mt-0.5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-500"}
+     (for [[k v] items] [:span k ": " [:span {:class "font-semibold tabular-nums text-zinc-900"} v]])]]
+   (shared/btn :variant :outline :size :md :class "flex-shrink-0" :attrs {:_ (shared/open-actions modal-id)} label)])
+
+(defn salary-strip
+  "Budget: the salary and payday now, with an Edit button and its modal."
+  [{:keys [session] :as ctx}]
+  (let [f (data/get-finances ctx (:uid session))
+        salary (:finances/salary f)
+        payday (:finances/payday f)]
+    [:div {:id "salary"}
+     (edit-strip "Salary and payday"
+                 [["Monthly salary" (if salary (tools/whole->rands salary) "not set")]
+                  ["Payday" (if payday (str "the " payday (case (mod payday 10) 1 (if (= 11 payday) "th" "st") 2 (if (= 12 payday) "th" "nd") 3 (if (= 13 payday) "th" "rd") "th")) "not set")]]
+                 "salary-modal" (if salary "Edit salary and payday" "Add salary and payday"))
+     (edit-modal "salary-modal" "salary" (finances ctx))]))
+
+(defn tax-profile-strip
+  "Tax: medical aid and retirement annuity now, with an Edit button and its modal."
+  [{:keys [session] :as ctx}]
+  (let [tp  (data/get-tax-profile ctx (:uid session))
+        med (or (:tax-profile/medical-monthly tp) 0)
+        ra  (or (:tax-profile/ra-annual tp) 0)]
+    [:div {:id "deductions"}
+     (edit-strip "Medical aid and retirement annuity"
+                 [["Medical aid" (if (pos? med) (str (tools/whole->rands med) " a month") "none")]
+                  ["Dependants" (str (or (:tax-profile/medical-dependants tp) 0))]
+                  ["Retirement annuity" (if (pos? ra) (str (tools/whole->rands ra) " a year") "none")]]
+                 "tax-profile-modal" "Edit tax details")
+     (edit-modal "tax-profile-modal" "deductions" (tax-profile ctx))]))
 
 (def ^:private budget-item-form-copy
   "Modal heading + blurb per category, so the Add dialog says exactly what it

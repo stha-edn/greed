@@ -130,32 +130,32 @@
    tab: spent, read against the plan, planned and spent as bars, and money
    in, out and the net. The same for every profile; `who` words it."
   [{:keys [month whole? summaries]} items-by-id planned-expenses who]
-  (let [{:keys [spent planned over linked? budgeted unplanned]}
+  (let [{:keys [spent planned over linked? budgeted unplanned] :as cmp}
         (spending/compare-with-budget summaries items-by-id planned-expenses)
         in    (reduce + 0 (map :statement-summary/money-in-cents summaries))
         net   (- in spent)
         over? (and whole? (pos? planned) (pos? over))]
     (hero/card
      {:label (month-name month "MMMM yyyy")
-      :badge (when-not whole? (hero/badge "Part of the month"))
       :value (whole spent)
-      :unit "spent"
+      :unit "money out"
+      :verdict (cond
+                 (not (pos? planned)) {:text "No plan to compare" :tone :neutral}
+                 (not whole?) {:text "Part of the month" :tone :neutral}
+                 :else (spending/verdict-pill cmp))
       :reading (cond
-                 (not (pos? planned)) (str "Add " (:possessive who) " costs to the budget to compare this month with a plan.")
-                 (not whole?) "Only part of this month is on the statements, so it is not compared with the plan yet."
-                 linked? (str (whole (Math/abs (long over))) (if over? " more" " less")
-                              " than the budget leaves for costs outside its linked items.")
-                 :else (str (whole (Math/abs (long over))) (if over? " more" " less") " than the "
-                            (whole planned) " the budget plans for expenses."))
+                 (not (pos? planned)) (str "Add " (:possessive who) " costs on Budget to compare this month with a plan.")
+                 (not whole?) "Only part of this month is on the statements, so it isn't compared with the plan yet."
+                 :else (spending/verdict-text cmp))
       :tone (when over? :rose)
       :picture (hero/bars {:title "Planned against spent"
                            :rows [{:label "Planned" :value (whole planned) :amount planned :cls "bg-zinc-400"}
                                   {:label "Spent" :value (whole spent) :amount spent :cls (if over? "bg-rose-500" "bg-brand-600")}]
                            :note (when linked?
-                                   (str (whole budgeted) " went to linked budget items, " (whole unplanned) " to everything else."))})
-      :stats [["Money in" (whole in)]
-              ["Money out" (whole spent)]
-              ["In minus out" (str (when (neg? net) "−") (whole (Math/abs (long net)))) (when (neg? net) "text-rose-700")]]
+                                   (str (whole budgeted) " paid items already in the budget, " (whole unplanned) " went on everything else."))})
+      :stats [["Money in" (whole in) nil :money-in]
+              ["Money out" (whole spent) nil :money-out]
+              ["Left over" (str (when (neg? net) "−") (whole (Math/abs (long net)))) (when (neg? net) "text-rose-700") :left-over]]
       :footer [:div {:class "mt-5 flex justify-end"}
                [:a {:href (str "/app/spending?month=" month)
                     :class "inline-flex items-center gap-1 rounded-md text-sm font-medium text-zinc-900 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"}

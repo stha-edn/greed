@@ -27,6 +27,7 @@
  :alert/goal-saved "The goal was saved."
  :alert/goal-deleted "The goal was deleted."
  :alert/statement-read "Your statement was read and split by month. The file was not kept."
+ :alert/statement-read-partly "Your statement was read. The free plan keeps one month, so the other months were not saved. Premium reads every month."
  :alert/budget-synced "Your months were matched with your budget."
  :alert/budget-synced-partly "Your months were matched with your budget. Some were read before greed kept payee totals: upload those statements once more."
  ;; VAT (SARS). Check each February's Budget; thresholds apply from April 2026.
@@ -77,17 +78,29 @@
  :alert/password-already-hashed "That user's password was already securely hashed."
  :alert/app-updated "greed has been updated: Banking, business profiles, and a new Home."
  :alert/signed-out "You're signed out. See you soon."
+ :alert/subscription-cancelled "Your subscription is cancelled. You keep your plan until the end of the period you paid for, and you won't be charged again."
+ :alert/subscription-resumed "Your subscription is back on. It renews as before."
+ :alert/already-cancelled "Your subscription is already cancelled."
+ :alert/no-subscription "You don't have a paid subscription to change."
+ :alert/cancel-failed "Paystack could not make that change just now, so nothing changed. Try again in a minute."
+ :alert/profile-deleted "Your profile and everything in it were deleted. Thank you for using greed."
+ :alert/delete-billing-failed "Paystack could not stop your plan, so nothing was deleted. Try again in a minute."
  :alert/trial-started "Your 14-day trial has started. Everything is unlocked, including businesses."
  :alert/trial-used "Your trial has already been used. Choose a plan to keep going."
  :alert/need-premium "Free accounts can read one statement month. Upgrade to Premium to add more."
+ :alert/need-premium-returns "The ITR12 return simulator is part of Premium. Start a trial or upgrade to use it."
  :alert/need-business "Businesses are part of the Business plan. Start a trial or upgrade to use them."
  :alert/payments-soon "Paid plans open soon. Start the free trial in the meantime."
  :alert/plan-active "Payment received. Your plan is active. Thank you for supporting greed."
  :alert/payment-failed "The payment did not go through, so your plan has not changed. Try again, or use another card."
- :alert/already-subscribed "You already have a paid plan. To change it, cancel in Manage billing first."
+ :alert/already-subscribed "You already have a paid plan. To change it, cancel your subscription in Settings first."
  :alert/billing-unavailable "Billing opens once Paystack confirms your subscription, usually within a minute. Try again shortly."
  :alert/trials-granted "Every account without a plan now has the free trial."
  :alert/no-trials-needed "Every account already has a trial or a plan."
+ :alert/plan-revoked "The plan was revoked. That person is on Free now."
+ :alert/plan-revoked-check-paystack "The plan was revoked, but Paystack had not confirmed the subscription yet. Check it is cancelled in the Paystack dashboard."
+ :alert/revoke-billing-failed "Paystack could not cancel the subscription, so the plan was not revoked. Try again in a minute."
+ :alert/nothing-to-revoke "That person has no trial or plan to revoke."
 
  :alert/errors #{:alert/email-taken
                  :alert/user-not-found
@@ -95,6 +108,10 @@
                  :alert/cannot-remove-own-admin-role
                  :alert/trial-used
                  :alert/payment-failed
+                 :alert/revoke-billing-failed
+                 :alert/delete-billing-failed
+                 :alert/cancel-failed
+                 :alert/nothing-to-revoke
                  :alert/billing-unavailable}
 
  :user/fields #{"firstname" "lastname" "age" "email" "password"}

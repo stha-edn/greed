@@ -75,14 +75,16 @@ on htmx:afterRequest remove .opacity-50 from #bonus-result"}
                           [:span {:class "text-base font-semibold text-zinc-900"} title]
                           [:span {:class "text-xs font-medium text-zinc-500"} subtitle]))])
           [:p {:class "mt-3 text-xs text-zinc-500"}
-           "Uses the salary and age saved in Settings."]]))
+           "Uses your salary from Budget and your age from Settings."]]))
       (tools/panel
        [:div {:class "flex flex-col items-center justify-center px-6 py-12 text-center"}
         [:div {:class "mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100"}
          [:span {:class "text-zinc-500"} (svgs/wallet)]]
         [:p {:class "text-sm font-medium text-zinc-500"} "No salary data yet"]
         [:p {:class "mt-1 max-w-xs text-xs text-zinc-500"}
-         "Add your salary and age in "
+         "Add your salary in "
+         [:a {:href "/app/finances/#salary" :class "font-medium text-zinc-900 hover:underline"} "Budget"]
+         " and your age in "
          [:a {:href "/app/settings" :class "font-medium text-zinc-900 hover:underline"} "Settings"]
          " to enable auto assessment."]]))))
 

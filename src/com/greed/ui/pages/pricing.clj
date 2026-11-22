@@ -5,20 +5,14 @@
             [com.greed.ui.components.marketing :as m]
             [com.greed.ui.components.plans :as plan-cards]))
 
-(def ^:private btn-dark
-  "inline-flex w-full items-center justify-center rounded-md bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition-[transform,background-color] duration-150 ease-out hover:bg-zinc-700 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2")
-
-(def ^:private btn-outline
-  "inline-flex w-full items-center justify-center rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 ring-1 ring-zinc-300 transition-[transform,background-color] duration-150 ease-out hover:bg-zinc-50 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2")
-
 (defn- action [signed-in?]
   (fn [tier]
-    (let [href (if signed-in? "/app/plan" "/signup")]
-      (case tier
-        :free     [:a {:href href :class btn-outline} (if signed-in? "Your account" "Start free")]
-        :premium  [:a {:href href :class btn-dark} (if signed-in? "Choose Premium" "Start with a free trial")]
-        :business [:a {:href (if signed-in? "/app/plan" "/signup?as=business") :class btn-outline}
-                   (if signed-in? "Choose Business" "Start with a free trial")]))))
+    (let [href (cond (and signed-in? (= :free tier)) "/app" signed-in? "/app/plan" (= :business tier) "/signup?as=business" :else "/signup")]
+      [:a {:href href :class (str (if (= :premium tier) m/btn-green m/btn-outline) " w-full")}
+       (cond (and signed-in? (= :free tier)) "Go to your account"
+             signed-in? (str "Choose " (plans/tier-name tier))
+             (= :free tier) "Start free"
+             :else "Start your free trial")])))
 
 (def ^:private faq
   [["How does the free trial work?"
@@ -35,19 +29,34 @@
 (defn page [{:keys [session params]}]
   (let [signed-in? (some? (:uid session))
         interval   (plan-cards/interval-of params)]
-    [:div
+    [:div {:class "bg-white"}
      [:style (biff/unsafe m/enter-css)]
-     [:div {:class "container mx-auto px-6"}
-      (m/page-head "Start free. Pay when it earns its place."
-                   (str "Budget, goals, the calendar, insights and every tax calculator are free. Premium reads all your statements; Business adds your businesses. Try everything free for " (plans/trial-days) " days, no card needed."))
-      [:div {:class "enter" :style {"--d" "120ms"}}
-       [:div {:class "mb-6"} (plan-cards/interval-switch "/pricing" interval)]
-       (plan-cards/cards {:interval interval :action (action signed-in?)})
-       [:p {:class "mt-4 text-sm text-zinc-500"} "Prices in rand. Paid by card through Paystack."]]
-      (m/split {:id "faq" :heading "Questions"}
-               [:dl {:class "divide-y divide-zinc-200 border-y border-zinc-200"}
-                (for [[q a] faq]
-                  [:div {:class "py-6"}
-                   [:dt {:class "text-lg font-semibold tracking-[-0.01em] text-zinc-900"} q]
-                   [:dd {:class "mt-2 max-w-[60ch] text-base leading-relaxed text-zinc-600"} a]])])]
+     (m/page-hero
+      {:kicker "Pricing"
+       :title "Start free. Pay when it earns its place."
+       :line (str "Budget, goals, the calendar, insights and the income tax and bonus calculators are free. Premium reads all your statements and simulates your ITR12 return; Business adds your businesses. Try everything free for " (plans/trial-days) " days, no card needed.")})
+     [:section {:class "container mx-auto px-6 py-16 lg:py-20" :aria-label "Plans"}
+      [:div {:class "enter mb-8 flex flex-wrap items-center justify-between gap-4"}
+       [:p {:class "text-sm text-zinc-500"} "Prices in rand. Paid by card through Paystack. Cancel any time."]
+       (plan-cards/interval-switch "/pricing" interval)]
+      [:div {:class "enter" :style {"--d" "80ms"}}
+       (plan-cards/cards {:interval interval :action (action signed-in?)})]]
+     [:section {:id "faq" :class "bg-zinc-50 py-20 lg:py-24" :aria-labelledby "faq-h"}
+      [:div {:class "container mx-auto grid grid-cols-1 gap-12 px-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]"}
+       (m/section-head {:kicker "Questions" :id "faq-h" :title "Good to know before you start."
+                        :line [:span "Something else? " [:a {:href "/contact" :class m/link-ink} "Ask us"] "."]})
+       [:div {:class "enter space-y-3" :style {"--d" "80ms"}}
+        (for [[q a] faq]
+          [:details {:class "group rounded-2xl bg-white p-5 ring-1 ring-zinc-200/70 open:shadow-card-md sm:p-6"}
+           [:summary {:class "flex cursor-pointer list-none items-center justify-between gap-4 text-[17px] font-semibold text-zinc-900 [&::-webkit-details-marker]:hidden"}
+            q
+            [:span {:aria-hidden "true" :class "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 transition group-open:rotate-45"} "+"]]
+           [:p {:class "mt-3 max-w-[60ch] text-[15px] leading-relaxed text-zinc-600"} a]])]]]
+     (m/action-tile
+      {:id "close"
+       :heading "Try everything free for 14 days."
+       :line "No card needed. When the trial ends you choose a plan, or stay on Free."
+       :primary {:href (if signed-in? "/app/plan" "/signup") :label (if signed-in? "Open your plan" "Start free")}
+       :secondary {:href "/#features" :label "See the features"}
+       :facts :none})
      [:script (biff/unsafe m/enter-js)]]))

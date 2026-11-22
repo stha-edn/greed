@@ -125,19 +125,24 @@
 (defn panel-footer [& body]
   [:div {:class "flex justify-end border-t border-zinc-100 px-5 py-3 sm:px-6"} body])
 
-(defn- tool-card [& {:keys [title description link badge icon]}]
-  [:a {:href link
+(defn- tool-card [& {:keys [title description link badge icon locked?]}]
+  [:a {:href (if locked? "/app/plan?alert=need-premium-returns" link)
        :class "group flex flex-col rounded-lg bg-white p-6 ring-1 ring-zinc-200/70 transition duration-200 hover:-translate-y-0.5 hover:ring-zinc-300/70"}
    [:div {:class "mb-3 flex items-start justify-end empty:hidden"}
-    (when badge
-      [:span {:class "text-xs font-medium text-zinc-900 bg-zinc-100 px-2.5 py-1 rounded-full"} badge])]
+    (if locked?
+      [:span {:class "text-xs font-semibold text-brand-700 bg-brand-50 ring-1 ring-brand-600/20 px-2.5 py-1 rounded-full"} "Premium"]
+      (when badge
+        [:span {:class "text-xs font-medium text-zinc-900 bg-zinc-100 px-2.5 py-1 rounded-full"} badge]))]
    [:h3 {:class "text-sm font-semibold text-zinc-900 tracking-tight group-hover:text-zinc-900 transition-colors"} title]
    [:p {:class "mt-1 flex-1 text-sm text-zinc-500 leading-relaxed"} description]
    [:div {:class "mt-4 flex items-center gap-1 text-xs font-medium text-zinc-500 group-hover:text-zinc-900 transition-colors"}
-    "Open tool"
+    (if locked? "See plans" "Open tool")
     (svgs/->next {:class "size-3.5 -translate-x-0.5 transition-transform group-hover:translate-x-0"})]])
 
-(defn tools []
+(defn tools
+  "The personal tax tools. `premium?` false marks the ITR12 simulator,
+   which needs Premium, and sends its card to the plans."
+  [& {:keys [premium?] :or {premium? true}}]
   [:div
    (stats/section-header "Tax tools"
                          :href "https://www.sars.gov.za/tax-rates/income-tax/rates-of-tax-for-individuals/"
@@ -154,6 +159,7 @@
      :description "Simulate your SARS tax return including medical aid credits, RA deductions, and travel allowances."
      :link "/app/tax/tax-returns"
      :badge "2026 year"
+     :locked? (not premium?)
      :icon (svgs/document-text))
     (tool-card
      :title "Bonus Tax Calculator"

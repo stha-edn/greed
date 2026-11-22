@@ -77,22 +77,30 @@
            (let [set-aside (* per-month (:months current))
                  gap       (- (:net budget) set-aside)]
              (hero/card
-              {:label (str "Current period · " (period-label current))
-               :badge (hero/badge (str "Due " (fmt (:due current) "d MMM")) :tone (when (< days-left 14) :rose))
+              {:label (str "VAT for " (period-label current))
+               :badge (hero/badge (str "Due " (fmt (:due current) "d MMM")))
                :value (owes (:net budget))
                :unit "this period"
-               :reading (str "Expected from your budget. The VAT201 is due on " (fmt (:due current) "EEEE d MMMM yyyy") ".")
+               :verdict (cond
+                          (neg? days-left) {:text "Past its due date" :tone :bad}
+                          (<= days-left 7) {:text (str "Due in " days-left " day" (when (not= 1 days-left) "s")) :tone :bad}
+                          (<= days-left 21) {:text (str "Due in " days-left " days") :tone :warn}
+                          :else {:text (str "Due in " days-left " days") :tone :neutral})
+               :reading (str (if (neg? (:net budget))
+                               "The business paid more VAT on costs than it charged on sales, so SARS owes it the difference. "
+                               "VAT charged on sales, minus VAT paid on costs, from the budget. ")
+                             "Submit the VAT201 by " (fmt (:due current) "EEEE d MMMM") ".")
                :picture (hero/bars
-                         {:title "VAT on sales and on costs"
-                          :rows [{:label "On sales" :value (whole (:output budget)) :amount (:output budget) :cls "bg-zinc-700"}
-                                 {:label "On costs" :value (whole (:input budget)) :amount (:input budget) :cls "bg-brand-600"}]
+                         {:title "VAT charged and VAT paid"
+                          :rows [{:label "On your sales" :value (whole (:output budget)) :amount (:output budget) :cls "bg-zinc-700"}
+                                 {:label "On your costs" :value (whole (:input budget)) :amount (:input budget) :cls "bg-brand-600"}]
                           :note (if (pos? per-month)
                                   (str "Your VAT set-aside items put away " (whole set-aside) " for this period"
                                        (if (pos? gap) (str ", " (whole gap) " less than expected.") ", enough to cover it."))
                                   "Tip: add a set-aside item with VAT in its name, so the money is put away before the due date.")})
-               :stats [["Days left" (str days-left)]
-                       ["Months in period" (str (:months current))]
-                       ["Set aside for it" (whole set-aside)]]}))
+               :stats [["VAT to pay" (whole (max 0 (:net budget))) nil :vat-to-pay]
+                       ["Period" (str (:months current) (if (= 1 (:months current)) " month" " months")) nil :vat-period]
+                       ["Put away for it" (whole set-aside) (when (pos? gap) "text-amber-700") :set-aside]]}))
            [:div {:class "grid grid-cols-1 gap-6 lg:grid-cols-2"}
             [:section {:class card :aria-labelledby "budget-h"}
              [:h2 {:id "budget-h" :class "text-sm font-semibold tracking-tight text-zinc-900"} "From your budget"]

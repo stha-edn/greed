@@ -1,8 +1,10 @@
 (ns com.greed.ui.app.tools
   (:require [com.greed.core :as c.greed]
             [com.greed.data.core :as data]
+            [com.greed.data.plans :as plans]
             [com.greed.ui :as ui]
             [com.greed.ui.tools.core :as tools]
+            [com.greed.ui.components.forms :as forms]
             [com.greed.ui.components.headers :as headers]
             [com.greed.ui.components.stats :as stats]
             [com.greed.ui.app.owner-tax :as owner-tax]))
@@ -19,9 +21,11 @@
      [:div {:class "space-y-7"}
       (headers/pages-heading ["Tax"] "What you earn, what SARS takes, what you keep.")
       (stats/tax-hero income-tax-data)
+      ;; medical aid and retirement annuity: the one place to change them
+      (forms/tax-profile-strip ctx)
       (when has-income?
         [:div {:class "space-y-4"}
          (stats/tax-readiness income-tax-data tax-profile)
          (stats/tax-bracket-breakdown income-tax-data)])
       (owner-tax/section ctx user (:annual-income income-tax-data))
-      (tools/tools)])))
+      (tools/tools :premium? (plans/at-least? ctx user-id :premium))])))
