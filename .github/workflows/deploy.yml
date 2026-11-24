@@ -56,3 +56,8 @@ jobs:
         run: |
           git remote add prod ssh://app@mygreed.co.za/home/app/repo.git 2>&1 || true
           GIT_SSH_COMMAND="ssh -i $HOME/.ssh/prod_key -o IdentitiesOnly=yes" git push prod master
+
+      # The server's post-receive hook only checks the code out; restart the
+      # app so the new code runs.
+      - name: Restart app
+        run: ssh -i ~/.ssh/prod_key -o IdentitiesOnly=yes app@mygreed.co.za "sudo systemctl reset-failed app.service; sudo systemctl restart app"
