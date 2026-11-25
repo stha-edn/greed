@@ -86,7 +86,7 @@
       (boolean
        (some #(and (= :owner (:business-member/role %))
                    (at-least? ctx (:business-member/user-id %) :business))
-             (map first (data/get-business-members ctx business-id))))))
+             (data/get-business-members ctx business-id)))))
 
 (defn statement-months
   "The months already read for an owner (a set of \"yyyy-MM\")."
