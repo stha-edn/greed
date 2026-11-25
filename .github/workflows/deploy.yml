@@ -21,7 +21,12 @@ jobs:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          echo "$PROD_SSH_KEY" | base64 -d > ~/.ssh/prod_key
+          # The secret may hold the private key as-is, or base64-encoded.
+          if printf '%s' "$PROD_SSH_KEY" | grep -q -- '-----BEGIN'; then
+            printf '%s\n' "$PROD_SSH_KEY" > ~/.ssh/prod_key
+          else
+            printf '%s' "$PROD_SSH_KEY" | tr -d ' \r\n' | base64 -d > ~/.ssh/prod_key
+          fi
           chmod 600 ~/.ssh/prod_key
           ssh-keyscan mygreed.co.za >> ~/.ssh/known_hosts
         env:
