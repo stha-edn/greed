@@ -733,7 +733,9 @@
                   business-id (assoc :statement-summary/business-id business-id)))
         own-item #uuid "11111111-2222-0000-0000-000000000001"
         biz-item #uuid "11111111-2222-0000-0000-000000000002"]
-    (with-open [node (test-xtdb-node [{:xt/id biz :business/name "Biz" :business/entity-type :pty-ltd :business/created-at now}
+    (with-open [node (test-xtdb-node [{:xt/id uid :user/email "money@example.com" :user/password "x" :user/firstname "M"
+                                       :user/lastname "K" :user/active true}
+                                      {:xt/id biz :business/name "Biz" :business/entity-type :pty-ltd :business/created-at now}
                                       {:xt/id (random-uuid) :business-member/business-id biz :business-member/user-id uid
                                        :business-member/role :owner :business-member/created-at now}
                                       (item own-item "Rent")
@@ -1117,7 +1119,7 @@
           (is (not (str/includes? (html {:alert "email-taken"} seen :in-app? true) "wait 6s"))))
         (testing "the update notice shows until acknowledged, and returns to the same page"
           (let [h (html {} {:uid uid} :in-app? true)]
-            (is (str/includes? h "What's new"))
+            (is (str/includes? h "has been updated"))
             (is (str/includes? h "/app/finances/")))
           (is (nil? (html {} seen :in-app? true))))
         (testing "signing out says so on the public page"
@@ -1218,8 +1220,11 @@
         biz    #uuid "eeeeeeee-4000-0000-0000-0000000000b1"
         now    (java.util.Date.)
         join   (fn [u role] {:xt/id (random-uuid) :business-member/business-id biz :business-member/user-id u
-                             :business-member/role role :business-member/created-at now})]
-    (with-open [node (test-xtdb-node [{:xt/id biz :business/name "Biz" :business/entity-type :pty-ltd :business/created-at now}
+                             :business-member/role role :business-member/created-at now})
+        person (fn [u email] {:xt/id u :user/email email :user/password "x" :user/firstname "P"
+                              :user/lastname "B" :user/active true})]
+    (with-open [node (test-xtdb-node [(person owner "owner@example.com") (person member "member@example.com")
+                                      {:xt/id biz :business/name "Biz" :business/entity-type :pty-ltd :business/created-at now}
                                       (join owner :owner) (join member :member)])]
       (testing "without the Business plan, nobody may work in it"
         (is (not (plans/business-allowed? (fresh node) member biz)))

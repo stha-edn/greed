@@ -1,4 +1,5 @@
 (ns com.greed.categorise-test
+  (:refer-clojure :exclude [cat])
   (:require [clojure.test :refer [deftest is are testing]]
             [com.greed.statements.categorise :as c]
             [com.greed.statements.fnb :as fnb]
