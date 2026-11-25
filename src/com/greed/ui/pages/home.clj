@@ -58,11 +58,13 @@
 (defn- laptop []
   [:div {:class "relative mx-auto w-full max-w-[640px]"}
    [:div {:class "rounded-t-[16px] bg-zinc-900 p-[7px] shadow-[0_40px_80px_-20px_rgba(0,0,0,.55)] ring-1 ring-white/10"}
-    [:div {:class "overflow-hidden rounded-[10px] bg-zinc-50"}
+    [:div {:class "aspect-[16/10] overflow-hidden rounded-[10px] bg-zinc-50 sm:aspect-auto"}
      [:div {:class "flex h-7 items-center gap-1.5 border-b border-zinc-200 bg-white px-3"}
       [:span {:class "h-2 w-2 rounded-full bg-rose-400"}] [:span {:class "h-2 w-2 rounded-full bg-amber-400"}] [:span {:class "h-2 w-2 rounded-full bg-brand-400"}]
       [:span {:class "mx-auto rounded-md bg-zinc-100 px-8 py-0.5 text-[10px] text-zinc-500"} "mygreed.co.za/app/finances"]]
-     [:div {:class "flex [zoom:0.66]"}
+     ;; Below sm the screen keeps its shape and the app is drawn at desktop
+     ;; width, scaled down, so it doesn't reflow into a tall narrow screen.
+     [:div {:class "flex w-[950px] [zoom:0.42] min-[480px]:[zoom:0.55] sm:w-auto sm:[zoom:0.66]"}
       (mini-nav "Budget")
       [:div {:class "min-w-0 flex-1 space-y-4 p-5"}
        [:p {:class "text-xl font-semibold tracking-tight text-zinc-900"} "Budget"]
@@ -82,10 +84,10 @@
     [:div {:class "mx-auto h-1.5 w-24 rounded-b-lg bg-zinc-400/80"}]]])
 
 (defn- phone []
-  [:div {:class "float w-[176px] rounded-[2.2rem] bg-zinc-900 p-[7px] shadow-[0_30px_60px_-15px_rgba(0,0,0,.6)] ring-1 ring-white/15 sm:w-[210px]"}
-   [:div {:class "relative overflow-hidden rounded-[1.8rem] bg-zinc-50"}
-    [:div {:class "absolute left-1/2 top-1.5 z-10 h-4 w-16 -translate-x-1/2 rounded-full bg-zinc-900"}]
-    [:div {:class "space-y-3 p-4 pt-8 [zoom:0.56]"}
+  [:div {:class "float w-[100px] rounded-[1.3rem] bg-zinc-900 p-[5px] shadow-[0_30px_60px_-15px_rgba(0,0,0,.6)] ring-1 ring-white/15 min-[480px]:w-[140px] sm:w-[210px] sm:rounded-[2.2rem] sm:p-[7px]"}
+   [:div {:class "relative aspect-[9/19] overflow-hidden rounded-[1rem] bg-zinc-50 sm:aspect-auto sm:rounded-[1.8rem]"}
+    [:div {:class "absolute left-1/2 top-1 z-10 h-2.5 w-9 -translate-x-1/2 rounded-full bg-zinc-900 sm:top-1.5 sm:h-4 sm:w-16"}]
+    [:div {:class "w-[350px] space-y-3 p-4 pt-8 [zoom:0.26] min-[480px]:[zoom:0.37] sm:w-auto sm:[zoom:0.56]"}
      [:p {:class "text-lg font-semibold tracking-tight text-zinc-900"} "Banking"]
      (m/shot {:label "Statements" :value "4" :unit "months read"
               :verdict {:text "Up to date" :tone :good}
@@ -99,7 +101,7 @@
 (defn- devices []
   [:div {:class "relative pb-10 lg:pb-0"}
    (laptop)
-   [:div {:class "absolute -bottom-2 right-0 sm:-right-4 lg:-bottom-10 lg:-right-8"} (phone)]
+   [:div {:class "absolute -bottom-6 right-0 sm:-bottom-2 sm:-right-4 lg:-bottom-10 lg:-right-8"} (phone)]
    ;; a floating notice, like the app's own
    [:div {:class "float-slow absolute -left-2 -top-6 hidden rounded-2xl bg-white/95 px-4 py-3 shadow-card-md ring-1 ring-zinc-200/70 backdrop-blur sm:block lg:-left-6"}
     [:p {:class "flex items-center gap-2 text-xs font-semibold text-zinc-900"}
