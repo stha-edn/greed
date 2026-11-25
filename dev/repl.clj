@@ -86,7 +86,7 @@
   (docs-of :dev :user :user/email). Pass :prod to query production instead."
   [env entity anchor]
   (eval-on env
-    (str "(let [{:keys [biff/db]} (repl/get-context)]"
+    (str "(let [{:keys [biff/db]} (com.biffweb/merge-context @com.greed/system)]"
       "  (com.biffweb/q db"
       "    '{:find (pull " (entity-str entity) " [*])"
       "      :where [[" (entity-str entity) " " (str anchor) "]]}))")))
@@ -108,7 +108,7 @@
   "Returns the user with the given email, from :dev or :prod, or nil."
   [env email]
   (eval-on env
-    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)]"
+    (str "(let [{:keys [biff/db] :as ctx} (com.biffweb/merge-context @com.greed/system)]"
       "  (com.greed.data.core/get-user ctx"
       "    (com.biffweb/lookup-id db :user/email " (pr-str email) ")))")))
 
@@ -117,7 +117,7 @@
   :prod."
   [env email]
   (eval-on env
-    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+    (str "(let [{:keys [biff/db] :as ctx} (com.biffweb/merge-context @com.greed/system)"
       "      user (com.greed.data.core/get-user ctx"
       "            (com.biffweb/lookup-id db :user/email " (pr-str email) "))]"
       "  (:user/roles user))")))
@@ -127,7 +127,7 @@
   Returns the user-id, or nil if no user has that email."
   [env email role]
   (eval-on env
-    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+    (str "(let [{:keys [biff/db] :as ctx} (com.biffweb/merge-context @com.greed/system)"
       "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")"
       "        user (when user-id (com.greed.data.core/get-user ctx user-id))]"
       "  (when user"
@@ -143,7 +143,7 @@
   :prod. Returns the user-id, or nil if no user has that email."
   [env email role]
   (eval-on env
-    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+    (str "(let [{:keys [biff/db] :as ctx} (com.biffweb/merge-context @com.greed/system)"
       "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")"
       "        user (when user-id (com.greed.data.core/get-user ctx user-id))]"
       "  (when user"
@@ -166,7 +166,7 @@
   counts as deactivated. Returns nil if no user has that email."
   [env email]
   (eval-on env
-    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+    (str "(let [{:keys [biff/db] :as ctx} (com.biffweb/merge-context @com.greed/system)"
       "      user (com.greed.data.core/get-user ctx"
       "            (com.biffweb/lookup-id db :user/email " (pr-str email) "))]"
       "  (when user (com.greed.data.core/user-active? user)))")))
@@ -176,7 +176,7 @@
   Returns the user-id, or nil if no user has that email."
   [env email active?]
   (eval-on env
-    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+    (str "(let [{:keys [biff/db] :as ctx} (com.biffweb/merge-context @com.greed/system)"
       "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")]"
       "  (when user-id"
       "    (com.biffweb/submit-tx ctx"
@@ -204,7 +204,7 @@
   Returns the number of docs deleted, or nil if no user has that email."
   [env email]
   (eval-on env
-    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+    (str "(let [{:keys [biff/db] :as ctx} (com.biffweb/merge-context @com.greed/system)"
       "      user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")]"
       "  (when user-id (com.greed.data.core/delete-user ctx user-id)))")))
 
@@ -218,7 +218,7 @@
   passwords. Returns the user-id, or nil if no user has that email."
   [env email]
   (eval-on env
-    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+    (str "(let [{:keys [biff/db] :as ctx} (com.biffweb/merge-context @com.greed/system)"
       "        user-id (com.biffweb/lookup-id db :user/email " (pr-str email) ")"
       "        user (when user-id (com.greed.data.core/get-user ctx user-id))]"
       "  (when user"
@@ -234,7 +234,7 @@
   already bcrypt, on :dev or :prod. Returns the list of upgraded emails."
   [env]
   (eval-on env
-    (str "(let [{:keys [biff/db] :as ctx} (repl/get-context)"
+    (str "(let [{:keys [biff/db] :as ctx} (com.biffweb/merge-context @com.greed/system)"
       "        users (com.biffweb/q db"
       "                 '{:find (pull user [*])"
       "                   :where [[user :user/email]]})"
@@ -307,7 +307,7 @@
   (get-user :dev "you@example.com")
 
   ;; Run an arbitrary query, printing the result:
-  (query-raw :dev "(count (com.biffweb/q (:biff/db (repl/get-context)) '{:find [u] :where [[u :user/email]]}))")
+  (query-raw :dev "(count (com.biffweb/q (:biff/db (com.biffweb/merge-context @com.greed/system)) '{:find [u] :where [[u :user/email]]}))")
 
   ;; --------------------------------------------------------------------------
   ;; User management

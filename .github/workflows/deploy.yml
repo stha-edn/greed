@@ -46,6 +46,10 @@ jobs:
           key: clj-${{ hashFiles('deps.edn') }}
           restore-keys: clj-
 
+      # A failing test stops the job here, so nothing is deployed.
+      - name: Run tests
+        run: clojure -M:dev test
+
       - name: Build CSS
         run: |
           set -e
